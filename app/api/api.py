@@ -4,6 +4,7 @@ from typing import Literal
 
 router = APIRouter()
 
+
 class SuccessResponse(BaseModel):
     status: Literal["success"]
     message: str

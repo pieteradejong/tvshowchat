@@ -10,29 +10,29 @@ seed vector database. Creating quality content for such purposes is likely
 to remain closer to one-off tasks than automatable.
 """
 
+
 def fetch_and_parse(url: str) -> Dict[str, str]:
     response = requests.get(url)
     if response.status_code != 200:
         return {}
-    
-    soup = BeautifulSoup(response.content, 'lxml')
+
+    soup = BeautifulSoup(response.content, "lxml")
     result = {}
 
     for header in ["Synopsis", "Summary"]:
-        target_span = soup.find('span', {'id': 'Summary'})
+        target_span = soup.find("span", {"id": "Summary"})
 
         if target_span:
-            parent_h2 = target_span.find_parent('h2')
+            parent_h2 = target_span.find_parent("h2")
             if parent_h2:
                 paragraphs = []
                 for sibling in parent_h2.find_next_siblings():
-                    if sibling.name == 'p':
+                    if sibling.name == "p":
                         paragraphs.append(sibling.text)
                     else:
                         break
 
                 result[header] = paragraphs
-                    
 
     print(f"result: {result}")
     return result
@@ -54,6 +54,7 @@ def main():
 
     with open("buffy_data.json", "w") as f:
         json.dump(all_data, f, indent=4)
+
 
 if __name__ == "__main__":
     main()

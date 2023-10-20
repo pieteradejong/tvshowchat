@@ -16,10 +16,9 @@ Buffy the Vampire Slayer. Sole purpose is to generate initial content to
 seed vector database. Creating quality content for such purposes is likely
 to remain closer to one-off tasks than automatable.
 * API
+  * Query endpoint: Something like `GET /query`, but first we need to understand the vector database's API and what a req/resp looks like.
+* Vector database: go with redis because widely used and to gain experience.
 
-```python
-GET /question
-```
 
 
 ## Run
