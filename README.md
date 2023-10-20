@@ -20,6 +20,12 @@ to remain closer to one-off tasks than automatable.
 * Vector database: go with redis because widely used and to gain experience.
 
 
+## MVP TODO 
+* [ DONE ] Crawl 
+* [ ] API query endpoint
+* [ ] add embeddings to database
+* [ ] frontend: question field and room for answer text.
+
 
 ## Run
 
@@ -27,14 +33,5 @@ to remain closer to one-off tasks than automatable.
 ## Test
 
 
-## TODO
-[ ] Crawl 
 
-
-## Roadmap
-### MVP: 
-* Backend:
-  * API endpoint for query, a few fozen saved HTML/content files, a vector database with embeddings.
-* Frontend:
-  * Question field, and room for answer text.
 
