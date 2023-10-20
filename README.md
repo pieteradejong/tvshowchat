@@ -1,9 +1,7 @@
-# tvshowchat
-get answers to questions about tv shows based on vector embeddings
-# Origin Financial Take Home (for fun)
-**Risk Assessment using FastAPI**
+# TV Show Chat
+Get answers to questions about tv shows based on vector embeddings.
 
-[![pytest](https://github.com/pieteradejong/origin-backend-take-home-assignment/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/pieteradejong/origin-backend-take-home-assignment/actions/workflows/ci.yml)
+[![pytest](https://github.com/pieteradejong/tvshowchat/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/pieteradejong/tvshowchat/actions/workflows/ci.yml)
 
 **Purpose**
 Experiment with vector databases.
@@ -26,6 +24,8 @@ GET /question
 ## Test
 
 
+## TODO
+* 
 
 
 ## Roadmap

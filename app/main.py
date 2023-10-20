@@ -5,7 +5,7 @@ import uvicorn
 
 from app.api import api
 
-with open("logging_config.json", "r") as f:
+with open("logging.conf", "r") as f:
     config = json.load(f)
 
 logging.config.dictConfig(config)
