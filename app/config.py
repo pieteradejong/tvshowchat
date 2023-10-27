@@ -3,6 +3,7 @@ import json
 
 K_RESULTS = 3
 
+
 def load_logging_config():
     try:
         with open("app/logging_config.json", "r") as f:

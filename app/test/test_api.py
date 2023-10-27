@@ -1,7 +1,5 @@
 from fastapi.testclient import TestClient
 from app.api.api import router
-import app.api.api as api
-import redis
 
 client = TestClient(router)
 
@@ -16,8 +14,10 @@ def test_root():
 
 
 def test_search():
-    response = client.post("/search", json={"query": "What is the name of the main character in Breaking Bad?"})
+    response = client.post(
+        "/search",
+        json={"query": "What is the name of the main character in Breaking Bad?"},
+    )
     assert response.status_code == 200
     assert response.json()["status"] == "success"
     assert isinstance(response.json()["result"], list)
-

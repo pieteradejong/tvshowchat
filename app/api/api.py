@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException, status, Request
 from pydantic import BaseModel
 from typing import Literal, Optional
-import redis
 from fastapi.responses import JSONResponse
 from app.config import logger
 from app.services import embed
@@ -18,7 +17,6 @@ class SuccessResponse(BaseModel):
 class SearchResponse(BaseModel):
     status: Literal["success"]
     result: list
-
 
 
 @router.get("/", response_model=SuccessResponse, status_code=status.HTTP_200_OK)
