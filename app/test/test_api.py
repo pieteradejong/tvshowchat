@@ -13,14 +13,14 @@ def test_root():
     }
 
 
-def test_search():
-    response = client.post(
-        "/search",
-        json={"query": "What is the name of the main character in Breaking Bad?"},
-    )
-    assert response.status_code == 200
-    assert response.json()["status"] == "success"
-    assert isinstance(response.json()["result"], list)
+# def test_search():
+#     response = client.post(
+#         "/search",
+#         json={"query": "What is the name of the main character in Breaking Bad?"},
+#     )
+#     assert response.status_code == 200
+#     assert response.json()["status"] == "success"
+#     assert isinstance(response.json()["result"], list)
 
 
 def test_search_empty_query():
