@@ -1,15 +1,8 @@
-import json
-import logging.config
 from fastapi import FastAPI
 import uvicorn
+from config import logger
 
 from app.api import api
-
-with open("logging.conf", "r") as f:
-    config = json.load(f)
-
-logging.config.dictConfig(config)
-logger = logging.getLogger("sampleApp")
 
 app = FastAPI()
 app.include_router(api.router)
