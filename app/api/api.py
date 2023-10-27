@@ -4,6 +4,7 @@ from typing import Literal
 import redis
 from fastapi.responses import JSONResponse
 from app.config import logger
+from app.services import embed
 
 router = APIRouter()
 
@@ -38,7 +39,9 @@ async def search(request: Request):
         if not search_query:
             raise HTTPException(status_code=400, detail="Invalid or empty query string")
 
-        results = ["result one", "result two", search_query]
+        # results = ["result one", "result two", search_query]
+        results = embed.search(search_query)
+
         return {"status": "success", "result": results}
 
     except Exception as e:

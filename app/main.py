@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 import uvicorn
-from config import logger
+from app.config import logger
 
 from app.api import api
 

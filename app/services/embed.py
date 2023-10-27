@@ -11,24 +11,6 @@ from redis.commands.search.field import (
 from redis.commands.search.indexDefinition import IndexDefinition, IndexType
 from redis.commands.search.query import Query
 
-"""
-Steps:
-- choose model
-- create embeddings for data
-- store embeddings in db
-- create index in db
-
-"""
-"""
-    redis schema design:
-    key: <show_name:season_number>; 
-        field: [summary:, synopsis], v: string
-        field: embedding, v: list of numbers
-    example: buffy:s1 summary text synopsis text
-
-
-"""
-
 
 def get_index_info(redis: redis.Redis, index_id: str) -> dict:
     info = redis.ft(index_id).info()
@@ -49,20 +31,15 @@ def load_data() -> dict:
 
 
 def search(query: str = "", top_k: int = 3) -> list[str]:
-    """
-    Returns top k matches for query.
-    - embedder.encode(query)
-    """
-    pass
-
-    return []
+    res = main()
+    return res
 
 
 def main():
     client = redis.Redis(host="localhost", port=6379, decode_responses=True)
     client.flushdb()
 
-    with open("content/buffy_data.json", "r") as f:
+    with open("app/content/buffy_data.json", "r") as f:
         buffy_json = json.load(f)
 
     embedder = SentenceTransformer("msmarco-distilbert-base-v4")

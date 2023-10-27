@@ -1,8 +1,13 @@
 Redis blog post:
 
-
+	
 - give schema example of RedisJSON
 
+Steps:
+- choose model
+- create embeddings for data
+- store embeddings in db
+- create index in db
 
 # Intro and motivation
 
