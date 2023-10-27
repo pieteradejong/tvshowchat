@@ -4,7 +4,7 @@ import json
 
 def load_logging_config():
     try:
-        with open("logging_config.json", "r") as f:
+        with open("app/logging_config.json", "r") as f:
             config = json.load(f)
         logging.config.dictConfig(config)
     except Exception as e:
