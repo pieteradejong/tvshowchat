@@ -1,6 +1,7 @@
 import logging.config
 import json
 
+K_RESULTS = 3
 
 def load_logging_config():
     try:

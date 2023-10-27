@@ -15,7 +15,9 @@ def test_root():
     }
 
 
-def test_redis_client_loading():
-    redis_client = api.get_redis_client()
-    assert redis_client is not None
-    assert isinstance(redis_client, redis.Redis)
+def test_search():
+    response = client.post("/search", json={"query": "What is the name of the main character in Breaking Bad?"})
+    assert response.status_code == 200
+    assert response.json()["status"] == "success"
+    assert isinstance(response.json()["result"], list)
+

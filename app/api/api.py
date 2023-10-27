@@ -1,10 +1,11 @@
 from fastapi import APIRouter, HTTPException, status, Request
 from pydantic import BaseModel
-from typing import Literal
+from typing import Literal, Optional
 import redis
 from fastapi.responses import JSONResponse
 from app.config import logger
 from app.services import embed
+from app import config
 
 router = APIRouter()
 
@@ -19,10 +20,6 @@ class SearchResponse(BaseModel):
     result: list
 
 
-def get_redis_client():
-    client = redis.Redis(host="localhost", port=6379, db=0)
-    return client
-
 
 @router.get("/", response_model=SuccessResponse, status_code=status.HTTP_200_OK)
 async def root():
@@ -31,7 +28,7 @@ async def root():
 
 
 @router.post("/search", response_model=SearchResponse, status_code=status.HTTP_200_OK)
-async def search(request: Request):
+async def search(request: Request, k: Optional[int] = config.K_RESULTS):
     try:
         body_as_json = await request.json()
         search_query = body_as_json.get("query", None)
@@ -39,8 +36,7 @@ async def search(request: Request):
         if not search_query:
             raise HTTPException(status_code=400, detail="Invalid or empty query string")
 
-        # results = ["result one", "result two", search_query]
-        results = embed.search(search_query)
+        results = embed.fetch_search_results(search_query, k)
 
         return {"status": "success", "result": results}
 
