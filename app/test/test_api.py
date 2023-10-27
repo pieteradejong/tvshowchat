@@ -21,3 +21,15 @@ def test_search():
     assert response.status_code == 200
     assert response.json()["status"] == "success"
     assert isinstance(response.json()["result"], list)
+
+
+def test_search_empty_query():
+    response = client.post(
+        "/search",
+        json={"query": ""},
+    )
+    print(f"RESPONSE: {response}")
+    assert response.status_code == 200
+    assert response.json()["status"] == "success"
+    assert response.json()["result"] == []
+    assert response.json()["message"] == "Empty query string submitted."

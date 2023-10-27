@@ -15,14 +15,17 @@ class SuccessResponse(BaseModel):
 
 
 class SearchResponse(BaseModel):
-    status: Literal["success"]
-    result: list
+    status: Literal["success", "error"]
+    result: Optional[list]
+    message: Optional[str]
 
 
 @router.get("/", response_model=SuccessResponse, status_code=status.HTTP_200_OK)
 async def root():
     logger.info("Received root request")
-    return {"status": "success", "message": "This application is a TV Show Q&A engine."}
+    return SuccessResponse(
+        status="success", message="This application is a TV Show Q&A engine."
+    )
 
 
 @router.post("/search", response_model=SearchResponse, status_code=status.HTTP_200_OK)
@@ -30,13 +33,23 @@ async def search(request: Request, k: Optional[int] = config.K_RESULTS):
     try:
         body_as_json = await request.json()
         search_query = body_as_json.get("query", None)
+        if search_query is None:
+            logger.error(f"No value for search query submitted: [{search_query}]")
+            raise HTTPException(
+                status_code=400, detail="Search query parameter is required."
+            )
+        elif search_query == "":
+            logger.info(f"Empty search qeury submitted: [{search_query}]")
 
-        if not search_query:
-            raise HTTPException(status_code=400, detail="Invalid or empty query string")
+            return SearchResponse(
+                status="success", result=[], message="Empty query string submitted."
+            )
+        else:
+            results = embed.fetch_search_results(search_query, k)
 
-        results = embed.fetch_search_results(search_query, k)
-
-        return {"status": "success", "result": results}
+            return SearchResponse(
+                status="success", result=results, message="Search successful."
+            )
 
     except Exception as e:
         return JSONResponse(

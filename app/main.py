@@ -19,7 +19,7 @@ app.include_router(api.router)
 
 @app.on_event("startup")
 async def startup_event():
-    logger.info("Starting application...")
+    logger.info("Main.py: Starting application...")
 
     try:
         client.flushdb()
@@ -43,7 +43,7 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    logger.info("Shutting down application...")
+    logger.info("Main.py: Shutting down application...")
 
 
 if __name__ == "__main__":
