@@ -1,0 +1,54 @@
+Redis blog post:
+
+
+- give schema example of RedisJSON
+
+
+# Intro and motivation
+
+# End result, try it here:
+
+# Technologies
+
+# Steps and challenges
+
+* Using the latest RediSearch, and RedisJSON, which docs are new
+Prereqs:
+Redis 6.x or later
+Redis Search 2.2 or later
+Redis JSON 2.0 or later
+
+* Index not being created, with 7 failures. `hash_indexing_failures`
+"which accoridng to redis docs (https://redis.io/commands/ft.info/), indicate a 'number of failures due to operations not compatible with index schema'. So the schema was the issue, as could be expected with a data-centric operation."
+
+relevant resource:
+https://developer.redis.com/howtos/redisjson/jsonind-document
+
+
+# Conclusion: takeaways and learning
+
+* Since this is new , and I have experience, I might ask redis team if they're open to Python docs and examples to contribute.
+
+
+
+
+Python: how to set and get json paths, and how it maps to dict objects and redis key
+
+Redis JSON and Vector search relatively new and changing, so it's hard to find proper docs, examples, solved issues.
+(example of very sparse info:
+https://stackoverflow.com/questions/74544711/how-to-debug-redisearch-json-indexing-issues
+)
+
+
+
+helpful references:
+https://github.com/RediSearch/RediSearch/blob/master/docs/docs/vecsim-range_queries_examples.ipynb
+(because actual python code, well organized)
+
+
+bug?:
+docs for:
+client.ft.create_index(),
+they say:
+"**fields**: a list of TextField or NumericField objects"
+should include TagField and or VectorField as well?
