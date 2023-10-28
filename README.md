@@ -13,7 +13,11 @@ Anyone interested in FastAPI and vector databases.
 * Start with MVP, with emphasis on the M.
 * Pay close attention to what library/module methods accept and return (even if it seems obvious).
 * Bug: was pre-formatting the embedding vectors into json, and then sending them to `pipeline.json()`, which was redundant.
-* 
+
+## Thoughts/observations during dev
+* As I assemble the data set, I wonder what queries will return relevant results given the nature of the data (essentially descriptions of what occurs on the show) and the construction of the content embeddings for "similarity". It could be that the only useful queries are of the form "when did x happen" and not e.g. "what would character x say to character y".
+* Verifying data integrity, structure, and completeness, is an interesting task. I optimized for readability, main structure of the `json` object, and meta data most relevant to the nature of the data, namely the presence of all seasons, and the exact set of expected episodes. As well as to a limited extent the expected metadata per episode. 
+  * Locality of documentation: since this is a one-off, and the structure of the crawled data is highly coupled with both the crawling and its testing, there are many semi-hardcoded elements througout.
 
 ## Architecture
 1) Data corpus (set of content, e.g. json)
