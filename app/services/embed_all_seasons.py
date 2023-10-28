@@ -13,6 +13,13 @@ from redis.commands.search.field import (
 from redis.commands.search.indexDefinition import IndexDefinition, IndexType
 from redis.commands.search.query import Query
 
+"""
+TODO:
+- modify `create_pipeline` based on json structure
+- modify `create_index` based in json structure
+
+"""
+
 # Constants
 REDIS_HOST = "localhost"
 REDIS_PORT = 6379
@@ -106,7 +113,7 @@ def create_index():
         logger.info(
             (
                 f"Index [{index_name}] was created "
-                f"in [{duration}] seconds with [{num_docs}] documents"
+                f"in [{duration}] seconds with [{num_docs}]"
             )
         )
 
