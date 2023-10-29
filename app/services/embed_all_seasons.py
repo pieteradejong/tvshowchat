@@ -43,6 +43,7 @@ Pipeline is tailored to this particular content.
 def create_pipeline(buffy_json):
     pipeline = client.pipeline()
     key_prefix = "buffy:"
+    # TODO create new pipeline
 
     for ix, season_label in enumerate(buffy_json, start=1):
         key_full = f"{key_prefix}s{ix:02}"  # 'buffy:s03'

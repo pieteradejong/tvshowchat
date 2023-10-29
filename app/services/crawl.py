@@ -76,7 +76,7 @@ def fetch_parse_save_episodes():
 
     # Save result dict to buffy_all_seasons_<timestamp>.json
     timestamp = str(int(time.time()))
-    save_to_filename = f"buffy_all_seasons_{timestamp}.json"
+    save_to_filename = f"app/content/buffy_all_seasons_{timestamp}.json"
 
     with open(save_to_filename, "w") as f:
         json.dump(result, f, indent=4)

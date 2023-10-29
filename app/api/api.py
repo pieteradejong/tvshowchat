@@ -1,10 +1,12 @@
 from fastapi import APIRouter, HTTPException, status, Request
 from pydantic import BaseModel
 from typing import Literal, Optional
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
 from app.config import logger
 from app.services import embed
 from app import config
+from pathlib import Path
+
 
 router = APIRouter()
 
@@ -27,6 +29,10 @@ async def root():
         status="success", message="This application is a TV Show Q&A engine."
     )
 
+
+@router.get("/vite", response_class=HTMLResponse)
+async def index():
+    return FileResponse(Path(__file__).parent.parent.absolute() / "static" / "index.html")
 
 @router.post("/search", response_model=SearchResponse, status_code=status.HTTP_200_OK)
 async def search(request: Request, k: Optional[int] = config.K_RESULTS):

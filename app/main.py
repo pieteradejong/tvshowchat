@@ -13,9 +13,16 @@ from app.services.embed import (
 )
 from app.services.embed import CONTENT_PATH
 
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+
 app = FastAPI()
 app.include_router(api.router)
-
+app.mount(
+    "/static",
+    StaticFiles(directory=Path(__file__).parent.parent.absolute() / "app/static"),
+    name="static",
+)
 
 @app.on_event("startup")
 async def startup_event():
