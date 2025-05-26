@@ -1,4 +1,3 @@
-import numpy as np
 import json
 import redis
 from app import config
@@ -13,17 +12,9 @@ from redis.commands.search.field import (
 from redis.commands.search.indexDefinition import IndexDefinition, IndexType
 from redis.commands.search.query import Query
 
-"""
-TODO:
-- modify `create_pipeline` based on json structure
-- modify `create_index` based in json structure
-
-"""
-
-# Constants
 REDIS_HOST = "localhost"
 REDIS_PORT = 6379
-CONTENT_PATH = "app/content/buffy_data.json"
+CONTENT_PATH = "app/content/buffy_all_seasons_1698524665.json"
 VECTOR_DIMENSION = 768  # related to the chosen embedding model
 
 client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
@@ -36,32 +27,32 @@ def load_content(file_path):
 
 
 """
-Pipeline is tailored to this particular content.
+Pipeline is tailored to this particular content:
+obj = {
+        'season_01': {
+            '01':  {
+                'episode_number': 'string',
+                'episode_airdate': 'string',
+                'episode_title': 'string',
+                'episode_synopsis': 'list[string]',
+                'episode_summary': 'list[string]'
+            },
+            '02': {
+                ....
+            },
+            # further episodes
+        ...
+        }
+        # further seasons
+    }
 """
 
 
 def create_pipeline(buffy_json):
     pipeline = client.pipeline()
-    key_prefix = "buffy:"
-    # TODO create new pipeline
+    key = "buffy"
 
-    for ix, season_label in enumerate(buffy_json, start=1):
-        key_full = f"{key_prefix}s{ix:02}"  # 'buffy:s03'
-
-        synopsis = "".join(buffy_json[season_label]["Synopsis"])
-        summary = "".join(buffy_json[season_label]["Summary"])
-
-        synopsis_embedding = embedder.encode(synopsis).astype(np.float32).tolist()
-        summary_embedding = embedder.encode(summary).astype(np.float32).tolist()
-
-        obj = {
-            "synopsis": synopsis,
-            "summary": summary,
-            "synopsis_embedding": synopsis_embedding,
-            "summary_embedding": summary_embedding,
-        }
-
-        pipeline.json().set(key_full, "$", obj)
+    pipeline.json().set(key, "$", buffy_json)
 
     return pipeline
 
@@ -69,7 +60,15 @@ def create_pipeline(buffy_json):
 def execute_pipeline(pipeline):
     try:
         res = pipeline.execute()
+        # db_keys = client.json().  keys('*') # add to log msg
         logger.info(f"Pipeline successfully executed: {res}")
+        # ep_info = client.json().get('buffy', '$.season_02.01')
+        ep_info = client.json().get('buffy', '$.season_1.01.episode_airdate')
+        # logger.info(f"expect episode title: {ep_info}")
+        nested_info = client.json().get('buffy', '$.*.*.episode_airdate')
+        # logger.info(f"expect nested info: {nested_info}")
+
+        # TODO latest: summary_embedding being stored as empty list
     except Exception as e:
         logger.info(f"Error executing pipeline: {e}")
     # TODO return execution result
@@ -77,20 +76,12 @@ def execute_pipeline(pipeline):
 
 def create_index():
     schema = (
-        TextField("$.synopsis", no_stem=False, as_name="synopsis"),
-        TextField("$.summary", no_stem=False, as_name="summary"),
+        TextField("$.*.*.episode_number", no_stem=False, as_name="episode_number"),
+        TextField("$.*.*.episode_airdate", no_stem=False, as_name="episode_airdate"),
+        TextField("$.*.*.episode_title", no_stem=False, as_name="episode_title"),
+        TextField("$.*.*.episode_summary", no_stem=False, as_name="episode_summary"),
         VectorField(
-            "$.synopsis_embedding",
-            "FLAT",
-            {
-                "TYPE": "FLOAT32",
-                "DIM": VECTOR_DIMENSION,
-                "DISTANCE_METRIC": "COSINE",
-            },
-            as_name="synopsis_embedding",
-        ),
-        VectorField(
-            "$.summary_embedding",
+            "$.*.*.summary_embedding",
             "FLAT",
             {
                 "TYPE": "FLOAT32",
@@ -101,7 +92,7 @@ def create_index():
         ),
     )
 
-    definition = IndexDefinition(prefix=["buffy:"], index_type=IndexType.JSON)
+    definition = IndexDefinition(prefix=["buffy"], index_type=IndexType.JSON)
     try:
         client.ft("idx:buffy_vss").create_index(fields=schema, definition=definition)
 
@@ -114,7 +105,7 @@ def create_index():
         logger.info(
             (
                 f"Index [{index_name}] was created "
-                f"in [{duration}] seconds with [{num_docs}]"
+                f"in [{duration}] seconds with [{num_docs}] documents."
             )
         )
 
@@ -157,15 +148,16 @@ def fetch_search_results(query_text: str = "", k: int = config.K_RESULTS) -> lis
     return sorted(res, key=lambda x: x["vector_score"])
 
 
-def main_new():
+def main():
     client.flushdb()
 
     content_json = load_content(CONTENT_PATH)
     pipeline = create_pipeline(content_json)
     execute_pipeline(pipeline)
+    # TODO: pipeline / data storage works; now add embeddings, create index, and search!
     create_index()
-    fetch_search_results()
+    # fetch_search_results()
 
 
 if __name__ == "__main__":
-    main_new()
+    main()

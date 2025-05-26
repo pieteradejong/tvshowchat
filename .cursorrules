@@ -1,0 +1,110 @@
+# Python + React Side Project Dependency Guidelines
+
+## Core Philosophy: Stability Over Bleeding Edge
+
+**Goal**: Build and ship quickly without dependency hell.
+
+## Python Backend Dependencies
+
+### Version Selection Strategy
+- **Use stable, battle-tested versions** - not latest
+- **Choose versions 6-12 months old** - proven in production
+- **Avoid x.0.0 releases** - wait for x.1+ or x.2+
+- **Pin exact versions** - prevents surprise breakages
+
+### Critical Compatibility Rules
+1. **Python 3.9+** for maximum compatibility
+2. **Pydantic v1.x** - v2 breaks many things
+3. **FastAPI < 0.105** - stable ecosystem
+4. **aiohttp 3.9.x** - not 4.x (requires Python 3.10+)
+
+### Safe Version Ranges
+```
+# Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Database
+redis==5.0.1
+pydantic==1.10.13
+
+# HTTP/Async
+aiohttp==3.9.5
+requests==2.31.0
+websockets==11.0.3
+
+# ML/AI
+sentence-transformers==2.2.2
+
+# Development
+pytest==7.4.3
+black==23.11.0
+```
+
+## React Frontend Dependencies
+
+### Version Strategy
+- **React 18.x** - stable, widely supported
+- **Vite 4.x** - fast, reliable
+- **TypeScript 5.x** - mature type system
+
+### Safe Starter Stack
+```json
+{
+  "react": "^18.2.0",
+  "vite": "^4.5.0",
+  "typescript": "^5.2.0",
+  "@types/react": "^18.2.0",
+  "tailwindcss": "^3.3.0"
+}
+```
+
+## Red Flags to Avoid
+
+### Python
+- ❌ Pydantic v2.x (breaking changes)
+- ❌ FastAPI 0.100+ (dependency conflicts)
+- ❌ aiohttp 4.x (Python 3.10+ only)
+- ❌ Any package with "alpha/beta" in version
+
+### React
+- ❌ React 19 canary builds
+- ❌ Experimental Next.js features
+- ❌ Packages with < 1000 weekly downloads
+
+## Decision Framework
+
+**When choosing a package version:**
+
+1. **Check release date** - 3+ months old preferred
+2. **Check GitHub issues** - < 50 open critical bugs
+3. **Check download stats** - 100k+ weekly downloads
+4. **Test locally first** - always verify compatibility
+
+## Quick Compatibility Check
+
+Before adding any dependency:
+```bash
+# Check if it works with your Python version
+pip install package-name==x.y.z
+python -c "import package_name; print('✅ Works')"
+```
+
+## Emergency Fixes
+
+If you encounter version conflicts:
+1. **Pin working versions** in requirements.txt
+2. **Use virtual environments** - never install globally
+3. **Document working combinations** in README
+4. **Keep requirements.txt in version control**
+
+## Update Strategy
+
+- **Never update all packages at once**
+- **Update one package at a time**
+- **Test after each update**
+- **Keep a working requirements.txt backup**
+
+---
+
+**Remember**: For side projects, shipping > perfect dependencies. Use what works reliably.

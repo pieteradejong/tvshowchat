@@ -1,8 +1,7 @@
 import numpy as np
 import json
 import redis
-from app import config
-from app.config import logger
+from app.config.config import logger, K_RESULTS
 
 from sentence_transformers import SentenceTransformer
 
@@ -17,10 +16,10 @@ from redis.commands.search.query import Query
 REDIS_HOST = "localhost"
 REDIS_PORT = 6379
 CONTENT_PATH = "app/content/buffy_data.json"
-VECTOR_DIMENSION = 768  # related to the chosen embedding model
+VECTOR_DIMENSION = 384  # all-MiniLM-L6-v2 uses 384 dimensions
 
 client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
-embedder = SentenceTransformer("msmarco-distilbert-base-v4")
+embedder = SentenceTransformer("all-MiniLM-L6-v2")  # Fast, good for dialogue, small memory footprint
 
 
 def load_content(file_path):
@@ -117,7 +116,9 @@ def create_index():
     return index_info
 
 
-def fetch_search_results(query_text: str = "", k: int = config.K_RESULTS) -> list[str]:
+def fetch_search_results(query_text: str = "", k: int = None) -> list[str]:
+    if k is None:
+        k = K_RESULTS
     if not query_text:
         logger.warn("Empty query text submitted.")
         return []

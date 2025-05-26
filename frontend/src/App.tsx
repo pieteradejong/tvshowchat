@@ -1,14 +1,22 @@
 // App.tsx
-import { FC } from 'react';
-import Search from './components/Search';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ChatWindow } from './components/ChatWindow';
 
-const App: FC = () => {
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 1,
+    },
+  },
+});
+
+export default function App() {
   return (
-    <div>
-      <h1>TV Show Q&A Engine</h1>
-      <Search />
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <div className="min-h-screen bg-gray-50">
+        <ChatWindow />
+      </div>
+    </QueryClientProvider>
   );
 }
-
-export default App;

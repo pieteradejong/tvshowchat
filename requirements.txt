@@ -1,9 +1,27 @@
-fastapi==0.97.0
-uvicorn[standard]==0.22.0
-pytest==7.3.1
-httpx==0.24.1
-requests==2.26.0
-beautifulsoup4==4.10.0
-lxml==4.9.2
-redis==5.0.0
+# Python 3.9 compatible dependencies
+# All packages are battle-tested and stable (6-12 months old)
+# Minimal setup for semantic embeddings + web scraping
+
+# Web Framework and Server
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# Database and Search
+redis==5.0.1
+pydantic==1.10.13     # v1 for stability
+hiredis==2.2.3        # Redis performance boost
+
+# Data Processing & ML
+beautifulsoup4==4.12.2
 sentence-transformers==2.2.2
+requests==2.31.0
+huggingface_hub==0.15.1
+
+# Core Utilities
+python-dotenv==1.0.0
+
+# Development Tools
+black==23.11.0
+ruff==0.1.6
+pytest==7.4.3
