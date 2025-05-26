@@ -29,6 +29,7 @@ A semantic search and chat application that allows users to interact with TV sho
     - [Monitoring](#monitoring)
     - [Health Check Usage](#health-check-usage)
   - [Model Setup](#model-setup)
+  - [Model Files](#model-files)
   - [Troubleshooting](#troubleshooting)
   - [Project History \& Notes](#project-history--notes)
     - [Development Phases](#development-phases)
@@ -491,6 +492,17 @@ model.save('app/models/all-MiniLM-L6-v2')
    - Model can handle concurrent requests
    - Redis efficiently stores and retrieves embeddings
    - System can scale horizontally if needed
+
+## Model Files
+
+The project uses the `all-MiniLM-L6-v2` model from HuggingFace for semantic search. Due to GitHub's file size limitations, the model weights are not included in the repository. The model will be automatically downloaded on first run, but you can also download it manually:
+
+```bash
+# From the project root
+python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+```
+
+This will download the model to `app/models/all-MiniLM-L6-v2/`. The repository includes all necessary configuration files, but excludes the large model weights (`.bin` files) to comply with GitHub's file size limits.
 
 ## Troubleshooting
 

@@ -255,3 +255,16 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+
+# Model files
+app/models/**/*.bin
+app/models/**/*.pt
+app/models/**/*.pth
+app/models/**/*.onnx
+app/models/**/*.h5
+app/models/**/*.ckpt
+
+# Keep model config files
+!app/models/**/*.json
+!app/models/**/*.txt
+!app/models/**/*.md
