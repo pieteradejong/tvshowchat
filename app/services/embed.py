@@ -36,23 +36,36 @@ def create_pipeline(buffy_json):
     pipeline = client.pipeline()
     key_prefix = "buffy:"
 
-    for ix, season_label in enumerate(buffy_json, start=1):
-        key_full = f"{key_prefix}s{ix:02}"  # 'buffy:s03'
+    for season_label, season_data in buffy_json.items():
+        season_num = int(season_label.split('_')[1])
+        key_full = f"{key_prefix}s{season_num:02}"  # 'buffy:s03'
 
-        synopsis = "".join(buffy_json[season_label]["Synopsis"])
-        summary = "".join(buffy_json[season_label]["Summary"])
+        # Process each episode in the season
+        for episode_num, episode_data in season_data.items():
+            episode_key = f"{key_full}:e{episode_num}"  # 'buffy:s03:e01'
+            
+            # Get episode content
+            synopsis = " ".join(episode_data.get("episode_synopsis", []))
+            summary = " ".join(episode_data.get("episode_summary", []))
 
-        synopsis_embedding = embedder.encode(synopsis).astype(np.float32).tolist()
-        summary_embedding = embedder.encode(summary).astype(np.float32).tolist()
+            # Generate embeddings
+            synopsis_embedding = embedder.encode(synopsis).astype(np.float32).tolist() if synopsis else None
+            summary_embedding = embedder.encode(summary).astype(np.float32).tolist() if summary else None
 
-        obj = {
-            "synopsis": synopsis,
-            "summary": summary,
-            "synopsis_embedding": synopsis_embedding,
-            "summary_embedding": summary_embedding,
-        }
+            obj = {
+                "synopsis": synopsis,
+                "summary": summary,
+                "synopsis_embedding": synopsis_embedding,
+                "summary_embedding": summary_embedding,
+                "metadata": {
+                    "season": season_num,
+                    "episode": episode_num,
+                    "title": episode_data.get("episode_title"),
+                    "airdate": episode_data.get("episode_airdate")
+                }
+            }
 
-        pipeline.json().set(key_full, "$", obj)
+            pipeline.json().set(episode_key, "$", obj)
 
     return pipeline
 

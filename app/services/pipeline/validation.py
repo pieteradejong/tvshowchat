@@ -1,15 +1,42 @@
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from datetime import datetime
 import re
 from pydantic import BaseModel, Field, validator
 
 class EpisodeSummary(BaseModel):
     """Validates a single episode's summary data."""
+    # Basic metadata
     episode_number: str = Field(..., pattern=r'^\d{2}$')
     episode_airdate: str
     episode_title: str
+    season_number: int = Field(..., ge=1, le=7)
+    
+    # Content
     episode_summary: List[str]
-    summary_embedding: List[float]
+    episode_synopsis: Optional[List[str]] = None  # More detailed synopsis if available
+    episode_quotes: Optional[List[str]] = None    # Notable quotes from the episode
+    episode_trivia: Optional[List[str]] = None    # Behind-the-scenes trivia
+    
+    # Production info
+    director: Optional[str] = None
+    writer: Optional[str] = None
+    production_code: Optional[str] = None
+    us_viewers_millions: Optional[float] = None
+    
+    # Cast & Characters
+    guest_stars: Optional[List[str]] = None
+    recurring_characters: Optional[List[str]] = None
+    first_appearances: Optional[List[str]] = None  # Characters making first appearance
+    
+    # Story elements
+    continuity_notes: Optional[List[str]] = None  # References to other episodes
+    cultural_references: Optional[List[str]] = None
+    music: Optional[List[str]] = None  # Songs featured in episode
+    
+    # Technical
+    summary_embedding: List[float]  # 384-dim vector from all-MiniLM-L6-v2
+    synopsis_embedding: Optional[List[float]] = None  # Optional embedding of full synopsis
+    quotes_embedding: Optional[List[float]] = None    # Optional embedding of quotes
 
     @validator('episode_airdate')
     def validate_airdate(cls, v: str) -> str:
@@ -36,6 +63,16 @@ class EpisodeSummary(BaseModel):
             raise ValueError('Embedding cannot be empty')
         if len(v) != 384:  # all-MiniLM-L6-v2 dimension
             raise ValueError(f'Invalid embedding dimension. Expected 384, got {len(v)}')
+        return v
+
+    @validator('synopsis_embedding', 'quotes_embedding')
+    def validate_optional_embeddings(cls, v: Optional[List[float]]) -> Optional[List[float]]:
+        """Validate optional embedding vectors."""
+        if v is not None:
+            if not v:
+                raise ValueError('Optional embedding cannot be empty if provided')
+            if len(v) != 384:
+                raise ValueError(f'Invalid optional embedding dimension. Expected 384, got {len(v)}')
         return v
 
 class SeasonData(BaseModel):

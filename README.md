@@ -29,6 +29,12 @@ A semantic search and chat application that allows users to interact with TV sho
     - [Backend Health Checks](#backend-health-checks)
     - [Monitoring](#monitoring)
     - [Health Check Usage](#health-check-usage)
+  - [Testing](#testing)
+    - [System Test](#system-test)
+    - [Search Testing](#search-testing)
+    - [Expected Test Results](#expected-test-results)
+    - [Testing Tips](#testing-tips)
+    - [Automated Testing](#automated-testing)
   - [Model Setup](#model-setup)
     - [Model Comparison](#model-comparison)
     - [Automatic Setup](#automatic-setup)
@@ -40,6 +46,25 @@ A semantic search and chat application that allows users to interact with TV sho
   - [Project History \& Notes](#project-history--notes)
     - [Development Phases](#development-phases)
     - [Technical Decisions](#technical-decisions)
+  - [Development Roadmap & TODOs](#development-roadmap--todos)
+    - [Phase 1: Core Search Enhancement (Current Focus)](#phase-1-core-search-enhancement-current-focus)
+      - [Storage Improvements](#storage-improvements)
+      - [Search Improvements](#search-improvements)
+      - [Data Enhancement](#data-enhancement)
+    - [Phase 2: Interactive Features](#phase-2-interactive-features)
+      - [Basic Chat Interface](#basic-chat-interface)
+      - [UI/UX Improvements](#uiux-improvements)
+    - [Phase 3: Advanced Features](#phase-3-advanced-features)
+      - [Character Analysis](#character-analysis)
+      - [Story Analysis](#story-analysis)
+    - [Phase 4: Production & Polish](#phase-4-production--polish)
+      - [Performance](#performance)
+      - [User Experience](#user-experience)
+    - [Technical TODOs](#technical-todos)
+      - [Backend](#backend)
+      - [Frontend](#frontend)
+      - [Data](#data)
+    - [Immediate Next Steps](#immediate-next-steps)
   - [License](#license)
 
 ## Project Overview
@@ -135,27 +160,32 @@ Our immediate focus is on building a minimal viable product with these core comp
 tvshowchat/
 ├── app/
 │   ├── api/                 # FastAPI routes and endpoints
-│   │   ├── scraping/       # Web scraping components
-│   │   ├── pipeline/       # Data processing pipeline
-│   │   ├── embeddings/     # Vector embedding service
-│   │   └── search/         # Search service
+│   ├── data/               # Document storage
+│   │   ├── episodes/       # Season JSON files
+│   │   ├── embeddings/     # Vector embeddings
+│   │   └── backup_*/       # Timestamped backups
 │   ├── models/             # Data models and schemas
-│   ├── config/             # Configuration management
-│   └── utils/              # Shared utilities
-├── frontend/               # React application
-├── tests/                  # Test suite
-└── scripts/               # Utility scripts
+│   ├── services/           # Core services
+│   │   ├── scraping/      # Web scraping
+│   │   ├── pipeline/      # Data processing
+│   │   ├── embed/         # Vector embeddings
+│   │   └── storage/       # Document store
+│   ├── config/            # Configuration
+│   └── utils/             # Shared utilities
+├── frontend/              # React application
+├── tests/                 # Test suite
+└── scripts/              # Utility scripts
 ```
 
 ### Data Flow
 1. **Content Collection**
    ```
-   Web Source → Scraping Service → Data Pipeline → Redis Store
+   Web Source → Scraping Service → Document Store → Vector Search
    ```
 
 2. **Query Processing**
    ```
-   User Query → Embedding Service → Search Service → Redis Store → Response
+   User Query → Embedding Service → Vector Search → Document Store → Response
    ```
 
 3. **Real-time Chat**
@@ -167,10 +197,16 @@ tvshowchat/
 
 - Natural language querying of TV show content
 - Semantic search using vector embeddings
+- Document-based storage with automatic backups
+- Rich episode metadata including:
+  - Basic episode info (title, airdate, etc.)
+  - Content (summary, synopsis, quotes, trivia)
+  - Production details (director, writer, budget, etc.)
+  - Cast & Characters (main cast, guest stars, appearances)
+  - Story elements (continuity, references, mythology)
+  - Awards and reception
 - Real-time chat interface
-- Episode information display
 - Responsive and modern UI
-- Caching for improved performance
 - Comprehensive error handling
 - Detailed logging
 
@@ -178,7 +214,7 @@ tvshowchat/
 
 - Python 3.9 (required for compatibility with dependencies)
 - Node.js 18 or higher
-- Redis 6 or higher
+- Redis 6 or higher (for vector search only)
 - Git
 
 ## Quick Start
@@ -455,6 +491,106 @@ curl http://localhost:8000/health/model
 ./run.sh
 ```
 
+## Testing
+
+The application includes several test endpoints to verify system functionality and data integrity:
+
+### Automated Testing
+```bash
+# Run all tests using the test script
+./test.sh
+```
+This script will:
+- Check if the server is running
+- Test all health endpoints
+- Verify system state
+- Test search functionality
+- Check Redis state
+- Verify document store
+- Provide a formatted summary
+
+The test script provides color-coded output:
+- 🟢 Green: Successful tests
+- 🔴 Red: Failed tests
+- 🟡 Yellow: Test categories and progress
+
+### Manual Testing
+
+1. **System Test** (`/api/test`) should return:
+   ```json
+   {
+     "status": "healthy",
+     "redis": {
+       "total_keys": "number of keys",
+       "sample_keys": ["buffy:s01:e01", "buffy:s01:e02", ...],
+       "index_info": {
+         "num_docs": "number of documents",
+         "index_name": "idx:buffy_vss"
+       }
+     },
+     "store": {
+       "total_seasons": 7,
+       "total_episodes": 144,
+       "sample_episode": {
+         "season": "1",
+         "episode": "01",
+         "title": "Welcome to the Hellmouth",
+         "has_synopsis": true,
+         "has_summary": true,
+         "has_embedding": true
+       }
+     },
+     "test_search": {
+       "query": "Buffy fights vampires",
+       "results": [...]
+     }
+   }
+   ```
+
+2. **Search Test** (`/api/test-search`) should return:
+   ```json
+   {
+     "query": "your search query",
+     "limit": 3,
+     "results": [
+       {
+         "season": 1,
+         "episode": "01",
+         "title": "Episode Title",
+         "score": 0.85,
+         "summary": ["Episode summary..."],
+         "synopsis": ["Detailed synopsis..."]
+       },
+       // ... more results
+     ]
+   }
+   ```
+
+### Testing Tips
+
+1. **Verify Data Loading**
+   - Check Redis keys exist: `redis-cli keys "buffy:*"`
+   - Verify document store: `ls app/data/episodes/`
+   - Confirm embeddings: `ls app/data/embeddings/`
+
+2. **Test Search Quality**
+   - Try character-specific queries: "Willow uses magic"
+   - Test plot-based queries: "Buffy fights the Master"
+   - Try thematic queries: "episodes about love"
+   - Verify result relevance and ranking
+
+3. **Monitor Performance**
+   - Check response times
+   - Verify Redis index creation
+   - Monitor memory usage
+   - Watch for any errors in logs
+
+4. **Common Issues**
+   - If Redis shows 0 keys: Check data import
+   - If search returns no results: Verify index creation
+   - If embeddings missing: Check model loading
+   - If store empty: Verify JSON file import
+
 ## Model Setup
 
 The application uses the `all-MiniLM-L6-v2` model for generating embeddings. This model was chosen for its:
@@ -588,28 +724,137 @@ This will download the model to `app/models/all-MiniLM-L6-v2/`. The repository i
 
 ### Technical Decisions
 
-1. **Vector Search Implementation**
+1. **Storage Implementation**
+   - Document-based storage using JSON files
+   - Separate storage for content and embeddings
+   - Automatic backup system
+   - Benefits:
+     - Simple to understand and maintain
+     - No database dependencies
+     - Easy to version control
+     - Efficient for our use case
+     - Portable and shareable
+
+2. **Vector Search Implementation**
    - Using HuggingFace models for state-of-the-art embeddings
-   - Custom vector search implementation using numpy/scipy
-   - Redis for efficient storage and caching
+   - Redis for vector search index only
    - Cosine similarity for matching
    - Benefits:
-     - More portable (works with standard Redis)
-     - Better control over search implementation
-     - Reduced dependencies
-     - Simpler deployment
+     - Fast semantic search
+     - Efficient memory usage
+     - Scalable for our needs
 
-2. **Architecture**
+3. **Architecture**
    - Modular design for easy extension
-   - Microservices approach
    - Clear separation of concerns
-   - Efficient vector storage in Redis
-   - Custom vector search algorithms
+   - Document-first approach
+   - Efficient vector storage and search
 
-3. **Frontend**
-   - React for modern UI
-   - TypeScript for type safety
-   - Tailwind CSS for styling
+## Development Roadmap & TODOs
+
+### Phase 1: Core Search Enhancement (Current Focus)
+- [x] **Storage Improvements**
+  - [x] Implement document-based storage
+  - [x] Add automatic backups
+  - [x] Separate content and embeddings
+  - [ ] Add data validation
+  - [ ] Implement data versioning
+
+- [ ] **Search Improvements**
+  - [ ] Add basic filtering by season/episode
+  - [ ] Implement character-based search
+  - [ ] Add simple theme categorization
+  - [ ] Improve search result display
+  - [ ] Add basic caching for frequent searches
+
+- [ ] **Data Enhancement**
+  - [x] Add character metadata
+  - [x] Implement production details
+  - [x] Add story elements
+  - [ ] Add episode connections
+  - [ ] Improve summary quality
+
+### Phase 2: Interactive Features
+- [ ] **Basic Chat Interface**
+  - [ ] Simple Q&A about episodes
+  - [ ] Episode summary requests
+  - [ ] Basic character information queries
+  - [ ] Simple recommendation system
+
+- [ ] **UI/UX Improvements**
+  - [ ] Redesign search interface
+  - [ ] Add episode cards with key information
+  - [ ] Implement basic filters
+  - [ ] Add loading states and error handling
+
+### Phase 3: Advanced Features
+- [ ] **Character Analysis**
+  - [ ] Track character appearances
+  - [ ] Show character relationships
+  - [ ] Display character arcs
+  - [ ] Add character-specific search
+
+- [ ] **Story Analysis**
+  - [ ] Identify story arcs
+  - [ ] Show episode connections
+  - [ ] Track recurring themes
+  - [ ] Visualize story progression
+
+### Phase 4: Production & Polish
+- [ ] **Performance**
+  - [ ] Optimize search speed
+  - [ ] Implement proper caching
+  - [ ] Add rate limiting
+  - [ ] Improve error handling
+
+- [ ] **User Experience**
+  - [ ] Add user preferences
+  - [ ] Implement search history
+  - [ ] Add favorite episodes
+  - [ ] Create watchlists
+
+### Technical TODOs
+- [ ] **Backend**
+  - [ ] Refactor search service for better modularity
+  - [ ] Add proper logging and monitoring
+  - [ ] Implement proper error handling
+  - [ ] Add API documentation
+  - [ ] Add unit tests
+
+- [ ] **Frontend**
+  - [ ] Implement proper state management
+  - [ ] Add error boundaries
+  - [ ] Improve component structure
+  - [ ] Add proper TypeScript types
+  - [ ] Add unit tests
+
+- [ ] **Data**
+  - [ ] Improve data validation
+  - [ ] Add data versioning
+  - [ ] Implement data updates
+  - [ ] Add data quality checks
+
+### Immediate Next Steps
+1. **Search Enhancement**
+   - Implement basic character search
+   - Add simple theme categorization
+   - Improve search result display
+
+2. **Data Structure**
+   - Add character metadata
+   - Implement basic theme tagging
+   - Structure episode connections
+
+3. **UI Improvements**
+   - Redesign search interface
+   - Add episode cards
+   - Implement basic filters
+
+4. **Technical Foundation**
+   - Add proper error handling
+   - Implement basic caching
+   - Add logging
+   - Write tests
 
 ## License
 

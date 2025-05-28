@@ -1,11 +1,9 @@
 from fastapi import FastAPI, HTTPException
 import uvicorn
 from app.config.config import logger
-
 from app.api import api
 from app.api.routes import search as search_router
 from fastapi.middleware.cors import CORSMiddleware
-
 from app.services.embed import (
     client,
     load_content,
@@ -14,10 +12,11 @@ from app.services.embed import (
     create_index,
 )
 from app.services.embed import CONTENT_PATH
-
+from app.services.storage.document_store import get_store
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from typing import Dict, Any
+import json
 
 app = FastAPI()
 app.add_middleware(
@@ -39,7 +38,8 @@ app.mount(
 service_status: Dict[str, Any] = {
     "redis": {"status": "unknown", "error": None},
     "model": {"status": "unknown", "error": None},
-    "data": {"status": "unknown", "error": None}
+    "data": {"status": "unknown", "error": None},
+    "store": {"status": "unknown", "error": None}
 }
 
 @app.on_event("startup")
@@ -56,16 +56,48 @@ async def startup_event():
         service_status["redis"]["error"] = str(e)
         logger.error(f"Redis connection failed: {e}")
 
+    # Initialize Document Store
+    try:
+        store = get_store()
+        # Test store by checking if any seasons exist
+        if not list(store.episodes_path.glob("season_*.json")):
+            logger.info("Store empty, importing data...")
+            # Find latest JSON file
+            content_dir = Path(CONTENT_PATH).parent
+            json_files = list(content_dir.glob("buffy_all_seasons_*.json"))
+            if json_files:
+                latest_file = max(json_files, key=lambda p: p.stat().st_mtime)
+                store.import_from_json(str(latest_file))
+                logger.info(f"Imported data from {latest_file}")
+            else:
+                logger.warning("No JSON data files found to import")
+        
+        service_status["store"]["status"] = "healthy"
+        logger.info("Document store initialized successfully")
+
+    except Exception as e:
+        service_status["store"]["status"] = "unhealthy"
+        service_status["store"]["error"] = str(e)
+        logger.error(f"Document store initialization failed: {e}")
+
     # Load and process data if Redis is healthy
     if service_status["redis"]["status"] == "healthy":
         try:
             client.flushdb()
             logger.info("Flushed the Redis database.")
 
-            buffy_json = load_content(CONTENT_PATH)
-            logger.info("Loaded Buffy data.")
+            # Load data from document store
+            store = get_store()
+            buffy_data = {}
+            
+            # Load each season
+            for season_file in store.episodes_path.glob("season_*.json"):
+                season_num = int(season_file.stem.split('_')[1])
+                with open(season_file, 'r') as f:
+                    season_data = json.load(f)
+                buffy_data[f"season_{season_num}"] = season_data
 
-            pipeline = create_pipeline(buffy_json)
+            pipeline = create_pipeline(buffy_data)
             logger.info("Created pipeline.")
 
             execute_pipeline(pipeline)
@@ -95,6 +127,8 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     logger.info("Main.py: Shutting down application...")
+    # No need to close document store as it's file-based
+    pass
 
 @app.get("/health")
 async def health_check():
@@ -123,6 +157,16 @@ async def model_health_check():
     raise HTTPException(
         status_code=503,
         detail=f"Model is unhealthy: {service_status['model']['error']}"
+    )
+
+@app.get("/health/store")
+async def store_health_check():
+    """Document store health check endpoint."""
+    if service_status["store"]["status"] == "healthy":
+        return {"status": "healthy", "message": "Document store is healthy"}
+    raise HTTPException(
+        status_code=503,
+        detail=f"Document store is unhealthy: {service_status['store']['error']}"
     )
 
 if __name__ == "__main__":

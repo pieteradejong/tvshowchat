@@ -4,9 +4,9 @@ import axios from 'axios';
 
 interface SearchResult {
   episode_number: string;
-  episode_title: string;
-  episode_airdate: string;
-  episode_summary: string[];
+  title: string;
+  airdate: string;
+  summary: string[];
   score: number;
 }
 
@@ -71,12 +71,12 @@ const Search: FC = () => {
       <div className="space-y-4">
         {searchResults.map((result) => (
           <div 
-            key={`${result.episode_number}-${result.episode_title}`}
+            key={`${result.episode_number}-${result.title}`}
             className="p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
           >
             <div className="flex justify-between items-start mb-2">
               <h3 className="text-lg font-semibold text-gray-900">
-                {result.episode_number}. {result.episode_title}
+                {result.episode_number}. {result.title}
               </h3>
               <span className="text-sm text-gray-500">
                 Score: {Math.round(result.score * 100)}%
@@ -84,10 +84,10 @@ const Search: FC = () => {
             </div>
             <div className="prose prose-sm max-w-none">
               <div className="mb-2 text-sm text-gray-500">
-                Aired: {new Date(result.episode_airdate).toLocaleDateString()}
+                Aired: {new Date(result.airdate).toLocaleDateString()}
               </div>
               <div className="space-y-2">
-                {result.episode_summary.map((summary, index) => (
+                {result.summary.map((summary, index) => (
                   <p key={index} className="text-gray-600">{summary}</p>
                 ))}
               </div>
