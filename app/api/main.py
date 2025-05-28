@@ -3,6 +3,8 @@ import uvicorn
 from app.config.config import logger
 
 from app.api import api
+from app.api.routes import search as search_router
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.services.embed import (
     client,
@@ -18,7 +20,15 @@ from pathlib import Path
 from typing import Dict, Any
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://localhost:5175"],  # React dev server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(api.router)
+app.include_router(search_router.router, prefix="/api")
 app.mount(
     "/static",
     StaticFiles(directory=Path(__file__).parent.parent.absolute() / "static"),

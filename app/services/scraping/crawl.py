@@ -2,207 +2,194 @@ import json
 import requests
 from bs4 import BeautifulSoup
 from sentence_transformers import SentenceTransformer
-from typing import Dict
+from typing import Dict, Optional
 import time
+import re
 from numpy import float32
+import logging
+from ratelimit import limits, sleep_and_retry
+from tenacity import retry, stop_after_attempt, wait_exponential
+from app.services.pipeline.validation import validate_single_episode, validate_episode_data
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('app/logs/scraper.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 BASE_URL = "https://buffy.fandom.com/"
+ONE_MINUTE = 60
+MAX_REQUESTS_PER_MINUTE = 30
 
-"""
-Script tailored for crawling specific content from specific URLs:
-specifically, synopses and summaries for all available episode per season 
-of Buffy the Vampire Slayer.
-Sole purpose is to seed a vector database to enable similarity searches. 
-"""
+@sleep_and_retry
+@limits(calls=MAX_REQUESTS_PER_MINUTE, period=ONE_MINUTE)
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+def make_request(url: str) -> Optional[requests.Response]:
+    """Make a rate-limited and retried request to the URL."""
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        return response
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Request failed for {url}: {str(e)}")
+        raise
 
+def clean_text(text: str) -> str:
+    """Clean and normalize text content."""
+    # Remove extra whitespace
+    text = ' '.join(text.split())
+    # Remove special characters but keep basic punctuation
+    text = re.sub(r'[^\w\s.,!?-]', '', text)
+    return text.strip()
+
+def extract_episode(url: str) -> Dict[str, list]:
+    """Extract episode data with improved error handling."""
+    try:
+        response = make_request(url)
+        if not response:
+            return {}
+
+        soup = BeautifulSoup(response.content, "lxml")
+        result = {}
+
+        for header in ["Synopsis", "Summary"]:
+            target_span = soup.find("span", {"id": "Summary"})
+            if not target_span:
+                logger.warning(f"Summary section not found for {url}")
+                continue
+
+            parent_h2 = target_span.find_parent("h2")
+            if not parent_h2:
+                logger.warning(f"Summary header not found for {url}")
+                continue
+
+            paragraphs = []
+            for sibling in parent_h2.find_next_siblings():
+                if sibling.name == "p":
+                    cleaned_text = clean_text(sibling.text)
+                    if cleaned_text:  # Only add non-empty paragraphs
+                        paragraphs.append(cleaned_text)
+                elif sibling.name == "h2":  # Stop at next section
+                    break
+
+            if paragraphs:
+                result[header.lower()] = paragraphs
+            else:
+                logger.warning(f"No paragraphs found for {header} in {url}")
+
+        return result
+    except Exception as e:
+        logger.error(f"Error extracting episode data from {url}: {str(e)}")
+        return {}
 
 def fetch_parse_save_episodes():
-    url = "https://buffy.fandom.com/wiki/List_of_Buffy_the_Vampire_Slayer_episodes"
-    response = requests.get(url)
-    if response.status_code != 200:
-        print(f"Error: url GET request failed: {response.status_code}")
-        return
+    """Main function to fetch, parse, and save episode data with validation."""
+    try:
+        url = f"{BASE_URL}wiki/List_of_Buffy_the_Vampire_Slayer_episodes"
+        response = make_request(url)
+        if not response:
+            return
 
-    soup = BeautifulSoup(response.content, "lxml")
-    embedder = SentenceTransformer("all-MiniLM-L6-v2")
-    result = {}
+        soup = BeautifulSoup(response.content, "lxml")
+        embedder = SentenceTransformer("all-MiniLM-L6-v2")
+        result = {}
+        validation_errors = []
 
-    # Tracking season number separately assumes non-changing DOM,
-    # but this entire crawler does so, so we'll just do what is expedient.
-    # Optimize for expedience, data completeness, and acquintance with bs4.
-    tables = soup.find_all("table", class_="wikitable")
-    season_number = 1
-    print(
-        f"Expect to find 7 tables, consistent with number of seasons. \
-            Found: [{len(tables)}]"
-    )
-    for t in tables:
-        curr_season = {}
+        tables = soup.find_all("table", class_="wikitable")
+        logger.info(f"Found {len(tables)} season tables")
 
-        t_body = t.find("tbody")
-        relevant_trs = [
-            child
-            for child in t_body.find_all("tr")
-            if child.name == "tr" and len(child.find_all("td", recursive=False)) == 4
-        ]
+        # MVP: Only process season 1 (the first table)
+        if tables:
+            table = tables[0]
+            season_num = 1
+            curr_season = {}
+            logger.info(f"Processing season {season_num}")
 
-        # Each tr contains data for one episode
-        for tr in relevant_trs:
-            curr_episode = {}
+            t_body = table.find("tbody")
+            if not t_body:
+                logger.warning(f"No tbody found for season {season_num}")
+            else:
+                relevant_trs = [
+                    child for child in t_body.find_all("tr")
+                    if child.name == "tr" and len(child.find_all("td", recursive=False)) == 4
+                ]
 
-            tds = tr.find_all("td")
-            episode_number_text = tds[0].text.strip()
-            if episode_number_text != '01': break
+                for tr in relevant_trs:
+                    try:
+                        tds = tr.find_all("td")
+                        if len(tds) < 4:
+                            continue
 
-            curr_episode["episode_number"] = episode_number_text
-            episode_airdate_text = tds[3].text.strip()
-            curr_episode["episode_airdate"] = episode_airdate_text
+                        episode_number = tds[0].text.strip()
+                        if not episode_number.isdigit():
+                            continue
 
-            episode_title = tds[2].find("a")["title"].strip()
-            curr_episode["episode_title"] = episode_title
+                        episode_data = {
+                            "episode_number": episode_number.zfill(2),
+                            "episode_airdate": tds[3].text.strip(),
+                            "episode_title": tds[2].find("a")["title"].strip(),
+                        }
 
-            # Crawl episode page for synopsis and summary
-            episode_link_relative = tds[2].find("a")["href"]
-            full_episode_url = BASE_URL + episode_link_relative
-            print(f"Crawling season {season_number} - episode {episode_number_text}")
-            episode_page_data = extract_episode(full_episode_url)
+                        # Get episode details
+                        episode_link = tds[2].find("a")["href"]
+                        full_url = BASE_URL + episode_link
+                        logger.info(f"Crawling season {season_num} - episode {episode_number}")
+                        
+                        episode_page_data = extract_episode(full_url)
+                        if not episode_page_data.get("summary"):
+                            logger.warning(f"No summary found for episode {episode_number}")
+                            continue
 
-            # synopsis not needed for now
-            # curr_episode["episode_synopsis"] = episode_page_data["synopsis"]
-            curr_episode["episode_summary"] = episode_page_data["summary"]
+                        episode_data["episode_summary"] = episode_page_data["summary"]
+                        
+                        # Generate embedding
+                        summary_text = " ".join(episode_page_data["summary"])
+                        episode_data["summary_embedding"] = embedder.encode(summary_text).astype(float32).tolist()
 
-            # create and save embedding for summary
-            episode_summary_as_str = "".join(episode_page_data["summary"])
-            episode_summary_as_embedding = embedder.encode(episode_summary_as_str).astype(float32).tolist()
-            print(f'summary embedding is of type: {type(episode_summary_as_embedding)}')
-            # print(f'summary embedding sample: {episode_summary_as_embedding[:100]}')
-            # print('any newslines in vector:')
-            # print(any("\n" in element for element in episode_summary_as_embedding))
-            for el in episode_summary_as_embedding:
-                print(type(el))
+                        # Validate episode data
+                        try:
+                            validated_episode = validate_single_episode(episode_data)
+                            curr_season[episode_number.zfill(2)] = validated_episode.dict()
+                        except ValueError as e:
+                            validation_errors.append(f"Season {season_num}, Episode {episode_number}: {str(e)}")
+                            continue
+
+                    except Exception as e:
+                        logger.error(f"Error processing episode in season {season_num}: {str(e)}")
+                        continue
+
+                if curr_season:
+                    result[f"season_{season_num}"] = curr_season
+        else:
+            logger.error("No season tables found!")
+
+        # Validate complete dataset
+        try:
+            validated_data = validate_episode_data(result)
+            timestamp = str(int(time.time()))
+            save_to_filename = f"app/content/buffy_all_seasons_{timestamp}.json"
+
+            with open(save_to_filename, "w") as f:
+                json.dump(validated_data.dict()["__root__"], f, indent=4)
+
+            logger.info(f"Saved validated crawl results to {save_to_filename}")
             
-                
-            curr_episode["summary_embedding"] = episode_summary_as_embedding
+            if validation_errors:
+                logger.warning("Validation errors occurred:")
+                for error in validation_errors:
+                    logger.warning(error)
 
-            curr_season[episode_number_text] = curr_episode
-            # end of row = episode
+        except ValueError as e:
+            logger.error(f"Dataset validation failed: {str(e)}")
 
-        result[f"season_{season_number}"] = curr_season
-        season_number += 1
-        # end of table = season
-    # end of all tables / seasons
-
-    # Save result dict to buffy_all_seasons_<timestamp>.json
-    timestamp = str(int(time.time()))
-    save_to_filename = f"app/content/buffy_all_seasons_{timestamp}.json"
-
-    with open(save_to_filename, "w") as f:
-        json.dump(result, f, indent=4)
-
-    print(f"Saved crawl results to {save_to_filename}")
-
-    """
-    Crawl goal:
-    [
-        "season 1" : [
-            "episode 19": {
-                "season": 1,
-                "number": 19,
-                "title": "Empty Places",
-                "air_date": "April 29, 2003",
-                "writer": "Drew Z. Greenberg",
-                "director": "James A. Contner",
-                "synopsis": "",
-                "summary": "",
-            },
-            "episode 20": {},
-            ...
-        ]
-    ]
-    """
-
-
-def extract_episode(url: str) -> dict:
-    response = requests.get(url)
-    if response.status_code != 200:
-        print(f"Error: episode page GET request failed: {response.status_code}")
-        return {}
-
-    soup = BeautifulSoup(response.content, "lxml")
-    result = {}
-
-    for header in ["Synopsis", "Summary"]:
-        target_span = soup.find("span", {"id": "Summary"})
-
-        if target_span:
-            parent_h2 = target_span.find_parent("h2")
-            if parent_h2:
-                paragraphs = []
-                for sibling in parent_h2.find_next_siblings():
-                    if sibling.name == "p":
-                        paragraphs.append(sibling.text.strip())
-                    else:
-                        break
-
-                result[header.lower()] = paragraphs
-
-    return result
-
-
-"""
-Script tailored for crawling specific content from specific URLs, for
-Buffy the Vampire Slayer season summaries and synopses. Sole purpose is 
-to generate initial content to 
-seed vector database. Creating quality content for such purposes is likely
-to remain closer to one-off tasks than automatable.
-"""
-
-
-def fetch_and_parse(url: str) -> Dict[str, str]:
-    response = requests.get(url)
-    if response.status_code != 200:
-        return {}
-
-    soup = BeautifulSoup(response.content, "lxml")
-    result = {}
-
-    for header in ["Synopsis", "Summary"]:
-        target_span = soup.find("span", {"id": "Summary"})
-
-        if target_span:
-            parent_h2 = target_span.find_parent("h2")
-            if parent_h2:
-                paragraphs = []
-                for sibling in parent_h2.find_next_siblings():
-                    if sibling.name == "p":
-                        paragraphs.append(sibling.text)
-                    else:
-                        break
-
-                result[header] = paragraphs
-
-    print(f"result: {result}")
-    return result
-
-
-def main():
-    base_url = "https://buffy.fandom.com/wiki/Buffy_the_Vampire_Slayer_season_"
-    seasons = range(1, 8)
-
-    all_data = {}
-
-    for season in seasons:
-        url = f"{base_url}{season}"
-        print(f"Fetching data from {url}")
-        parsed_data = fetch_and_parse(url)
-        print(f"parsed data: {parsed_data}")
-        if parsed_data:
-            all_data[f"Season {season}"] = parsed_data
-
-    with open("buffy_data.json", "w") as f:
-        json.dump(all_data, f, indent=4)
-
+    except Exception as e:
+        logger.error(f"Fatal error in fetch_parse_save_episodes: {str(e)}")
+        raise
 
 if __name__ == "__main__":
-    # main()
     fetch_parse_save_episodes()

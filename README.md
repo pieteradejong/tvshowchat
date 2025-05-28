@@ -7,6 +7,7 @@ A semantic search and chat application that allows users to interact with TV sho
   - [Table of Contents](#table-of-contents)
   - [Project Overview](#project-overview)
     - [Goal](#goal)
+    - [MVP Goals](#mvp-goals)
     - [Core Components](#core-components)
   - [Architecture](#architecture)
     - [Data Flow](#data-flow)
@@ -29,6 +30,11 @@ A semantic search and chat application that allows users to interact with TV sho
     - [Monitoring](#monitoring)
     - [Health Check Usage](#health-check-usage)
   - [Model Setup](#model-setup)
+    - [Model Comparison](#model-comparison)
+    - [Automatic Setup](#automatic-setup)
+    - [Manual Setup](#manual-setup)
+    - [Model Verification](#model-verification)
+    - [Performance Considerations](#performance-considerations)
   - [Model Files](#model-files)
   - [Troubleshooting](#troubleshooting)
   - [Project History \& Notes](#project-history--notes)
@@ -40,6 +46,39 @@ A semantic search and chat application that allows users to interact with TV sho
 
 ### Goal
 Create an interactive chat interface that allows users to "talk" with the entire Buffy the Vampire Slayer series, using semantic search to find relevant episode content based on natural language queries.
+
+### MVP Goals
+Our immediate focus is on building a minimal viable product with these core components:
+
+1. **Data Collection** (Current)
+   - Using buffy.fandom.com as data source
+   - Scraping episode summaries and metadata
+   - Storing raw data in JSON format
+   - Next steps:
+     - Validate data quality
+     - Add error handling
+     - Implement rate limiting
+     - Add data cleaning pipeline
+
+2. **Search Service**
+   - Implement basic vector search using existing embeddings
+   - Simple query processing
+   - Return top 3-5 most relevant episodes
+   - Next steps:
+     - Add basic caching
+     - Implement result ranking
+     - Add query preprocessing
+
+3. **Minimal Frontend**
+   - Single page with two main components:
+     - Query input window
+     - Results display window
+   - Basic styling with Tailwind
+   - No authentication required
+   - Next steps:
+     - Add loading states
+     - Implement error handling
+     - Add basic result formatting
 
 ### Core Components
 
