@@ -118,17 +118,19 @@ async def test_system():
                 "total_episodes": stats["total_episodes"],
                 "seasons": stats["seasons"],
                 "collection_name": stats["collection_name"],
-                "model": stats["embedding_model"]
+                "model": stats["embedding_model"],
+                "chromadb_episodes": stats.get("chromadb_episodes", 0)
             },
             "sample_episode": {
-                "season": sample_episode["season"] if sample_episode else None,
-                "episode": sample_episode["episode"] if sample_episode else None,
-                "title": sample_episode["title"] if sample_episode else None,
-                "has_text": bool(sample_episode["text"]) if sample_episode else False
+                "season": sample_episode.get("season_number") if sample_episode else None,
+                "episode": sample_episode.get("episode_number") if sample_episode else None,
+                "title": sample_episode.get("title") if sample_episode else None,
+                "has_summary": bool(sample_episode.get("summary")) if sample_episode else False
             } if sample_episode else None,
             "test_search": {
                 "query": test_query,
-                "results": search_results
+                "results_count": len(search_results),
+                "first_result": search_results[0] if search_results else None
             }
         }
         
