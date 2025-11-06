@@ -39,11 +39,37 @@ In a **new terminal** (keep the server running), run:
 ./test.sh
 ```
 
-This tests:
-- Health endpoints
-- Vector store status
-- Search functionality
-- System state
+This automated test script performs the following checks:
+
+#### 1. Health Endpoints
+- **`/health`** - Overall system health check
+- **`/health/vector-store`** - ChromaDB vector store health
+- **`/health/model`** - Embedding model (SentenceTransformer) health
+
+#### 2. System State
+- **`/api/test`** - Comprehensive system test that:
+  - Returns vector store statistics (episode count, seasons, collection info)
+  - Retrieves a sample episode
+  - Performs a test search query ("Buffy fights vampires")
+
+#### 3. Search Functionality
+- **`/api/test-search`** (default) - Tests search with default query "Willow uses magic"
+- **`/api/test-search?query=Willow%20uses%20magic&limit=2`** - Tests custom search query
+
+#### 4. Vector Store State
+- Checks if `/health/vector-store` returns `"status": "healthy"`
+- Verifies ChromaDB is operational
+
+#### 5. Document Store Verification
+- Checks if `app/data/episodes/` directory exists
+- Counts season files (`season_*.json`)
+- Checks if `app/data/chroma/` directory exists (ChromaDB data)
+
+**Expected Output:**
+- All health endpoints return `200 OK`
+- Search endpoints return results with episode data
+- Vector store status is "healthy"
+- Data directories exist with expected files
 
 ---
 

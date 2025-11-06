@@ -5,7 +5,7 @@ A semantic search and chat application for TV show transcripts, built with Pytho
 ## Features
 
 - **Semantic Search**: Find relevant episodes and scenes using natural language queries
-- **Vector Storage**: Efficient storage and retrieval of episode embeddings using Redis with RediSearch
+- **Vector Storage**: Efficient storage and retrieval of episode embeddings using ChromaDB
 - **Modern UI**: Clean, responsive interface built with React and TailwindCSS
 - **FastAPI Backend**: High-performance API with automatic OpenAPI documentation
 
@@ -14,7 +14,7 @@ A semantic search and chat application for TV show transcripts, built with Pytho
 ### Backend
 - Python 3.12
 - FastAPI 0.104.1
-- Redis 6.x with RediSearch 2.2+ and RedisJSON 2.0+ (Vector Database)
+- ChromaDB 0.4.22 (Vector Database)
 - Sentence Transformers (Embeddings)
 - Uvicorn (ASGI Server)
 
@@ -27,7 +27,6 @@ A semantic search and chat application for TV show transcripts, built with Pytho
 ## Prerequisites
 
 - Python 3.12 or later
-- Redis 6.x or later with RediSearch 2.2+ and RedisJSON 2.0+ modules
 - pip (Python package manager)
 - git
 
@@ -48,7 +47,7 @@ This will:
 - Create a Python virtual environment
 - Install all required dependencies
 - Set up the data directories
-- Initialize the Redis vector store
+- Initialize the ChromaDB vector store
 - Download the embedding model
 
 ## Running the Application
@@ -60,14 +59,15 @@ This will:
 
 This will:
 - Start the FastAPI server
-- Initialize the Redis vector store
+- Initialize the ChromaDB vector store
 - Load the embedding model
 - Make the API available at http://localhost:8000
 
 2. Access the application:
 - API Documentation: http://localhost:8000/docs
 - Health Check: http://localhost:8000/health
-- Redis Status: http://localhost:8000/health/redis
+- ChromaDB Status: http://localhost:8000/health/chromadb
+- Vector Store Status: http://localhost:8000/health/vector-store
 - Model Status: http://localhost:8000/health/model
 
 ## Project Structure
@@ -96,31 +96,42 @@ tvshowchat/
 1. **Data Collection**: Episode transcripts are collected and stored in JSON format
 2. **Text Processing**: Transcripts are cleaned and prepared for embedding
 3. **Embedding Generation**: Text is converted to vector embeddings using Sentence Transformers
-4. **Vector Storage**: Embeddings are stored in Redis with RediSearch for efficient retrieval
-5. **Search**: Semantic search is performed using Redis vector similarity search
+4. **Vector Storage**: Embeddings are stored in ChromaDB for efficient retrieval
+5. **Search**: Semantic search is performed using ChromaDB vector similarity search
 
 ## Development
 
 ### Adding New Episodes
 
 1. Place episode transcripts in `app/data/episodes/` in JSON format
-2. Run the initialization script to update the Redis vector store:
+2. Run the initialization script to update the ChromaDB vector store:
 ```bash
 python scripts/init_data.py
 ```
 
 ### Testing
 
-Run the test suite:
+Run the automated test suite:
 ```bash
 ./test.sh
 ```
 
-This will:
-- Check system health
-- Verify Redis connection and vector store status
-- Test search functionality
-- Validate model availability
+**Prerequisites:** The server must be running (`./run.sh`)
+
+**What it tests:**
+1. **Health Endpoints** - `/health`, `/health/vector-store`, `/health/model`
+2. **System State** - `/api/test` (vector store stats, sample episode, test search)
+3. **Search Functionality** - `/api/test-search` (default and custom queries)
+4. **Vector Store Status** - Verifies ChromaDB is healthy
+5. **Data Directories** - Checks for episode files and ChromaDB data
+
+**Expected Results:**
+- All endpoints return `200 OK`
+- Search returns relevant episode results
+- Vector store shows healthy status
+- Data directories contain expected files
+
+See `docs/TESTING_GUIDE.md` for detailed testing documentation.
 
 ## Contributing
 
