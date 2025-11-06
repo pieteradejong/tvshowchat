@@ -4,19 +4,11 @@ from app.config.config import logger
 from app.api import api
 from app.api.routes import search as search_router
 from fastapi.middleware.cors import CORSMiddleware
-from app.services.embed import (
-    client,
-    load_content,
-    create_pipeline,
-    execute_pipeline,
-    create_index,
-)
-from app.services.embed import CONTENT_PATH
 from app.services.storage.document_store import get_store
+from app.services.vector_store import get_vector_store
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from typing import Dict, Any
-import json
 
 app = FastAPI()
 app.add_middleware(
@@ -36,25 +28,16 @@ app.mount(
 
 # Track service status
 service_status: Dict[str, Any] = {
-    "redis": {"status": "unknown", "error": None},
+    "chromadb": {"status": "unknown", "error": None},
     "model": {"status": "unknown", "error": None},
     "data": {"status": "unknown", "error": None},
-    "store": {"status": "unknown", "error": None}
+    "store": {"status": "unknown", "error": None},
+    "vector_store": {"status": "unknown", "error": None}
 }
 
 @app.on_event("startup")
 async def startup_event():
     logger.info("Main.py: Starting application...")
-
-    # Initialize Redis
-    try:
-        client.ping()
-        service_status["redis"]["status"] = "healthy"
-        logger.info("Redis connection successful")
-    except Exception as e:
-        service_status["redis"]["status"] = "unhealthy"
-        service_status["redis"]["error"] = str(e)
-        logger.error(f"Redis connection failed: {e}")
 
     # Initialize Document Store
     try:
@@ -63,7 +46,7 @@ async def startup_event():
         if not list(store.episodes_path.glob("season_*.json")):
             logger.info("Store empty, importing data...")
             # Find latest JSON file
-            content_dir = Path(CONTENT_PATH).parent
+            content_dir = Path("app/content")
             json_files = list(content_dir.glob("buffy_all_seasons_*.json"))
             if json_files:
                 latest_file = max(json_files, key=lambda p: p.stat().st_mtime)
@@ -80,41 +63,26 @@ async def startup_event():
         service_status["store"]["error"] = str(e)
         logger.error(f"Document store initialization failed: {e}")
 
-    # Load and process data if Redis is healthy
-    if service_status["redis"]["status"] == "healthy":
-        try:
-            client.flushdb()
-            logger.info("Flushed the Redis database.")
-
-            # Load data from document store
-            store = get_store()
-            buffy_data = {}
-            
-            # Load each season
-            for season_file in store.episodes_path.glob("season_*.json"):
-                season_num = int(season_file.stem.split('_')[1])
-                with open(season_file, 'r') as f:
-                    season_data = json.load(f)
-                buffy_data[f"season_{season_num}"] = season_data
-
-            pipeline = create_pipeline(buffy_data)
-            logger.info("Created pipeline.")
-
-            execute_pipeline(pipeline)
-            logger.info("Executed pipeline.")
-
-            create_index()
-            logger.info("Created index.")
-
-            service_status["data"]["status"] = "healthy"
-        except Exception as e:
-            service_status["data"]["status"] = "unhealthy"
-            service_status["data"]["error"] = str(e)
-            logger.error(f"Data processing failed: {e}")
+    # Initialize Vector Store (ChromaDB)
+    try:
+        vector_store = get_vector_store()
+        # Test vector store by getting stats
+        stats = vector_store.get_stats()
+        logger.info(f"Vector store initialized: {stats.get('chromadb_episodes', 0)} episodes in ChromaDB")
+        service_status["vector_store"]["status"] = "healthy"
+        service_status["chromadb"]["status"] = "healthy"
+        logger.info("Vector store (ChromaDB) initialized successfully")
+    except Exception as e:
+        service_status["vector_store"]["status"] = "unhealthy"
+        service_status["chromadb"]["status"] = "unhealthy"
+        service_status["vector_store"]["error"] = str(e)
+        service_status["chromadb"]["error"] = str(e)
+        logger.error(f"Vector store initialization failed: {e}")
 
     # Verify model
     try:
-        from app.services.embed import embedder
+        from sentence_transformers import SentenceTransformer
+        embedder = SentenceTransformer("all-MiniLM-L6-v2")
         # Test model with a simple string
         embedder.encode("test")
         service_status["model"]["status"] = "healthy"
@@ -123,6 +91,13 @@ async def startup_event():
         service_status["model"]["status"] = "unhealthy"
         service_status["model"]["error"] = str(e)
         logger.error(f"Model verification failed: {e}")
+    
+    # Mark data as healthy if store and vector store are healthy
+    if (service_status["store"]["status"] == "healthy" and 
+        service_status["vector_store"]["status"] == "healthy"):
+        service_status["data"]["status"] = "healthy"
+    else:
+        service_status["data"]["status"] = "unhealthy"
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -141,12 +116,30 @@ async def health_check():
 
 @app.get("/health/redis")
 async def redis_health_check():
-    """Redis health check endpoint."""
-    if service_status["redis"]["status"] == "healthy":
-        return {"status": "healthy", "message": "Redis connection is healthy"}
+    """Redis health check endpoint (deprecated - use /health/chromadb)."""
+    raise HTTPException(
+        status_code=410,
+        detail="Redis endpoint deprecated. Use /health/chromadb instead."
+    )
+
+@app.get("/health/chromadb")
+async def chromadb_health_check():
+    """ChromaDB health check endpoint."""
+    if service_status["chromadb"]["status"] == "healthy":
+        return {"status": "healthy", "message": "ChromaDB is healthy"}
     raise HTTPException(
         status_code=503,
-        detail=f"Redis is unhealthy: {service_status['redis']['error']}"
+        detail=f"ChromaDB is unhealthy: {service_status['chromadb']['error']}"
+    )
+
+@app.get("/health/vector-store")
+async def vector_store_health_check():
+    """Vector store health check endpoint."""
+    if service_status["vector_store"]["status"] == "healthy":
+        return {"status": "healthy", "message": "Vector store is healthy"}
+    raise HTTPException(
+        status_code=503,
+        detail=f"Vector store is unhealthy: {service_status['vector_store']['error']}"
     )
 
 @app.get("/health/model")

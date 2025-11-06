@@ -1,5 +1,4 @@
 import json
-import redis
 from app import config
 from app.config import logger
 

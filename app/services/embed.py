@@ -1,7 +1,5 @@
 import numpy as np
 import json
-import redis
-from app.config.config import logger, K_RESULTS
 
 from sentence_transformers import SentenceTransformer
 

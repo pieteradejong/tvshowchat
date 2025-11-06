@@ -3,9 +3,8 @@ from pydantic import BaseModel
 from typing import Literal, Optional
 from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
 from app.config.config import logger, K_RESULTS
-from app.services import embed
+from app.services.vector_store import get_vector_store
 from pathlib import Path
-from redis import Redis
 
 
 router = APIRouter()
@@ -51,10 +50,23 @@ async def search(request: Request, k: Optional[int] = None):
                 status="success", result=[], message="Empty query string submitted."
             )
         else:
-            results = embed.fetch_search_results(search_query, k or K_RESULTS)
+            # Use the new vector store for search
+            vector_store = get_vector_store()
+            results = vector_store.search_episodes(search_query, limit=k or K_RESULTS)
+            
+            # Convert to the expected format
+            formatted_results = []
+            for result in results:
+                formatted_results.append({
+                    "episode": f"S{result['season']:02d}E{result['episode']}",
+                    "title": result['title'],
+                    "airdate": result['airdate'],
+                    "summary": result['text'],
+                    "score": result['score']
+                })
 
             return SearchResponse(
-                status="success", result=results, message="Search successful."
+                status="success", result=formatted_results, message="Search successful."
             )
 
     except Exception as e:
@@ -71,32 +83,13 @@ async def health_check():
         message="Backend is healthy"
     )
 
-@router.get("/health/redis", response_model=SuccessResponse, status_code=status.HTTP_200_OK)
-async def redis_health_check():
-    """Health check endpoint to verify Redis connection."""
-    try:
-        # Test Redis connection
-        client = Redis(host='localhost', port=6379, db=0)
-        client.ping()
-        logger.info("Redis health check successful")
-        return SuccessResponse(
-            status="success",
-            message="Redis connection is healthy"
-        )
-    except Exception as e:
-        logger.error(f"Redis health check failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Redis connection failed: {str(e)}"
-        )
-
 @router.get("/health/model", response_model=SuccessResponse, status_code=status.HTTP_200_OK)
 async def model_health_check():
     """Health check endpoint to verify the embedding model is loaded."""
     try:
-        # Test model by encoding a simple string
-        from app.services.embed import embedder
-        embedder.encode("test")
+        # Test model by encoding a simple string using vector store's embedder
+        vector_store = get_vector_store()
+        vector_store.embedder.encode("test")
         logger.info("Model health check successful")
         return SuccessResponse(
             status="success",

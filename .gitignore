@@ -60,9 +60,6 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Redis
-dump.rdb
-
 # Build
 /frontend/build
 /frontend/dist

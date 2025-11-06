@@ -1,352 +1,134 @@
 #!/bin/bash
-
-# Exit on error
 set -e
+
+# Colors for output
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
 
 # Function to print section headers
 print_section() {
-    echo ""
-    echo "=== $1 ==="
-    echo ""
+    echo -e "\n${YELLOW}=== $1 ===${NC}"
 }
 
-# Function to check command exists
-check_command() {
-    if ! command -v $1 &> /dev/null; then
-        echo "❌ $1 is not installed. $2"
-        return 1
-    fi
-    return 0
-}
-
-print_section "🚀 Initializing TV Show Chat Development Environment"
-
-# Check and install system dependencies
-print_section "System Dependencies Check"
-
-# Check Python
-if ! check_command "python3" "Please install Python 3.8 or higher."; then
-    exit 1
-fi
-
-# Check Python version
-PYTHON_VERSION=$(python3 -c 'import sys; v = sys.version_info; print(f"{v.major}.{v.minor}")')
-PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d. -f1)
-PYTHON_MINOR=$(echo $PYTHON_VERSION | cut -d. -f2)
-
-if [ "$PYTHON_MAJOR" -lt 3 ] || ([ "$PYTHON_MAJOR" -eq 3 ] && [ "$PYTHON_MINOR" -lt 9 ]); then
-    echo "❌ Python version must be 3.9 or higher. Current version: $PYTHON_VERSION"
-    echo "Recommended: Install Python 3.9 using:"
-    echo "   - macOS: brew install python@3.9"
-    echo "   - Ubuntu: sudo apt install python3.9"
-    echo "   - Windows: Download from https://www.python.org/downloads/"
-    exit 1
-fi
-echo "✅ Python version $PYTHON_VERSION detected"
-
-# Check pip
-if ! check_command "pip3" "Please install pip."; then
-    exit 1
-fi
-
-# Check Node.js
-if ! check_command "node" "Please install Node.js 18 or higher."; then
-    echo "Installation instructions:"
-    echo "   - macOS: brew install node"
-    echo "   - Ubuntu: curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - && sudo apt-get install -y nodejs"
-    echo "   - Windows: Download from https://nodejs.org/"
-    exit 1
-fi
-
-# Check Node.js version
-NODE_VERSION=$(node -v | cut -d'v' -f2 | cut -d'.' -f1)
-if [ "$NODE_VERSION" -lt 18 ]; then
-    echo "❌ Node.js version must be 18 or higher. Current version: $(node -v)"
-    exit 1
-fi
-echo "✅ Node.js version $(node -v) detected"
-
-# Check npm
-if ! check_command "npm" "Please install npm."; then
-    exit 1
-fi
-echo "✅ npm version $(npm -v) detected"
-
-# Check and install Redis
-print_section "Redis Setup"
-
-if ! check_command "redis-stack-server" "Installing Redis Stack..."; then
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        # macOS
-        brew install redis-stack
-    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        # Linux
-        echo "Please install Redis Stack using your package manager:"
-        echo "   - Ubuntu/Debian: Follow instructions at https://redis.io/docs/stack/get-started/installation/install-stack-linux/"
+# Function to check Python version
+check_python_version() {
+    local min_version="3.12.0"
+    if ! command -v python3.12 &> /dev/null; then
+        echo -e "${RED}❌ Python 3.12 is not installed. Please install it first.${NC}"
+        echo -e "You can install it using:"
+        echo -e "  - macOS: brew install python@3.12"
+        echo -e "  - Linux: Use your distribution's package manager"
         exit 1
-    else
-        echo "Unsupported operating system. Please install Redis Stack manually."
-        exit 1
-    fi
-fi
-
-# Check Redis status
-echo "🔍 Checking Redis Stack status..."
-if ! redis-cli ping &> /dev/null; then
-    echo "⚠️  Redis Stack is not running. Starting Redis Stack..."
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        # Start Redis Stack directly since it's installed as a cask
-        /opt/homebrew/Caskroom/redis-stack-server/7.2.0-v10/bin/redis-stack-server &
-        sleep 5  # Give it time to start
-    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        sudo systemctl start redis-stack
     fi
     
-    # Wait for Redis to start
-    echo "Waiting for Redis Stack to start..."
-    for i in {1..5}; do
-        if redis-cli ping &> /dev/null; then
-            break
+    local current_version=$(python3.12 -c 'import sys; print(".".join(map(str, sys.version_info[:3])))')
+    if [ "$(printf '%s\n' "$min_version" "$current_version" | sort -V | head -n1)" != "$min_version" ]; then
+        echo -e "${RED}❌ Python version 3.12 or higher is required. Current version: $current_version${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}✅ Python version $current_version is compatible${NC}"
+}
+
+# Function to install Python dependencies
+install_python_deps() {
+    print_section "Installing Python Dependencies"
+    
+    # Remove Python virtual environment if it exists
+    echo -e "${GREEN}🧹 Removing existing Python virtual environment (venv/) ...${NC}"
+    rm -rf venv
+    
+    # Create new Python virtual environment with explicit Python version
+    echo -e "${GREEN}🐍 Creating new Python virtual environment with Python 3.12 ...${NC}"
+    python3.12 -m venv venv
+    
+    # Activate virtual environment
+    source venv/bin/activate
+    
+    # Verify Python version in virtual environment
+    venv_python_version=$(python -c 'import sys; print(".".join(map(str, sys.version_info[:3])))')
+    if [[ ! "$venv_python_version" =~ ^3\.12\. ]]; then
+        echo -e "${RED}❌ Virtual environment Python version mismatch. Expected Python 3.12.x, got $venv_python_version${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}✅ Using Python $venv_python_version in virtual environment${NC}"
+    
+    # Remove Python caches
+    echo -e "${GREEN}🧹 Removing all __pycache__, .pytest_cache, and .ruff_cache directories ...${NC}"
+    find . -type d -name "__pycache__" -exec rm -rf {} +
+    rm -rf .pytest_cache .ruff_cache
+    
+    # Upgrade pip
+    echo "Upgrading pip..."
+    python -m pip install --upgrade pip
+    
+    # Install dependencies
+    echo "Installing project dependencies..."
+    python -m pip install -r requirements.txt
+    
+    # Verify critical packages
+    echo "Verifying critical package installation..."
+    declare -A package_imports=(
+        ["fastapi"]="fastapi"
+        ["uvicorn"]="uvicorn"
+        ["chromadb"]="chromadb"
+        ["sentence-transformers"]="sentence_transformers"
+    )
+    
+    for package in "${!package_imports[@]}"; do
+        import_name="${package_imports[$package]}"
+        echo -n "Checking $package... "
+        if python -c "import sys; sys.path.insert(0, '.'); import $import_name; print('OK')" 2>/dev/null; then
+            echo -e "${GREEN}✓${NC}"
+        else
+            echo -e "${RED}✗${NC}"
+            echo -e "${RED}❌ Failed to import $package. Please check the installation.${NC}"
+            echo "You can try:"
+            echo "  1. source venv/bin/activate"
+            echo "  2. python -c 'import $import_name'"
+            echo "  3. If that fails, try: pip install --force-reinstall $package"
+            exit 1
         fi
-        echo "Attempt $i/5: Waiting for Redis Stack..."
-        sleep 2
     done
-fi
-
-# Verify Redis is running and has required modules
-echo "🔍 Verifying Redis Stack modules..."
-if ! redis-cli module list | grep -q "ReJSON" || ! redis-cli module list | grep -q "search"; then
-    echo "❌ Redis Stack modules (ReJSON, RediSearch) not found. Please ensure Redis Stack is properly installed."
-    exit 1
-fi
-
-# Verify Redis is running
-if ! redis-cli ping &> /dev/null; then
-    echo "❌ Redis Stack failed to start. Please check Redis logs:"
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        echo "   tail -f /opt/homebrew/var/log/redis-stack.log"
-    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        echo "   sudo systemctl status redis-stack"
-        echo "   sudo journalctl -u redis-stack"
-    fi
-    exit 1
-fi
-echo "✅ Redis Stack is installed and running with required modules"
-
-# Create necessary directories (non-Python operations)
-print_section "Creating Project Structure"
-mkdir -p app/{api,services/{scraping,pipeline,embeddings,search},models,config,utils}
-mkdir -p app/{content,logs}
-mkdir -p tests/{unit,integration}
-mkdir -p frontend/src/{components,hooks,services,types,utils}
-
-# Create necessary __init__.py files
-touch app/__init__.py
-touch app/api/__init__.py
-touch app/services/__init__.py
-touch tests/__init__.py
-touch tests/unit/__init__.py
-touch tests/integration/__init__.py
-
-# Python Environment Setup
-print_section "Python Environment Setup"
-
-# Remove all __pycache__ directories for a clean start
-echo "🧹 Removing all __pycache__ directories..."
-find . -name "__pycache__" -exec rm -rf {} +
-
-# Create virtual environment if it doesn't exist
-if [ ! -d "venv" ]; then
-    echo "📦 Creating Python virtual environment..."
-    python3.9 -m venv venv
-fi
-
-# Activate virtual environment
-echo "🔧 Activating virtual environment..."
-source venv/bin/activate
-
-# Upgrade pip and install wheel
-echo "⬆️  Upgrading pip and installing wheel..."
-python -m pip install --upgrade pip wheel
-
-# Clean any existing installations that might be broken
-echo "🧹 Cleaning existing installations..."
-python -m pip uninstall -y uvicorn fastapi redis redis-om pydantic
-
-# Install/upgrade requirements
-echo "📚 Installing/updating Python dependencies..."
-
-# Install system dependencies for macOS
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    echo "🍺 Installing system dependencies via Homebrew..."
-    
-    # Check if Homebrew is installed
-    if ! command -v brew &> /dev/null; then
-        echo "❌ Homebrew is not installed. Installing Homebrew..."
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    fi
-    
-    # Install sentencepiece via Homebrew
-    echo "📦 Installing sentencepiece via Homebrew..."
-    brew install sentencepiece
-    
-    # Install PyTorch for macOS
-    echo "🖥️  Installing PyTorch for macOS..."
-    python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-fi
-
-# Install other requirements
-echo "📦 Installing Python packages..."
-python -m pip install -r requirements.txt
-
-# Verify critical packages
-echo "🔍 Verifying critical package installation..."
-python -c "
-import sys
-from importlib.metadata import distributions
-required = {
-    'fastapi', 'uvicorn', 'redis', 'pydantic', 
-    'sentence-transformers', 'torch', 'transformers'
+    echo -e "${GREEN}✅ All critical packages installed successfully${NC}"
 }
-installed = {dist.metadata['Name'].lower() for dist in distributions()}
-missing = required - installed
-if missing:
-    print('❌ Missing required packages:', missing)
-    sys.exit(1)
-print('✅ All required Python packages are installed')
-"
 
-# Verify uvicorn specifically
-python -c "
-try:
-    import uvicorn
-    print('✅ uvicorn version', uvicorn.__version__, 'installed')
-except ImportError as e:
-    print('❌ uvicorn import failed:', e)
-    import sys; sys.exit(1)
-"
-
-# Download embedding model
-print_section "Setting up Embedding Model"
-echo "🤖 Setting up embedding model..."
-python3 -c "
-from sentence_transformers import SentenceTransformer
-import os
-model_path = 'app/models/all-MiniLM-L6-v2'
-if not os.path.exists(model_path):
-    print('Downloading model...')
-    model = SentenceTransformer('all-MiniLM-L6-v2')
-    model.save(model_path)
-    print('Model downloaded and saved.')
-else:
-    print('Model already exists.')
-"
-
-# Frontend Setup (non-Python operations)
-print_section "Frontend Setup"
-echo "🎨 Setting up frontend..."
-
-if [ -d "frontend" ]; then
-    cd frontend
+# Function to setup data directories
+setup_data_dirs() {
+    print_section "Setting up Data Directories"
     
-    # Install frontend dependencies
-    echo "📦 Installing frontend dependencies..."
-    npm install
+    # Create necessary directories
+    mkdir -p app/data/episodes
+    mkdir -p app/data/chroma
+    mkdir -p app/logs
     
-    # Check for vulnerabilities
-    echo "🔍 Checking for npm vulnerabilities..."
-    npm audit
-    
-    # Return to root directory
-    cd ..
+    echo -e "${GREEN}✅ Data directories created${NC}"
+}
+
+# Main script
+print_section "Initializing TV Show Chat System"
+
+# Check Python version first
+check_python_version
+
+# Install Python dependencies
+install_python_deps
+
+# Setup data directories
+setup_data_dirs
+
+# Initialize data
+print_section "Initializing Data"
+echo "Running data initialization script..."
+# Use venv's python (which is python3.12)
+if [ -n "$VIRTUAL_ENV" ] && [ -f "$VIRTUAL_ENV/bin/python" ]; then
+    $VIRTUAL_ENV/bin/python scripts/init_data.py
 else
-    echo "❌ Frontend directory not found. Please ensure the repository is properly cloned."
-    exit 1
+    python3.12 scripts/init_data.py
 fi
-
-# Environment Setup (non-Python operations)
-print_section "Environment Configuration"
-
-# Create .env file if it doesn't exist
-if [ ! -f ".env" ]; then
-    echo "📝 Creating .env file..."
-    cat > .env << EOL
-# Backend
-REDIS_HOST=localhost
-REDIS_PORT=6379
-MODEL_NAME=all-MiniLM-L6-v2
-MODEL_PATH=app/models/all-MiniLM-L6-v2
-LOG_LEVEL=INFO
-API_HOST=0.0.0.0
-API_PORT=8000
-
-# Frontend
-VITE_API_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000
-EOL
-fi
-
-# Create .env file for frontend if it doesn't exist
-if [ ! -f "frontend/.env" ]; then
-    echo "📝 Creating frontend .env file..."
-    cat > frontend/.env << EOL
-VITE_API_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000
-EOL
-fi
-
-# Final Checks (in venv context)
-print_section "Final Checks"
-
-# Check if all required directories exist
-for dir in "venv" "app/api" "app/services" "app/models" "frontend"; do
-    if [ ! -d "$dir" ]; then
-        echo "❌ Required directory $dir is missing"
-        exit 1
-    fi
-done
-
-# Check if model exists
-if [ ! -d "app/models/all-MiniLM-L6-v2" ]; then
-    echo "❌ Embedding model is missing"
-    exit 1
-fi
-
-# Check if Redis is running
-if ! redis-cli ping &> /dev/null; then
-    echo "❌ Redis is not running"
-    exit 1
-fi
-
-# Verify Python environment
-echo "🔍 Verifying Python environment..."
-python3 -c "
-import sys
-from importlib.metadata import distributions
-required = {
-    'fastapi', 'uvicorn', 'redis', 'sentence-transformers',
-    'torch', 'transformers'
-}
-installed = {dist.metadata['Name'].lower() for dist in distributions()}
-missing = required - installed
-if missing:
-    print('❌ Missing required packages:', missing)
-    sys.exit(1)
-print('✅ All required Python packages are installed')
-"
 
 print_section "✅ Initialization Complete"
-echo "You can now:"
-echo "   - Run './run.sh' to start the application"
-echo "   - Activate the virtual environment with 'source venv/bin/activate'"
-echo "   - Run tests with 'pytest'"
-echo ""
-echo "The application will be available at:"
-echo "   - Frontend: http://localhost:5173"
-echo "   - Backend API: http://localhost:8000"
-echo "   - API Documentation: http://localhost:8000/docs"
-echo ""
-echo "Health check endpoints:"
-echo "   - Backend: http://localhost:8000/health"
-echo "   - Redis: http://localhost:8000/health/redis"
-echo "   - Model: http://localhost:8000/health/model"
+echo -e "${GREEN}The system is now ready to run!${NC}"
+echo "To start the system, run:"
+echo "   ./run.sh"

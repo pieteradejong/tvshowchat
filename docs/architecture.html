@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TV Show Chat - Architecture Diagrams</title>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'default',
+      themeVariables: {
+        primaryColor: '#e1f5ff',
+        primaryTextColor: '#000',
+        primaryBorderColor: '#000',
+        lineColor: '#000',
+        secondaryColor: '#fff4e1',
+        tertiaryColor: '#ffe1f5'
+      }
+    });
+  </script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+      border-bottom: 3px solid #4CAF50;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #555;
+      margin-top: 40px;
+      border-bottom: 2px solid #2196F3;
+      padding-bottom: 5px;
+    }
+    .diagram-container {
+      background: white;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .mermaid {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>TV Show Chat - Architecture Diagrams</h1>
+  
+  <h2>1. System Overview</h2>
+  <div class="diagram-container">
+    <div class="mermaid">
+      graph TB
+        subgraph "Frontend Layer"
+          UI[React UI<br/>TypeScript + TailwindCSS]
+          SearchComp[Search Component]
+          ChatComp[Chat Component]
+        end
+        
+        subgraph "API Layer"
+          FastAPI[FastAPI Server<br/>Port 8000]
+          SearchRoute[/api/search]
+          HealthRoute[/health]
+          StaticFiles[Static File Server]
+        end
+        
+        subgraph "Service Layer"
+          VectorStore[AdvancedVectorStore<br/>Semantic Search Logic]
+          EmbeddingService[EmbeddingService<br/>Sentence Transformers]
+          DocumentStore[BuffyDocumentStore<br/>File-based Storage]
+        end
+        
+        subgraph "Storage Layer"
+          Redis[(Redis<br/>Vector Database<br/>RediSearch + RedisJSON)]
+          FileStorage[(File Storage<br/>JSON Files)]
+          Embeddings[(Embeddings<br/>JSON Files)]
+        end
+        
+        subgraph "Data Sources"
+          ContentFiles[Content JSON Files<br/>buffy_all_seasons_*.json]
+        end
+        
+        UI --> SearchComp
+        UI --> ChatComp
+        SearchComp --> FastAPI
+        ChatComp --> FastAPI
+        FastAPI --> SearchRoute
+        FastAPI --> HealthRoute
+        FastAPI --> StaticFiles
+        SearchRoute --> VectorStore
+        VectorStore --> EmbeddingService
+        VectorStore --> DocumentStore
+        VectorStore --> Redis
+        DocumentStore --> FileStorage
+        DocumentStore --> Embeddings
+        EmbeddingService --> Redis
+        ContentFiles --> DocumentStore
+        
+        style UI fill:#e1f5ff
+        style FastAPI fill:#fff4e1
+        style VectorStore fill:#ffe1f5
+        style Redis fill:#ffcccc
+        style FileStorage fill:#ccffcc
+    </div>
+  </div>
+
+  <h2>2. Data Flow</h2>
+  <div class="diagram-container">
+    <div class="mermaid">
+      sequenceDiagram
+        participant User
+        participant Frontend as React Frontend
+        participant API as FastAPI Backend
+        participant VectorStore as AdvancedVectorStore
+        participant Embedder as SentenceTransformer
+        participant Redis as Redis Vector DB
+        participant FileStore as File Storage
+        
+        Note over User,FileStore: Data Ingestion Phase
+        User->>FileStore: Import Content JSON
+        FileStore->>FileStore: Parse Episode Data
+        FileStore->>Embedder: Generate Embeddings
+        Embedder->>FileStore: Save Embeddings
+        FileStore->>Redis: Load Data to Redis
+        Redis->>Redis: Create Vector Index
+        
+        Note over User,FileStore: Search Query Phase
+        User->>Frontend: Enter Search Query
+        Frontend->>API: POST /api/search
+        API->>VectorStore: search_episodes(query)
+        VectorStore->>Embedder: Encode Query
+        Embedder-->>VectorStore: Query Embedding
+        VectorStore->>FileStore: Load Episode Data
+        VectorStore->>FileStore: Load Embeddings
+        VectorStore->>VectorStore: Calculate Similarity
+        VectorStore->>VectorStore: Extract Characters/Themes
+        VectorStore->>VectorStore: Boost Scores
+        VectorStore-->>API: Search Results
+        API-->>Frontend: JSON Response
+        Frontend-->>User: Display Results
+    </div>
+  </div>
+
+  <h2>3. Storage Architecture</h2>
+  <div class="diagram-container">
+    <div class="mermaid">
+      graph TB
+        subgraph "Primary Storage: Redis"
+          Redis[(Redis Server<br/>Port 6379)]
+          RediSearch[RediSearch Module<br/>Vector Search]
+          RedisJSON[RedisJSON Module<br/>JSON Storage]
+          Index[Vector Index<br/>idx:buffy_vss]
+          
+          Redis --> RediSearch
+          Redis --> RedisJSON
+          RediSearch --> Index
+        end
+        
+        subgraph "Backup Storage: File System"
+          Episodes[app/data/episodes/<br/>season_*.json]
+          Embeddings[app/data/embeddings/<br/>season_*_embeddings.json]
+          Backups[app/data/backup_*/<br/>Timestamped Backups]
+        end
+        
+        subgraph "Source Data"
+          Content[app/content/<br/>buffy_all_seasons_*.json]
+        end
+        
+        Content --> Episodes
+        Content --> Embeddings
+        Episodes --> Redis
+        Embeddings --> Redis
+        Episodes --> Backups
+        Embeddings --> Backups
+        
+        style Redis fill:#ffcccc
+        style Episodes fill:#ccffcc
+        style Embeddings fill:#ccffcc
+        style Content fill:#ffffcc
+    </div>
+  </div>
+
+  <h2>4. Search Pipeline</h2>
+  <div class="diagram-container">
+    <div class="mermaid">
+      flowchart TD
+        Start([User Query]) --> Encode[Encode Query<br/>SentenceTransformer]
+        Encode --> Analyze[Analyze Query Type<br/>relationship/quote/scene/episode]
+        Analyze --> ExtractChars[Extract Characters<br/>from Query]
+        Analyze --> ExtractThemes[Extract Themes<br/>from Query]
+        
+        ExtractChars --> LoadData[Load Episode Data<br/>from File Storage]
+        ExtractThemes --> LoadData
+        LoadData --> LoadEmbeddings[Load Embeddings<br/>from File Storage]
+        
+        LoadEmbeddings --> CalcSimilarity[Calculate Cosine Similarity<br/>Query vs Episode Embeddings]
+        
+        CalcSimilarity --> BoostScore[Boost Score Based On:<br/>- Character Matches<br/>- Theme Matches<br/>- Query Type]
+        
+        BoostScore --> ExtractContent[Extract Relevant Content<br/>Best Matching Summary Part]
+        ExtractContent --> ExtractMeta[Extract Metadata:<br/>- Characters in Episode<br/>- Themes in Episode<br/>- Context String]
+        
+        ExtractMeta --> RankResults[Rank Results<br/>Sort by Score]
+        RankResults --> FilterLimit[Filter & Limit Results]
+        FilterLimit --> FormatResponse[Format Response<br/>SearchResult Objects]
+        FormatResponse --> End([Return Results])
+        
+        style Start fill:#e1f5ff
+        style Encode fill:#fff4e1
+        style CalcSimilarity fill:#ffe1f5
+        style End fill:#ccffcc
+    </div>
+  </div>
+
+  <h2>5. Component Architecture</h2>
+  <div class="diagram-container">
+    <div class="mermaid">
+      graph LR
+        subgraph "Frontend Components"
+          A[App.tsx<br/>Main Application]
+          B[Search.tsx<br/>Search Interface]
+          C[ChatWindow.tsx<br/>Chat Interface]
+        end
+        
+        subgraph "Backend API"
+          F[main.py<br/>FastAPI App]
+          G[search.py<br/>Search Routes]
+        end
+        
+        subgraph "Core Services"
+          I[vector_store.py<br/>AdvancedVectorStore]
+          J[embed.py<br/>Redis Operations]
+          K[document_store.py<br/>BuffyDocumentStore]
+        end
+        
+        A --> B
+        A --> C
+        B --> F
+        F --> G
+        G --> I
+        I --> J
+        I --> K
+        
+        style A fill:#e1f5ff
+        style F fill:#fff4e1
+        style I fill:#ffe1f5
+    </div>
+  </div>
+
+  <h2>6. Current State vs Target State</h2>
+  <div class="diagram-container">
+    <div class="mermaid">
+      graph LR
+        subgraph "Current State"
+          CS1[Redis Dependencies Missing]
+          CS2[VectorStore Empty]
+          CS3[API Mismatch]
+          CS4[File Storage Only]
+        end
+        
+        subgraph "Target State"
+          TS1[Redis Fully Integrated]
+          TS2[VectorStore Complete]
+          TS3[API Aligned]
+          TS4[Hybrid Storage]
+        end
+        
+        CS1 -->|Add redis-py| TS1
+        CS2 -->|Implement Class| TS2
+        CS3 -->|Fix Response Format| TS3
+        CS4 -->|Add Redis Layer| TS4
+        
+        style CS1 fill:#ffcccc
+        style CS2 fill:#ffcccc
+        style CS3 fill:#ffcccc
+        style TS1 fill:#ccffcc
+        style TS2 fill:#ccffcc
+        style TS3 fill:#ccffcc
+        style TS4 fill:#ccffcc
+    </div>
+  </div>
+
+</body>
+</html>
+

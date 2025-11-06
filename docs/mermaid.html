@@ -13,11 +13,11 @@
         sequenceDiagram
             participant User
             participant "API Server"
-            participant "Redis Vector DB"
+            participant "ChromaDB Vector DB"
             
             User->>"API Server": Sends Request
-            "API Server"->>"Redis Vector DB": Queries Data
-            "Redis Vector DB"-->>"API Server": Returns Data
+            "API Server"->>"ChromaDB Vector DB": Queries Data
+            "ChromaDB Vector DB"-->>"API Server": Returns Data
             "API Server"-->>User: Sends Response
       </div>
 

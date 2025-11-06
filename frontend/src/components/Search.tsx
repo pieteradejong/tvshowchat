@@ -3,11 +3,16 @@ import { FC, useState } from 'react';
 import axios from 'axios';
 
 interface SearchResult {
-  episode_number: string;
+  season: number;
+  episode: string;
   title: string;
   airdate: string;
-  summary: string[];
+  content_type: string;
+  text: string;
   score: number;
+  characters: string[];
+  themes: string[];
+  context: string;
 }
 
 const Search: FC = () => {
@@ -25,9 +30,9 @@ const Search: FC = () => {
     try {
       const response = await axios.post('http://localhost:8000/api/search', { 
         query: searchQuery,
-        top_k: 3 
+        limit: 5 
       });
-      setSearchResults(response.data.results || []);
+      setSearchResults(response.data || []);
     } catch (error) {
       console.error('Search error:', error);
       setError('Failed to perform search. Please try again.');
@@ -50,7 +55,7 @@ const Search: FC = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="Search Buffy episodes..."
+          placeholder="Search Buffy episodes... (e.g., 'Buffy and Angel romantic scenes', 'Willow uses magic', 'episodes with vampires')"
           className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <button 
@@ -71,12 +76,12 @@ const Search: FC = () => {
       <div className="space-y-4">
         {searchResults.map((result) => (
           <div 
-            key={`${result.episode_number}-${result.title}`}
+            key={`${result.season}-${result.episode}-${result.title}`}
             className="p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
           >
             <div className="flex justify-between items-start mb-2">
               <h3 className="text-lg font-semibold text-gray-900">
-                {result.episode_number}. {result.title}
+                S{result.season:02d}E{result.episode}. {result.title}
               </h3>
               <span className="text-sm text-gray-500">
                 Score: {Math.round(result.score * 100)}%
@@ -84,13 +89,32 @@ const Search: FC = () => {
             </div>
             <div className="prose prose-sm max-w-none">
               <div className="mb-2 text-sm text-gray-500">
-                Aired: {new Date(result.airdate).toLocaleDateString()}
+                Aired: {result.airdate}
               </div>
-              <div className="space-y-2">
-                {result.summary.map((summary, index) => (
-                  <p key={index} className="text-gray-600">{summary}</p>
-                ))}
+              
+              {result.characters.length > 0 && (
+                <div className="mb-2">
+                  <span className="text-xs font-medium text-blue-600">Characters: </span>
+                  <span className="text-xs text-gray-600">{result.characters.join(', ')}</span>
+                </div>
+              )}
+              
+              {result.themes.length > 0 && (
+                <div className="mb-2">
+                  <span className="text-xs font-medium text-green-600">Themes: </span>
+                  <span className="text-xs text-gray-600">{result.themes.join(', ')}</span>
+                </div>
+              )}
+              
+              <div className="mt-3">
+                <p className="text-gray-700 text-sm leading-relaxed">{result.text}</p>
               </div>
+              
+              {result.context && (
+                <div className="mt-2 text-xs text-gray-500 italic">
+                  {result.context}
+                </div>
+              )}
             </div>
           </div>
         ))}

@@ -1,32 +1,45 @@
-# Python 3.9 compatible dependencies
+# Python 3.12 compatible dependencies
 # All packages are battle-tested and stable (6-12 months old)
 # Minimal setup for semantic embeddings + web scraping
 
-# Web Framework and Server
+# Web Framework
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
-python-multipart==0.0.6
 
-# Database and Search
-redis==5.0.1
-pydantic==1.10.13     # v1 for stability
-hiredis==2.2.3        # Redis performance boost
+# Vector Database
+chromadb==0.4.22  # Stable version with good Python 3.12 support
 
-# Data Processing & ML
-beautifulsoup4==4.12.2
-sentence-transformers==2.2.2
+# HTTP/Async
+aiohttp==3.9.5
 requests==2.31.0
-huggingface_hub==0.15.1
+websockets==11.0.3
+beautifulsoup4==4.12.2
+ratelimit==2.2.1
+
+# ML/AI
+sentence-transformers==2.5.1  # Updated for Python 3.12 compatibility
+torch==2.2.1  # Updated for Python 3.12 compatibility
+numpy==1.26.4  # Updated for Python 3.12 compatibility
+tqdm==4.66.1
+
+# Development
+pytest==7.4.3
+black==23.11.0
+ruff==0.1.6
+mypy==1.7.1
+
+# Logging
+python-json-logger==2.0.7
 
 # Core Utilities
 python-dotenv==1.0.0
 
 # Development Tools
-black==23.11.0
-ruff==0.1.6
-pytest==7.4.3
+# hiredis==2.2.3        # Redis performance boost
 
 # Scraping and Data Processing
-ratelimit==2.2.1
 tenacity==8.2.3
 lxml==4.9.3
+
+# Hugging Face
+huggingface_hub==0.20.3  # Updated for Python 3.12 compatibility
