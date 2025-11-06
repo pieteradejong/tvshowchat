@@ -121,6 +121,24 @@ packages/react-devtools-timeline/dist
 
 # custom:
 .rdb
+app/dump.rdb
+
+# PID files (process IDs)
+*.pid
+backend.pid
+frontend.pid
+
+# Application logs
+app/*.log
+app/logs/*.log
+
+# ChromaDB data files
+app/data/chroma/*.sqlite3
+app/data/chroma/*/
+!app/data/chroma/.gitkeep
+
+# ChromaDB binary files (already committed, but ignore future ones)
+app/data/chroma/**/*.bin
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
