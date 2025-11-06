@@ -50,15 +50,31 @@ export function ChatWindow() {
 
       const data = await response.json();
 
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: data.message || 'I found some relevant episodes!',
-        isUser: false,
-        timestamp: new Date(),
-        episodeInfo: data.episode_info,
-      };
-
-      setMessages((prev) => [...prev, botMessage]);
+      // Backend returns array of results
+      if (Array.isArray(data) && data.length > 0) {
+        const firstResult = data[0];
+        const botMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: `Found ${data.length} episode(s). Top result: ${firstResult.title} (S${String(firstResult.season).padStart(2, '0')}E${firstResult.episode})`,
+          isUser: false,
+          timestamp: new Date(),
+          episodeInfo: {
+            title: firstResult.title,
+            season: String(firstResult.season),
+            episode: firstResult.episode,
+            airdate: firstResult.airdate,
+          },
+        };
+        setMessages((prev) => [...prev, botMessage]);
+      } else {
+        const botMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: 'No episodes found matching your search.',
+          isUser: false,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, botMessage]);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       const errorMessage: Message = {

@@ -52,7 +52,9 @@ This will:
 
 ## Running the Application
 
-1. Start the application:
+### Backend
+
+1. Start the backend server:
 ```bash
 ./run.sh
 ```
@@ -63,12 +65,30 @@ This will:
 - Load the embedding model
 - Make the API available at http://localhost:8000
 
-2. Access the application:
+2. Access the backend:
 - API Documentation: http://localhost:8000/docs
 - Health Check: http://localhost:8000/health
 - ChromaDB Status: http://localhost:8000/health/chromadb
 - Vector Store Status: http://localhost:8000/health/vector-store
 - Model Status: http://localhost:8000/health/model
+
+### Frontend
+
+1. Start the frontend (in a new terminal):
+```bash
+./run_frontend.sh
+```
+
+This will:
+- Start the Vite development server
+- Make the frontend available at http://localhost:5173
+- Automatically reload on file changes
+
+2. Open your browser:
+- Frontend: http://localhost:5173
+- The frontend will connect to the backend API automatically
+
+**Note:** Make sure the backend is running before starting the frontend, otherwise API calls will fail.
 
 ## Project Structure
 

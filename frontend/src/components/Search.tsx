@@ -81,7 +81,7 @@ const Search: FC = () => {
           >
             <div className="flex justify-between items-start mb-2">
               <h3 className="text-lg font-semibold text-gray-900">
-                S{result.season:02d}E{result.episode}. {result.title}
+                S{String(result.season).padStart(2, '0')}E{result.episode}. {result.title}
               </h3>
               <span className="text-sm text-gray-500">
                 Score: {Math.round(result.score * 100)}%
