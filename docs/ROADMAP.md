@@ -24,9 +24,14 @@
    - Integrated crawler status + pipeline integrity verification into `./test.sh`
    - Documented testing workflow (`docs/TESTING_GUIDE.md`) and pipeline overview (`docs/DATA_PIPELINE.md`)
 
-3. **Docs & Tooling Refresh**
+3. **Pipeline Helpers**
+   - Added document-store import command (`scripts/scrape_episodes.py --import-latest`)
+   - Added Chroma reindex command (`scripts/scrape_episodes.py --reindex-chroma`)
+   - Extended `./test.sh` to exercise import and reindex flows
+
+4. **Docs & Tooling Refresh**
    - Consolidated architecture diagrams into `ARCHITECTURE.md`
-  - Created `docs/ROADMAP.md` as the single source for planning
+   - Created `docs/ROADMAP.md` as the single source for planning
    - Added README table of contents and documentation index for easier onboarding
 
 ---

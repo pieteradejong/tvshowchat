@@ -17,7 +17,13 @@
 # Inspect pipeline status (content/document store/ChromaDB)
 python3.12 scripts/scrape_episodes.py --status
 
-# Re-crawl Season 1 (creates a new timestamped JSON)
+# Import latest crawl snapshot into document store
+python3.12 scripts/scrape_episodes.py --import-latest
+
+# Rebuild ChromaDB collection from document store
+python3.12 scripts/scrape_episodes.py --reindex-chroma
+
+# Force a full re-crawl (expensive)
 python3.12 scripts/scrape_episodes.py --all --force
 ```
 

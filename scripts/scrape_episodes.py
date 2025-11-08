@@ -14,6 +14,10 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger("scrape_episodes")
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 
 CONTENT_DIR = Path("app/content")
 EPISODES_DIR = Path("app/data/episodes")
@@ -46,6 +50,55 @@ def _season_counts_from_content(data: Dict) -> Dict[int, int]:
             continue
         counts[season_num] = len(episodes)
     return counts
+
+
+def latest_content_path() -> Optional[Path]:
+    files = list_content_files()
+    if not files:
+        return None
+    return max(files, key=lambda p: p.stat().st_mtime)
+
+
+def import_latest_content() -> int:
+    try:
+        from app.services.storage.document_store import get_store
+    except ImportError as exc:
+        logger.error("Could not import document store: %s", exc)
+        return 1
+
+    latest = latest_content_path()
+    if not latest:
+        logger.error("No content files available. Run the crawler first.")
+        return 1
+
+    logger.info("Importing data from %s", latest)
+    try:
+        store = get_store()
+        store.import_from_json(str(latest))
+        print(f"Imported data from {latest.name}")
+        return 0
+    except Exception as exc:
+        logger.error("Import failed: %s", exc)
+        return 1
+
+
+def reindex_chromadb() -> int:
+    try:
+        from app.services.vector_store import get_vector_store
+    except ImportError as exc:
+        logger.error("Could not import vector store: %s", exc)
+        return 1
+
+    try:
+        vector_store = get_vector_store()
+        summary = vector_store.rebuild_from_document_store()
+        print("Reindexed ChromaDB. Summary:")
+        for key, value in summary.items():
+            print(f"  {key}: {value}")
+        return 0
+    except Exception as exc:
+        logger.error("Reindex failed: %s", exc)
+        return 1
 
 
 def status() -> int:
@@ -171,6 +224,8 @@ def parse_args() -> argparse.Namespace:
         help="Scrape specific season(s) (1-7)"
     )
     parser.add_argument("--status", action="store_true", help="Show pipeline status")
+    parser.add_argument("--import-latest", action="store_true", help="Import latest content JSON into the document store")
+    parser.add_argument("--reindex-chroma", action="store_true", help="Rebuild ChromaDB collection from document store")
     parser.add_argument("--force", action="store_true", help="Force crawl even if data exists")
     return parser.parse_args()
 
@@ -186,21 +241,30 @@ def _validate_seasons(values: Iterable[int]) -> List[int]:
 def main() -> int:
     args = parse_args()
 
+    exit_code = 0
+
     if args.status:
-        return status()
+        status()
+
+    if getattr(args, 'import_latest', False):
+        exit_code |= import_latest_content()
+
+    if getattr(args, 'reindex_chroma', False):
+        exit_code |= reindex_chromadb()
 
     try:
         if args.season:
             target = _validate_seasons(args.season)
-            return crawl(target, args.force)
-        if args.all:
-            return crawl(list(SEASON_RANGE), args.force)
+            exit_code |= crawl(target, args.force)
+        elif args.all:
+            exit_code |= crawl(list(SEASON_RANGE), args.force)
+        elif not (args.status or getattr(args, 'import_latest', False) or getattr(args, 'reindex_chroma', False)):
+            logger.info("No action requested. Use --status, --all, --season, --import-latest, or --reindex-chroma.")
     except ValueError as exc:
         logger.error(str(exc))
         return 1
 
-    logger.info("No action requested. Use --status, --all, or --season.")
-    return 0
+    return 0 if exit_code == 0 else 1
 
 
 if __name__ == "__main__":

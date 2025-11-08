@@ -334,7 +334,7 @@ def fetch_parse_save_episodes(target_seasons: Optional[Iterable[int]] = None) ->
             save_to_filename = f"app/content/buffy_all_seasons_{timestamp}.json"
 
             with open(save_to_filename, "w") as f:
-                json.dump(validated_data.dict()["__root__"], f, indent=4)
+                json.dump(validated_data.as_dict(), f, indent=4)
 
             logger.info(f"Saved validated crawl results to {save_to_filename}")
             if validation_errors:

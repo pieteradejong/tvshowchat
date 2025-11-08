@@ -3,6 +3,13 @@ from datetime import datetime
 import re
 from pydantic import BaseModel, Field, validator
 
+
+def _model_dump(model: BaseModel) -> Dict[str, Any]:
+    """Compatibility helper for Pydantic v1/v2."""
+    if hasattr(model, "model_dump"):
+        return model.model_dump()  # Pydantic v2
+    return model.dict()  # Pydantic v1
+
 class EpisodeSummary(BaseModel):
     """Validates a single episode's summary data."""
     # Basic metadata
@@ -77,42 +84,46 @@ class EpisodeSummary(BaseModel):
 
 class SeasonData(BaseModel):
     """Validates a season's episode data."""
-    __root__: Dict[str, EpisodeSummary]
+    episodes: Dict[str, EpisodeSummary]
 
     def __iter__(self):
-        return iter(self.__root__.items())
+        return iter(self.episodes.items())
 
     def __getitem__(self, key: str) -> EpisodeSummary:
-        return self.__root__[key]
+        return self.episodes[key]
+
 
 class BuffyData(BaseModel):
     """Validates the complete Buffy dataset."""
-    __root__: Dict[str, SeasonData]
+    seasons: Dict[str, SeasonData]
 
     def validate_season_numbers(self) -> bool:
         """Validate that season numbers are sequential."""
-        season_numbers = [int(k.split('_')[1]) for k in self.__root__.keys()]
+        season_numbers = [int(k.split('_')[1]) for k in self.seasons.keys()]
         return season_numbers == list(range(1, len(season_numbers) + 1))
 
     def validate_episode_numbers(self) -> bool:
         """Validate that episode numbers are sequential within each season."""
-        for season_key, season in self.__root__.items():
-            episode_numbers = [int(ep.episode_number) for ep in season.__root__.values()]
+        for season_key, season in self.seasons.items():
+            episode_numbers = [int(ep.episode_number) for ep in season.episodes.values()]
             if episode_numbers != list(range(1, len(episode_numbers) + 1)):
                 return False
         return True
 
+    def as_dict(self) -> Dict[str, Any]:
+        data = _model_dump(self)
+        return data.get("seasons", {})
+
 def validate_episode_data(data: Dict[str, Any]) -> BuffyData:
     """Validate the complete episode dataset."""
     try:
-        buffy_data = BuffyData(__root__=data)
-        
-        # Additional validations
+        buffy_data = BuffyData(seasons={k: SeasonData(episodes=v) for k, v in data.items()})
+
         if not buffy_data.validate_season_numbers():
             raise ValueError("Invalid season number sequence")
         if not buffy_data.validate_episode_numbers():
             raise ValueError("Invalid episode number sequence")
-            
+
         return buffy_data
     except Exception as e:
         raise ValueError(f"Data validation failed: {str(e)}")

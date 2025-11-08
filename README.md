@@ -186,8 +186,10 @@ See `docs/TESTING_GUIDE.md` for detailed testing documentation.
 
 Use the crawler helper script for manual checks or to refresh scraped data (Season 1 currently supported):
 ```bash
-python3.12 scripts/scrape_episodes.py --status      # snapshot of pipeline health
-python3.12 scripts/scrape_episodes.py --all --force  # re-crawl and regenerate content JSON
+python3.12 scripts/scrape_episodes.py --status          # snapshot of pipeline health
+python3.12 scripts/scrape_episodes.py --import-latest    # import latest crawl into document store
+python3.12 scripts/scrape_episodes.py --reindex-chroma   # rebuild ChromaDB from document store
+python3.12 scripts/scrape_episodes.py --all --force      # re-crawl and regenerate content JSON
 ```
 
 ## Contributing

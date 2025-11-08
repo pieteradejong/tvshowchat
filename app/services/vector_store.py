@@ -579,6 +579,27 @@ class AdvancedVectorStore:
             'themes_available': len(self.themes)
         }
     
+    def rebuild_from_document_store(self) -> Dict[str, Any]:
+        """Rebuild Chroma collection from the document store."""
+        logger.info("Rebuilding ChromaDB collection from document store...")
+        try:
+            try:
+                self.chroma_client.delete_collection("buffy_episodes")
+                logger.info("Existing ChromaDB collection deleted")
+            except Exception as exc:
+                logger.warning("Unable to delete existing collection: %s", exc)
+            self.collection = self.chroma_client.get_or_create_collection(
+                name="buffy_episodes",
+                metadata={"hnsw:space": "cosine"}
+            )
+            self._populate_chromadb()
+            summary = self.get_stats()
+            logger.info("ChromaDB rebuild complete: %s", summary)
+            return summary
+        except Exception as exc:
+            logger.error("Failed to rebuild ChromaDB: %s", exc)
+            raise
+
     def get_episode(self, season: int, episode: str) -> Optional[Dict[str, Any]]:
         """Get a specific episode by season and episode number."""
         return self.document_store.get_episode(season, episode)

@@ -70,12 +70,33 @@ This automated test script performs the following checks:
 - Verifies crawler script is accessible
 - Prints scraper/document store/ChromaDB summary
 
-**Manual crawler usage:**
+#### 7. Document Store Import
+- Runs `scripts/scrape_episodes.py --import-latest`
+- Imports latest crawl snapshot into file-based document store
+- Updates episode and embedding JSON files
+
+#### 8. ChromaDB Reindex
+- Runs `scripts/scrape_episodes.py --reindex-chroma`
+- Clears and repopulates Chroma collection from document store
+- Prints summary statistics
+
+#### 9. Data Pipeline Integrity
+- Compares counts across content JSON, document store, and ChromaDB
+- Uses `/api/test` to verify backend view
+- Fails if totals do not match
+
+**Manual pipeline commands:**
 ```bash
 # Inspect pipeline status without modifying data
 python3.12 scripts/scrape_episodes.py --status
 
-# Force a re-crawl (Season 1 currently implemented)
+# Import latest crawl snapshot into document store
+python3.12 scripts/scrape_episodes.py --import-latest
+
+# Rebuild ChromaDB from document store data
+python3.12 scripts/scrape_episodes.py --reindex-chroma
+
+# Force a full re-crawl (expensive)
 python3.12 scripts/scrape_episodes.py --all --force
 ```
 
