@@ -40,22 +40,28 @@
 
 ### Plan
 1. **Crawler Enhancements**
-   - Update `app/services/scraping/crawl.py` to iterate all season tables
-   - Support `scripts/scrape_episodes.py --season N` for targeted updates
-   - Improve logging / progress output for long runs
+   1.1 Update `app/services/scraping/crawl.py` to iterate all season tables and handle varying episode counts (12 vs 22)
+   1.2 Add per-season crawl flag `--season N` (and `--force`) to `scripts/scrape_episodes.py`
+   1.3 Improve logging/progress output for long runs and add basic retry handling
+   1.4 Capture crawl metadata (season totals, timestamps) for later integrity checks
 
 2. **Ingestion Helpers**
-   - Add CLI entry points to rerun `BuffyDocumentStore.import_from_json` and `_populate_chromadb()`
-   - Provide `--reindex` option to rebuild embeddings or purge stale ChromaDB data
+   2.1 Add CLI entry (or script flag) to rerun `BuffyDocumentStore.import_from_json` on latest content snapshot
+   2.2 Provide a `--reindex` or `--refresh-chroma` option that clears/represents the Chroma collection
+   2.3 Ensure embeddings are regenerated only when missing and reuse cached vectors otherwise
+   2.4 Expose helper to inspect collection stats (total episodes, season coverage)
 
 3. **Automated Testing Upgrades**
-   - Update `./test.sh` integrity checks to expect the full episode count (~144)
-   - Ensure API stats enumerate all seasons; fail fast if any are missing
-   - (Optional) Add frontend build smoke test (`npm run build`)
+   3.1 Update `./test.sh` integrity checks to expect ~144 episodes and 7 seasons
+   3.2 Extend integrity step to validate `app/data/embeddings` counts alongside episodes
+   3.3 Ensure `/api/test` returns season coverage list; fail if mismatched
+   3.4 (Optional) Add frontend build smoke test (`npm run build`) and surface errors clearly
 
 4. **Documentation Updates**
-   - Record new usage instructions in README + `docs/DATA_PIPELINE.md`
-   - Note season coverage/status in `docs/ROADMAP.md`
+   4.1 Update README quick-start with multi-season ingestion workflow (crawl → import → reindex)
+   4.2 Expand `docs/DATA_PIPELINE.md` with new CLI commands and season coverage notes
+   4.3 Refresh `docs/TESTING_GUIDE.md` expected outputs (full dataset) and troubleshooting tips
+   4.4 Capture crawl/import/reindex runbook in `docs/ROADMAP.md` for future automation
 
 ---
 

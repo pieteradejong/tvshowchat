@@ -2,7 +2,7 @@ import json
 import requests
 from bs4 import BeautifulSoup
 from sentence_transformers import SentenceTransformer
-from typing import Dict, Optional, Any
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 import time
 import re
 from numpy import float32
@@ -194,66 +194,81 @@ def extract_episode(url: str) -> Dict[str, Any]:
         logger.error(f"Error extracting episode data from {url}: {str(e)}")
         return {}
 
-def fetch_parse_save_episodes():
-    """Main function to fetch, parse, and save episode data with validation."""
+def _season_tables(soup: BeautifulSoup) -> List[Tuple[int, Any]]:
+    tables = soup.find_all("table", class_="wikitable")
+    season_tables: List[Tuple[int, Any]] = []
+    for season_idx, table in enumerate(tables, 1):
+        season_tables.append((season_idx, table))
+    return season_tables
+
+
+def _iter_episode_rows(table) -> Iterable[Any]:
+    t_body = table.find("tbody")
+    if not t_body:
+        return []
+    for row in t_body.find_all("tr"):
+        cells = row.find_all("td", recursive=False)
+        if len(cells) >= 4:
+            yield cells
+
+
+def fetch_parse_save_episodes(target_seasons: Optional[Iterable[int]] = None) -> Dict[str, Any]:
+    """Fetch, parse, and save episode data. Returns metadata about the crawl."""
     try:
         url = f"{BASE_URL}wiki/List_of_Buffy_the_Vampire_Slayer_episodes"
         response = make_request(url)
         if not response:
-            return
+            return {}
 
+        season_filter = set(target_seasons) if target_seasons else None
         soup = BeautifulSoup(response.content, "lxml")
         embedder = SentenceTransformer("all-MiniLM-L6-v2")
-        result = {}
+        result: Dict[str, Dict[str, Any]] = {}
         validation_errors = []
+        season_counts: Dict[int, int] = {}
+        processed_seasons: List[int] = []
 
-        tables = soup.find_all("table", class_="wikitable")
-        logger.info(f"Found {len(tables)} season tables")
-
-        # Process all seasons
-        for season_idx, table in enumerate(tables, 1):
-            season_num = season_idx
-            curr_season = {}
-            logger.info(f"Processing season {season_num}")
-
-            t_body = table.find("tbody")
-            if not t_body:
-                logger.warning(f"No tbody found for season {season_num}")
+        for season_num, table in _season_tables(soup):
+            if season_filter and season_num not in season_filter:
                 continue
 
-            relevant_trs = [
-                child for child in t_body.find_all("tr")
-                if child.name == "tr" and len(child.find_all("td", recursive=False)) == 4
-            ]
+            logger.info(f"Processing season {season_num}")
+            processed_seasons.append(season_num)
+            curr_season: Dict[str, Dict[str, Any]] = {}
 
-            for tr in relevant_trs:
+            for cells in _iter_episode_rows(table):
                 try:
-                    tds = tr.find_all("td")
-                    if len(tds) < 4:
+                    episode_number_raw = cells[0].text.strip()
+                    if not episode_number_raw or not episode_number_raw.split()[0].isdigit():
+                        continue
+                    episode_number = episode_number_raw.split()[0]
+
+                    link = cells[2].find("a")
+                    if not link:
                         continue
 
-                    episode_number = tds[0].text.strip()
-                    if not episode_number.isdigit():
-                        continue
+                    title = link.get("title") or link.text
+                    airdate = cells[3].text.strip()
 
                     episode_data = {
                         "episode_number": episode_number.zfill(2),
-                        "episode_airdate": tds[3].text.strip(),
-                        "episode_title": tds[2].find("a")["title"].strip(),
-                        "season_number": season_num
+                        "episode_airdate": airdate,
+                        "episode_title": title.strip(),
+                        "season_number": season_num,
                     }
 
-                    # Get episode details
-                    episode_link = tds[2].find("a")["href"]
-                    full_url = BASE_URL + episode_link
-                    logger.info(f"Crawling season {season_num} - episode {episode_number}")
-                    
-                    episode_page_data = extract_episode(full_url)
-                    if not episode_page_data.get("summary"):
-                        logger.warning(f"No summary found for episode {episode_number}")
+                    episode_link = link.get("href")
+                    if not episode_link:
                         continue
 
-                    # Map scraped data to our model
+                    full_url = BASE_URL + episode_link.lstrip("/")
+                    logger.info(f"Crawling season {season_num} - episode {episode_number}")
+
+                    episode_page_data = extract_episode(full_url)
+                    if not episode_page_data.get("summary"):
+                        logger.warning(f"No summary found for S{season_num:02d}E{episode_number.zfill(2)}")
+                        continue
+
                     episode_data.update({
                         "episode_summary": episode_page_data.get("summary", []),
                         "episode_synopsis": episode_page_data.get("synopsis"),
@@ -268,22 +283,20 @@ def fetch_parse_save_episodes():
                         "first_appearances": episode_page_data.get("first_appearances"),
                         "continuity_notes": episode_page_data.get("continuity"),
                         "cultural_references": episode_page_data.get("cultural_references"),
-                        "music": episode_page_data.get("music")
+                        "music": episode_page_data.get("music"),
                     })
-                    
-                    # Generate embeddings
+
                     summary_text = " ".join(episode_page_data.get("summary", []))
                     episode_data["summary_embedding"] = embedder.encode(summary_text).astype(float32).tolist()
-                    
+
                     if episode_page_data.get("synopsis"):
                         synopsis_text = " ".join(episode_page_data["synopsis"])
                         episode_data["synopsis_embedding"] = embedder.encode(synopsis_text).astype(float32).tolist()
-                    
+
                     if episode_page_data.get("quotes"):
                         quotes_text = " ".join(episode_page_data["quotes"])
                         episode_data["quotes_embedding"] = embedder.encode(quotes_text).astype(float32).tolist()
 
-                    # Validate episode data
                     try:
                         validated_episode = validate_single_episode(episode_data)
                         curr_season[episode_number.zfill(2)] = validated_episode.dict()
@@ -291,14 +304,30 @@ def fetch_parse_save_episodes():
                         validation_errors.append(f"Season {season_num}, Episode {episode_number}: {str(e)}")
                         continue
 
-                except Exception as e:
-                    logger.error(f"Error processing episode in season {season_num}: {str(e)}")
+                except Exception as exc:
+                    logger.error(f"Error processing episode in season {season_num}: {str(exc)}")
                     continue
 
             if curr_season:
                 result[f"season_{season_num}"] = curr_season
+                season_counts[season_num] = len(curr_season)
+            else:
+                logger.warning(f"No episodes processed for season {season_num}")
 
-        # Validate and save complete dataset
+        if season_filter:
+            missing = sorted(season_filter.difference(season_counts.keys()))
+            if missing:
+                logger.warning(f"Requested seasons not found or empty: {missing}")
+
+        if not result:
+            logger.error("No season data collected; aborting save")
+            return {
+                "saved": False,
+                "season_counts": season_counts,
+                "processed_seasons": processed_seasons,
+                "validation_errors": validation_errors,
+            }
+
         try:
             validated_data = validate_episode_data(result)
             timestamp = str(int(time.time()))
@@ -308,17 +337,32 @@ def fetch_parse_save_episodes():
                 json.dump(validated_data.dict()["__root__"], f, indent=4)
 
             logger.info(f"Saved validated crawl results to {save_to_filename}")
-            
             if validation_errors:
                 logger.warning("Validation errors occurred:")
                 for error in validation_errors:
                     logger.warning(error)
 
-        except ValueError as e:
-            logger.error(f"Dataset validation failed: {str(e)}")
+            total_episodes = sum(season_counts.values())
+            return {
+                "saved": True,
+                "output_file": save_to_filename,
+                "season_counts": season_counts,
+                "validation_errors": validation_errors,
+                "processed_seasons": processed_seasons,
+                "total_episodes": total_episodes,
+            }
 
-    except Exception as e:
-        logger.error(f"Fatal error in fetch_parse_save_episodes: {str(e)}")
+        except ValueError as exc:
+            logger.error(f"Dataset validation failed: {str(exc)}")
+            return {
+                "saved": False,
+                "season_counts": season_counts,
+                "validation_errors": validation_errors,
+                "processed_seasons": processed_seasons,
+            }
+
+    except Exception as exc:
+        logger.error(f"Fatal error in fetch_parse_save_episodes: {str(exc)}")
         raise
 
 if __name__ == "__main__":

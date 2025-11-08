@@ -7,7 +7,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, Iterable, List, Optional
 
 logging.basicConfig(
     level=logging.INFO,
@@ -19,6 +19,9 @@ CONTENT_DIR = Path("app/content")
 EPISODES_DIR = Path("app/data/episodes")
 EMBEDDINGS_DIR = Path("app/data/embeddings")
 CHROMA_DIR = Path("app/data/chroma")
+
+
+SEASON_RANGE = range(1, 8)
 
 
 def list_content_files() -> List[Path]:
@@ -34,6 +37,17 @@ def load_latest_content() -> Dict:
         return json.load(f)
 
 
+def _season_counts_from_content(data: Dict) -> Dict[int, int]:
+    counts: Dict[int, int] = {}
+    for key, episodes in data.items():
+        try:
+            season_num = int(key.split('_')[1])
+        except (IndexError, ValueError):
+            continue
+        counts[season_num] = len(episodes)
+    return counts
+
+
 def status() -> int:
     print("=== Scraper Status ===")
 
@@ -44,22 +58,30 @@ def status() -> int:
         latest = max(content_files, key=lambda p: p.stat().st_mtime)
         print(f"Latest content file: {latest.name}")
         data = load_latest_content()
-        seasons = list(data.keys())
-        print(f"Seasons available: {seasons if seasons else 'None'}")
-        if "season_1" in data:
-            print(f"Season 1 episodes: {len(data['season_1'])}")
+        season_counts = _season_counts_from_content(data)
+        if season_counts:
+            total = sum(season_counts.values())
+            for season in sorted(season_counts):
+                print(f"Season {season}: {season_counts[season]} episodes")
+            print(f"Total episodes (content): {total}")
+        else:
+            print("No season data found in latest content file.")
     else:
         print("No content files found.")
 
     # Document store
     print("\nDocument store:")
     if EPISODES_DIR.exists():
-        season_files = list(EPISODES_DIR.glob("season_*.json"))
+        season_files = sorted(EPISODES_DIR.glob("season_*.json"))
         print(f"Season files: {len(season_files)}")
-        if season_files:
-            with season_files[0].open("r", encoding="utf-8") as f:
+        for season_file in season_files:
+            try:
+                season_num = int(season_file.stem.split('_')[1])
+            except (IndexError, ValueError):
+                season_num = season_file.stem
+            with season_file.open("r", encoding="utf-8") as f:
                 season_data = json.load(f)
-                print(f"Sample season ({season_files[0].name}) episodes: {len(season_data)}")
+            print(f"Season {season_num}: {len(season_data)} episodes")
     else:
         print("Document store directory missing.")
 
@@ -74,7 +96,8 @@ def status() -> int:
 
             client = chromadb.PersistentClient(path=str(CHROMA_DIR.absolute()))
             collection = client.get_collection("buffy_episodes")
-            print(f"Collection count: {collection.count()}")
+            count = collection.count()
+            print(f"Collection count: {count}")
         except Exception as exc:  # pragma: no cover - informational only
             print(f"Failed to inspect ChromaDB collection: {exc}")
     else:
@@ -84,32 +107,80 @@ def status() -> int:
     return 0
 
 
-def crawl_all() -> int:
+
+def latest_season_coverage() -> Dict[int, int]:
+    data = load_latest_content()
+    return _season_counts_from_content(data)
+
+
+def crawl(target_seasons: Optional[Iterable[int]], force: bool) -> int:
     try:
         from app.services.scraping.crawl import fetch_parse_save_episodes
     except ImportError as exc:
         logger.error("Could not import crawler: %s", exc)
         return 1
 
-    logger.info("Starting full crawl of all seasons...")
+    seasons = sorted(set(target_seasons)) if target_seasons else None
+    coverage = latest_season_coverage() if seasons else {}
+
+    if seasons:
+        season_labels = ", ".join(f"S{season}" for season in seasons)
+        logger.info("Requested crawl for seasons: %s", season_labels)
+        if not force and coverage and set(seasons).issubset(coverage.keys()):
+            logger.warning("All requested seasons already present. Use --force to re-crawl.")
+            return 0
+    else:
+        logger.info("Starting full crawl of all seasons")
+        if not force and list_content_files():
+            logger.warning("Content files already exist. Use --force to re-crawl.")
+            return 0
+
     try:
-        fetch_parse_save_episodes()
+        metadata = fetch_parse_save_episodes(seasons)
     except Exception as exc:
         logger.error("Crawl failed: %s", exc)
         return 1
 
-    logger.info("Crawl completed successfully.")
+    if not metadata.get("saved"):
+        logger.error("Crawl did not complete successfully; see logs above")
+        return 1
+
+    logger.info("Crawl completed successfully (%s episodes)", metadata.get("total_episodes", "unknown"))
+    print("=== Crawl Summary ===")
+    for season, count in sorted(metadata.get("season_counts", {}).items()):
+        print(f"Season {season}: {count} episodes")
+    print(f"Total episodes: {metadata.get('total_episodes', 'unknown')}")
+    print(f"Saved to: {metadata.get('output_file')}")
+    if metadata.get("validation_errors"):
+        print("Validation warnings:")
+        for message in metadata["validation_errors"]:
+            print(f" - {message}")
     return 0
+
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Scrape Buffy episode data.")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--all", action="store_true", help="Scrape all seasons (web request)")
-    group.add_argument("--season", type=int, help="Scrape a single season (1-7)")
+    group.add_argument(
+        "--season",
+        type=int,
+        nargs="+",
+        metavar="N",
+        help="Scrape specific season(s) (1-7)"
+    )
     parser.add_argument("--status", action="store_true", help="Show pipeline status")
     parser.add_argument("--force", action="store_true", help="Force crawl even if data exists")
     return parser.parse_args()
+
+
+def _validate_seasons(values: Iterable[int]) -> List[int]:
+    seasons = sorted(set(int(v) for v in values))
+    invalid = [s for s in seasons if s not in SEASON_RANGE]
+    if invalid:
+        raise ValueError(f"Invalid season numbers: {invalid}. Expected values between 1 and 7.")
+    return seasons
 
 
 def main() -> int:
@@ -118,15 +189,15 @@ def main() -> int:
     if args.status:
         return status()
 
-    if args.season and args.season != 1:
-        logger.error("Season-specific crawl not yet implemented. Use --all or season 1.")
+    try:
+        if args.season:
+            target = _validate_seasons(args.season)
+            return crawl(target, args.force)
+        if args.all:
+            return crawl(list(SEASON_RANGE), args.force)
+    except ValueError as exc:
+        logger.error(str(exc))
         return 1
-
-    if args.season == 1 or args.all:
-        if not args.force and list_content_files():
-            logger.warning("Content files already exist. Use --force to re-crawl.")
-            return 0
-        return crawl_all()
 
     logger.info("No action requested. Use --status, --all, or --season.")
     return 0
