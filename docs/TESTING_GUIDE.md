@@ -70,12 +70,14 @@ This automated test script performs the following checks:
 - Verifies crawler script is accessible
 - Prints scraper/document store/ChromaDB summary
 
-**Expected Output:**
-- All health endpoints return `200 OK`
-- Search endpoints return results with episode data
-- Vector store status is "healthy"
-- Data directories exist with expected files
-- Crawler status command succeeds
+**Manual crawler usage:**
+```bash
+# Inspect pipeline status without modifying data
+python3.12 scripts/scrape_episodes.py --status
+
+# Force a re-crawl (Season 1 currently implemented)
+python3.12 scripts/scrape_episodes.py --all --force
+```
 
 ---
 

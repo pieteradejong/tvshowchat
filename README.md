@@ -154,6 +154,14 @@ Run the automated test suite:
 
 See `docs/TESTING_GUIDE.md` for detailed testing documentation.
 
+### Data Pipeline Utilities
+
+Use the crawler helper script for manual checks or to refresh scraped data (Season 1 currently supported):
+```bash
+python3.12 scripts/scrape_episodes.py --status      # snapshot of pipeline health
+python3.12 scripts/scrape_episodes.py --all --force  # re-crawl and regenerate content JSON
+```
+
 ## Contributing
 
 1. Fork the repository
