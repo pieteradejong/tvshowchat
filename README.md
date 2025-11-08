@@ -144,6 +144,7 @@ Run the automated test suite:
 3. **Search Functionality** - `/api/test-search` (default and custom queries)
 4. **Vector Store Status** - Verifies ChromaDB is healthy
 5. **Data Directories** - Checks for episode files and ChromaDB data
+6. **Crawler Status** - Runs `scripts/scrape_episodes.py --status`
 
 **Expected Results:**
 - All endpoints return `200 OK`

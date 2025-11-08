@@ -85,6 +85,21 @@ else
     echo -e "${RED}✗ ChromaDB data directory not found${NC}"
 fi
 
+
+echo -e "
+${YELLOW}6. Testing Crawler Status${NC}"
+CRAWLER_TMP_FILE=$(mktemp)
+if python3.12 scripts/scrape_episodes.py --status > "$CRAWLER_TMP_FILE"; then
+    echo -e "${GREEN}✓ Crawler status command succeeded${NC}"
+    head -n 10 "$CRAWLER_TMP_FILE"
+else
+    echo -e "${RED}✗ Crawler status command failed${NC}"
+    cat "$CRAWLER_TMP_FILE"
+    rm -f "$CRAWLER_TMP_FILE"
+    exit 1
+fi
+rm -f "$CRAWLER_TMP_FILE"
+
 echo -e "\n${YELLOW}Test Summary:${NC}"
 echo "----------------------------------------"
 echo "✓ Health endpoints tested"

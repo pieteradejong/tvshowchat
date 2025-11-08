@@ -65,11 +65,17 @@ This automated test script performs the following checks:
 - Counts season files (`season_*.json`)
 - Checks if `app/data/chroma/` directory exists (ChromaDB data)
 
+#### 6. Crawler Status
+- Runs `scripts/scrape_episodes.py --status`
+- Verifies crawler script is accessible
+- Prints scraper/document store/ChromaDB summary
+
 **Expected Output:**
 - All health endpoints return `200 OK`
 - Search endpoints return results with episode data
 - Vector store status is "healthy"
 - Data directories exist with expected files
+- Crawler status command succeeds
 
 ---
 
