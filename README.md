@@ -119,6 +119,13 @@ tvshowchat/
 4. **Vector Storage**: Embeddings are stored in ChromaDB for efficient retrieval
 5. **Search**: Semantic search is performed using ChromaDB vector similarity search
 
+## Documentation
+
+- `ARCHITECTURE.md` – High-level system design and diagrams
+- `docs/ROADMAP.md` – Current implementation roadmap and priorities
+- `docs/DATA_PIPELINE.md` – Detailed ingestion and storage pipeline
+- `docs/TESTING_GUIDE.md` – Automated and manual testing instructions
+
 ## Development
 
 ### Adding New Episodes

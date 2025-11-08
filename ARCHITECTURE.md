@@ -1,217 +1,173 @@
-# TV Show Chat - System Architecture
+# TV Show Chat – System Architecture
 
-## 🏗️ **Overall Architecture**
-
-TV Show Chat is a **semantic search and chat application** for Buffy the Vampire Slayer episodes, built with a modern microservices architecture using Redis as the primary database and vector store.
-
-## 🎯 **Core Components**
-
-### **1. Backend (Python FastAPI)**
-- **Framework**: FastAPI 0.104.1 with automatic OpenAPI documentation
-- **Language**: Python 3.12
-- **Server**: Uvicorn ASGI server
-- **Database**: Redis with RediSearch and RedisJSON modules
-- **Vector Store**: Redis with vector similarity search capabilities
-
-### **2. Frontend (React + TypeScript)**
-- **Framework**: React 18 with TypeScript
-- **Build Tool**: Vite 5.x
-- **Styling**: TailwindCSS
-- **State Management**: React Query for API state management
-- **UI Components**: Headless UI for accessible components
-
-### **3. AI/ML Layer**
-- **Embeddings**: Sentence Transformers `all-MiniLM-L6-v2`
-- **Vector Search**: Redis vector similarity search with cosine similarity
-- **Semantic Understanding**: Advanced query processing with character and theme detection
-
-## 🗄️ **Database Architecture**
-
-### **Primary Database: Redis**
-- **Redis Version**: 6.x or later
-- **Modules**: 
-  - **RediSearch 2.2+**: Full-text and vector search
-  - **RedisJSON 2.0+**: JSON document storage
-- **Connection**: Local Redis instance on port 6379
-
-### **Data Storage Strategy**
-
-#### **Episode Data Structure**
-```json
-{
-  "buffy:s01:e01": {
-    "synopsis": "Episode synopsis text...",
-    "summary": "Episode summary text...",
-    "synopsis_embedding": [0.1, 0.2, ...], // 384-dimensional vector
-    "summary_embedding": [0.3, 0.4, ...], // 384-dimensional vector
-    "metadata": {
-      "season": 1,
-      "episode": "01",
-      "title": "Welcome to the Hellmouth",
-      "airdate": "March 10, 1997"
-    }
-  }
-}
-```
-
-#### **Vector Search Index**
-- **Index Name**: `idx:buffy_vss`
-- **Vector Dimensions**: 384 (all-MiniLM-L6-v2)
-- **Distance Metric**: COSINE
-- **Vector Type**: FLOAT32
-- **Index Type**: FLAT (for small to medium datasets)
-
-### **Data Flow**
-1. **Data Ingestion**: Episode data imported from JSON files
-2. **Embedding Generation**: Text converted to 384-dimensional vectors
-3. **Redis Storage**: Data stored as JSON documents with vector embeddings
-4. **Index Creation**: RediSearch index created for vector similarity search
-5. **Query Processing**: Natural language queries converted to vectors and searched
-
-## 🔍 **Search Architecture**
-
-### **Semantic Search Pipeline**
-1. **Query Processing**: Natural language query received
-2. **Vector Encoding**: Query converted to embedding using Sentence Transformers
-3. **Vector Search**: Redis vector similarity search performed
-4. **Result Ranking**: Results ranked by cosine similarity score
-5. **Metadata Enrichment**: Additional context and metadata added
-6. **Response Formatting**: Structured response with rich metadata
-
-### **Advanced Search Features**
-- **Character Relationship Detection**: Automatically identifies character interactions
-- **Theme Recognition**: Detects themes like romance, magic, vampire, etc.
-- **Context-Aware Scoring**: Boosts results based on query intent
-- **Multi-Modal Search**: Supports episode, quote, scene, and relationship queries
-
-## 🚀 **API Architecture**
-
-### **RESTful Endpoints**
-- **Base URL**: `http://localhost:8000`
-- **API Prefix**: `/api`
-- **Documentation**: Automatic OpenAPI docs at `/docs`
-
-#### **Core Endpoints**
-- `POST /api/search` - Semantic episode search
-- `GET /api/test-search` - Test search functionality
-- `GET /api/test` - System health and status
-- `GET /health` - Overall system health
-- `GET /health/redis` - Redis connection status
-- `GET /health/model` - Embedding model status
-
-### **Request/Response Format**
-```json
-// Search Request
-{
-  "query": "Buffy and Angel romantic scenes",
-  "limit": 5,
-  "season": 1
-}
-
-// Search Response
-[
-  {
-    "season": 1,
-    "episode": "01",
-    "title": "Welcome to the Hellmouth",
-    "airdate": "March 10, 1997",
-    "content_type": "summary",
-    "text": "Relevant episode text...",
-    "score": 0.85,
-    "characters": ["Buffy", "Angel"],
-    "themes": ["romance", "vampire"],
-    "context": "Features characters: Buffy, Angel | Themes: romance, vampire"
-  }
-]
-```
-
-## 🔧 **Service Architecture**
-
-### **Backend Services**
-- **Main Application** (`app/api/main.py`): FastAPI app with middleware and routing
-- **Search Service** (`app/api/routes/search.py`): Search endpoint handlers
-- **Embedding Service** (`app/services/embed.py`): Redis operations and vector search
-- **Document Store** (`app/services/storage/document_store.py`): File-based backup storage
-- **Vector Store** (`app/services/vector_store.py`): Advanced semantic search logic
-
-### **Data Processing Pipeline**
-1. **Data Loading**: Episode data loaded from JSON files
-2. **Pipeline Creation**: Redis pipeline for batch operations
-3. **Embedding Generation**: Text converted to vectors
-4. **Data Storage**: Episodes stored in Redis as JSON documents
-5. **Index Creation**: RediSearch index created for vector search
-6. **Health Verification**: System components verified
-
-## 🌐 **Frontend Architecture**
-
-### **Component Structure**
-- **App.tsx**: Main application with tab navigation
-- **Search.tsx**: Advanced search interface with rich results
-- **ChatWindow.tsx**: Chat interface (future feature)
-- **Components**: Reusable UI components
-
-### **State Management**
-- **React Query**: API state management and caching
-- **Local State**: Component-level state with React hooks
-- **Error Handling**: Comprehensive error states and user feedback
-
-## 📊 **Performance Characteristics**
-
-### **Vector Search Performance**
-- **Embedding Model**: all-MiniLM-L6-v2 (384 dimensions, ~80MB)
-- **Search Latency**: <100ms for typical queries
-- **Index Size**: ~1MB per 100 episodes
-- **Memory Usage**: ~200MB for full Season 1 dataset
-
-### **Scalability**
-- **Redis**: Can handle thousands of episodes efficiently
-- **Vector Search**: Linear scaling with dataset size
-- **Concurrent Users**: Limited by Redis connection pool (default 100)
-
-## 🔒 **Security & Configuration**
-
-### **CORS Configuration**
-- **Allowed Origins**: `http://localhost:5173`, `http://localhost:5175`
-- **Methods**: All HTTP methods
-- **Headers**: All headers
-- **Credentials**: Enabled
-
-### **Environment Configuration**
-- **Redis Host**: localhost
-- **Redis Port**: 6379
-- **API Port**: 8000
-- **Frontend Port**: 5173
-
-## 🚀 **Deployment Architecture**
-
-### **Development Environment**
-- **Backend**: Python virtual environment with uvicorn
-- **Frontend**: Vite development server with hot reload
-- **Redis**: Local Redis instance
-- **Data**: Local JSON files and Redis storage
-
-### **Production Considerations**
-- **Redis**: Redis Cluster for high availability
-- **API**: Gunicorn with multiple workers
-- **Frontend**: Static build served by CDN
-- **Monitoring**: Redis monitoring and API health checks
-
-## 📈 **Future Architecture Enhancements**
-
-### **Planned Improvements**
-1. **Multi-Season Support**: Expand to all 7 seasons of Buffy
-2. **Chat Functionality**: LLM integration for conversational search
-3. **Real-time Features**: WebSocket support for live updates
-4. **Advanced Analytics**: Search analytics and user behavior tracking
-5. **Multi-Show Support**: Extend to other TV shows
-
-### **Scalability Roadmap**
-1. **Redis Cluster**: Distributed Redis for larger datasets
-2. **Microservices**: Split into separate search and chat services
-3. **CDN Integration**: Global content delivery
-4. **API Gateway**: Centralized API management
-5. **Container Orchestration**: Kubernetes deployment
+TV Show Chat is a semantic search and chat experience for *Buffy the Vampire Slayer*. The system ingests episode content, stores structured documents, generates embeddings, and serves semantic results to a React frontend via a FastAPI backend.
 
 ---
 
-*This architecture document reflects the current implementation using Redis as the primary database and vector store, not local file system storage.*
+## 1. High-Level Overview
+
+- **Backend:** FastAPI (Python 3.12) with Uvicorn; exposes REST endpoints, orchestrates ingest/search, and manages lifecycle hooks (document store + ChromaDB).
+- **Vector Store:** ChromaDB (persistent client) stores episode embeddings; file-based document store (`app/data/episodes`) acts as canonical backup.
+- **Embedding Model:** `sentence-transformers/all-MiniLM-L6-v2` loaded lazily for query encoding and on-demand embedding generation.
+- **Frontend:** React 18 + TypeScript + Vite; communicates with API for search and diagnostics.
+- **Automation:** Shell scripts (`init.sh`, `run.sh`, `test.sh`, `scripts/scrape_episodes.py`) standardize environment setup, testing, and crawling/status checks.
+
+---
+
+## 2. Architecture Diagram
+
+```mermaid
+graph TB
+    subgraph "Frontend Layer"
+        UI[React UI
+TypeScript + TailwindCSS]
+        SearchComp[Search Component]
+        ChatComp[Chat Component]
+    end
+
+    subgraph "API Layer"
+        FastAPI[FastAPI Server
+Port 8000]
+        SearchRoute[/api/search]
+        HealthRoute[/health/*]
+    end
+
+    subgraph "Service Layer"
+        VectorStore[AdvancedVectorStore
+ChromaDB Client]
+        DocumentStore[BuffyDocumentStore
+File-backed episodes]
+        EmbedService[SentenceTransformer
+Embeddings]
+    end
+
+    subgraph "Storage Layer"
+        Chroma[(ChromaDB
+PersistentClient)]
+        EpisodeFiles[(Episodes JSON
+app/data/episodes)]
+        EmbeddingFiles[(Embeddings JSON
+app/data/embeddings)]
+        ContentFiles[(Raw scrape JSON
+app/content)]
+    end
+
+    UI --> SearchComp
+    UI --> ChatComp
+    SearchComp --> FastAPI
+    ChatComp --> FastAPI
+    FastAPI --> SearchRoute
+    FastAPI --> HealthRoute
+    SearchRoute --> VectorStore
+    VectorStore --> EmbedService
+    VectorStore --> DocumentStore
+    VectorStore --> Chroma
+    DocumentStore --> EpisodeFiles
+    DocumentStore --> EmbeddingFiles
+    ContentFiles --> DocumentStore
+```
+
+---
+
+## 3. Component Architecture
+
+```mermaid
+graph LR
+    subgraph "Frontend Components"
+        A[App.tsx
+Tab navigation]
+        B[Search.tsx
+Search UI]
+        C[ChatWindow.tsx
+Chat prototype]
+    end
+
+    subgraph "Backend API"
+        D[app/api/main.py
+Application factory]
+        E[app/api/routes/search.py
+Search + test endpoints]
+    end
+
+    subgraph "Core Services"
+        F[app/services/vector_store.py
+AdvancedVectorStore]
+        G[app/services/storage/document_store.py
+BuffyDocumentStore]
+    end
+
+    A --> B
+    A --> C
+    B --> D
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+```
+
+---
+
+## 4. Data Flow
+
+```mermaid
+sequenceDiagram
+    participant Scraper as Crawler CLI
+    participant Content as Content JSON
+    participant DocStore as Document Store
+    participant Chroma as ChromaDB
+    participant API as FastAPI
+    participant Frontend as React UI
+
+    note over Scraper,DocStore: Ingestion Path
+    Scraper->>Content: scrape_episodes.py --all
+    Content->>DocStore: import_from_json()
+    DocStore->>Chroma: _populate_chromadb()
+
+    note over API,Frontend: Query Path
+    Frontend->>API: POST /api/search (query)
+    API->>Chroma: cosine similarity search
+    API->>DocStore: fetch metadata/context
+    API-->>Frontend: ranked SearchResult list
+```
+
+---
+
+## 5. Storage & Pipeline
+
+1. **Content JSON (`app/content/`)** – Raw scrape snapshots (`buffy_all_seasons_<timestamp>.json`).
+2. **Document Store (`app/data/episodes/`)** – Season files derived from latest content; embeddings cached in `app/data/embeddings/`.
+3. **ChromaDB (`app/data/chroma/`)** – Persistent vector collection (`buffy_episodes`) populated at startup when empty; reused afterwards.
+4. **Health & Monitoring** – `/health/vector-store`, `/health/model`, `/api/test`, and `scripts/scrape_episodes.py --status` provide diagnostics for each layer.
+
+---
+
+## 6. API Overview
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /health` | Application heartbeat |
+| `GET /health/vector-store` | Confirms Chroma availability |
+| `GET /health/model` | Validates SentenceTransformer load |
+| `GET /api/test` | System snapshot (stats + sample) |
+| `GET /api/test-search` | Fixture queries for smoke tests |
+| `POST /api/search` | Semantic search across episodes |
+
+Responses align with the frontend `SearchResult` interface and include season/episode identifiers, titles, summaries, metadata, and similarity scores.
+
+---
+
+## 7. Operational Scripts
+
+- `init.sh` – creates Python 3.12 venv, installs dependencies, primes data folders.
+- `run.sh` – enforces Python 3.12, runs FastAPI via Uvicorn, handles shutdown.
+- `run_frontend.sh` – starts Vite dev server.
+- `scripts/scrape_episodes.py` – crawler/status CLI (`--status`, `--all`, per-season planned).
+- `test.sh` – orchestrates health checks, search tests, crawler status, and pipeline integrity validation.
+
+---
+
+## 8. Scalability & Roadmap
+
+- **Short Term:** Expand crawler to all seven seasons, add reindex helpers, extend pipeline tests, enrich roadmap documentation.
+- **Medium Term:** Incremental crawling, automated re-population triggers, richer frontend experience, and optional chat UX.
+- **Long Term:** Multi-show support, pluggable vector stores, production deployment with containerization and monitoring.
