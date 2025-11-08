@@ -14,7 +14,7 @@ TV Show Chat delivers semantic search across *Buffy the Vampire Slayer* episodes
 - Automated test harness (`./test.sh`) covering health, search, crawler status, and pipeline integrity
 
 ### Data & Pipeline
-- Season 1 content scraped and stored in `app/content/buffy_all_seasons_*.json`
+- Season 1 content scraped and stored in `app/content/btvs_all_seasons.json`
 - Document store + embeddings exported to `app/data/episodes` and `app/data/embeddings`
 - `scripts/scrape_episodes.py` for crawler status reporting and manual re-crawling
 

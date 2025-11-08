@@ -1,15 +1,14 @@
 import pytest
 import os
-import glob
 import json
 
 
 @pytest.fixture(scope="module")
 def json_data():
-    file_list = glob.glob("buffy_all_seasons_*.json")
-    file_list.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-    most_recent_file = file_list[0]
-    with open(most_recent_file, "r") as f:
+    content_path = os.path.join("app", "content", "btvs_all_seasons.json")
+    if not os.path.exists(content_path):
+        pytest.skip("btvs_all_seasons.json not found; run scripts/crawl.sh first.")
+    with open(content_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 

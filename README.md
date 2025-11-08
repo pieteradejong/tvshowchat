@@ -184,12 +184,15 @@ See `docs/TESTING_GUIDE.md` for detailed testing documentation.
 
 ### Data Pipeline Utilities
 
-Use the crawler helper script for manual checks or to refresh scraped data (Season 1 currently supported):
+Use the crawler helper scripts for manual checks or to refresh scraped data:
 ```bash
 python3.12 scripts/scrape_episodes.py --status          # snapshot of pipeline health
 python3.12 scripts/scrape_episodes.py --import-latest    # import latest crawl into document store
 python3.12 scripts/scrape_episodes.py --reindex-chroma   # rebuild ChromaDB from document store
 python3.12 scripts/scrape_episodes.py --all --force      # re-crawl and regenerate content JSON
+./scripts/crawl.sh                                       # crawl any seasons missing from btvs_all_seasons.json
+./scripts/crawl.sh --season 5                            # crawl a specific season
+./scripts/crawl.sh --all --force                         # force a full re-crawl
 ```
 
 ## Contributing

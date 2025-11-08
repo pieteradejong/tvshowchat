@@ -10,7 +10,7 @@
 - Extracts episode data (summary, synopsis, quotes, trivia, production info, etc.)
 - Generates embeddings using SentenceTransformer
 - Validates data using `app/services/pipeline/validation.py`
-- **Saves to:** `app/content/buffy_all_seasons_{timestamp}.json`
+- **Saves to:** `app/content/btvs_all_seasons.json`
 
 **CLI Helper:**
 ```bash
@@ -29,14 +29,14 @@ python3.12 scripts/scrape_episodes.py --all --force
 
 **Current State:**
 - ✅ Scraping code exists and works (`scripts/scrape_episodes.py`)
-- ✅ 4 content JSON files exist (latest: `buffy_all_seasons_1748298398.json`)
+- ✅ Content JSON file present: `btvs_all_seasons.json`
 - ⚠️  Scraping is **manual** (not automated in init.sh)
 - ⚠️  Only Season 1 data currently scraped (12 episodes)
 
 ---
 
 ### 2. **Content Storage** ✅
-**Location:** `app/content/buffy_all_seasons_*.json`
+**Location:** `app/content/btvs_all_seasons.json`
 
 **Format:**
 ```json
@@ -118,7 +118,7 @@ python3.12 scripts/scrape_episodes.py --all --force
 │    ↓                                                         │
 │    buffy.fandom.com → BeautifulSoup → Validation            │
 │    ↓                                                         │
-│    app/content/buffy_all_seasons_{timestamp}.json           │
+│    app/content/btvs_all_seasons.json                        │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -203,7 +203,7 @@ python3.12 scripts/scrape_episodes.py --all --force
 # Run scraping for all seasons
 python app/services/scraping/crawl.py
 
-# This will create: app/content/buffy_all_seasons_{new_timestamp}.json
+# This will update: app/content/btvs_all_seasons.json
 # Then restart server - it will auto-import and populate ChromaDB
 ```
 
@@ -220,7 +220,7 @@ If you have content files with all seasons:
 python -c "
 from app.services.storage.document_store import get_store
 store = get_store()
-store.import_from_json('app/content/buffy_all_seasons_1748298398.json')
+store.import_from_json('app/content/btvs_all_seasons.json')
 "
 
 # Then restart server - ChromaDB will populate
@@ -232,7 +232,7 @@ store.import_from_json('app/content/buffy_all_seasons_1748298398.json')
 
 ```bash
 # Check content files
-ls -lh app/content/buffy_all_seasons_*.json
+ls -lh app/content/btvs_all_seasons.json
 
 # Check document store
 ls -lh app/data/episodes/season_*.json

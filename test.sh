@@ -137,7 +137,6 @@ fi
 echo -e "
 ${YELLOW}9. Testing Data Pipeline Integrity${NC}"
 $PYTHON_BIN <<'PYCODE'
-import glob
 import json
 import sys
 import urllib.request
@@ -151,11 +150,10 @@ def fail(msg):
     print(f"{RED}ERROR: {msg}{NC}")
     sys.exit(1)
 
-content_files = sorted(glob.glob('app/content/buffy_all_seasons_*.json'))
-if not content_files:
-    fail('No content files found (run scraper)')
-latest = max(content_files, key=lambda p: Path(p).stat().st_mtime)
-with open(latest, 'r', encoding='utf-8') as f:
+content_path = Path('app/content/btvs_all_seasons.json')
+if not content_path.exists():
+    fail('Content file btvs_all_seasons.json not found (run scripts/crawl.sh)')
+with open(content_path, 'r', encoding='utf-8') as f:
     content_data = json.load(f)
 content_total = sum(len(season) for season in content_data.values())
 

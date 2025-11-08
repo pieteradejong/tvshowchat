@@ -1,5 +1,3 @@
-import os
-import glob
 import json
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -8,25 +6,32 @@ import numpy as np
 from typing import List, Optional
 from app.services.vector_store import get_vector_store
 from app.config.config import logger
+from pathlib import Path
 
 # --- Data Loading ---
-CONTENT_DIR = "app/content"
+ROOT_DIR = Path(__file__).resolve().parents[3]
+CONTENT_FILE = ROOT_DIR / "app/content/btvs_all_seasons.json"
 MODEL_NAME = "all-MiniLM-L6-v2"
 
 # Find the latest season 1 data file
-def get_latest_data_file():
-    files = sorted(glob.glob(os.path.join(CONTENT_DIR, "buffy_all_seasons_*.json")), reverse=True)
-    for f in files:
-        with open(f, "r") as file:
-            data = json.load(file)
-            if "season_1" in data:
-                return f
-    raise FileNotFoundError("No season 1 data file found.")
+def get_data_file() -> Path:
+    if not CONTENT_FILE.exists():
+        raise FileNotFoundError(
+            f"No content data found at {CONTENT_FILE.relative_to(ROOT_DIR)}. "
+            "Run scripts/crawl.sh to generate btvs_all_seasons.json."
+        )
+    with CONTENT_FILE.open("r", encoding="utf-8") as file:
+        data = json.load(file)
+    if "season_1" not in data:
+        raise FileNotFoundError(
+            f"Content file {CONTENT_FILE.relative_to(ROOT_DIR)} does not contain season_1 data."
+        )
+    return CONTENT_FILE
 
 # Load data and model at startup
-DATA_FILE = get_latest_data_file()
-with open(DATA_FILE, "r") as f:
-    DATA = json.load(f)["season_1"]
+DATA_FILE = get_data_file()
+with DATA_FILE.open("r", encoding="utf-8") as f:
+    DATA = json.load(f).get("season_1", {})
 
 MODEL = SentenceTransformer(MODEL_NAME)
 

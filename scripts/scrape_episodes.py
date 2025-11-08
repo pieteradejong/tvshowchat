@@ -5,9 +5,8 @@ import argparse
 import json
 import logging
 import sys
-from datetime import datetime
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 logging.basicConfig(
     level=logging.INFO,
@@ -19,25 +18,20 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 
-CONTENT_DIR = Path("app/content")
-EPISODES_DIR = Path("app/data/episodes")
-EMBEDDINGS_DIR = Path("app/data/embeddings")
-CHROMA_DIR = Path("app/data/chroma")
+CONTENT_DIR = ROOT_DIR / "app/content"
+CONTENT_FILE = CONTENT_DIR / "btvs_all_seasons.json"
+EPISODES_DIR = ROOT_DIR / "app/data/episodes"
+EMBEDDINGS_DIR = ROOT_DIR / "app/data/embeddings"
+CHROMA_DIR = ROOT_DIR / "app/data/chroma"
 
 
 SEASON_RANGE = range(1, 8)
 
 
-def list_content_files() -> List[Path]:
-    return sorted(CONTENT_DIR.glob("buffy_all_seasons_*.json"))
-
-
-def load_latest_content() -> Dict:
-    files = list_content_files()
-    if not files:
+def load_latest_content() -> Dict[str, Any]:
+    if not CONTENT_FILE.exists():
         return {}
-    latest = max(files, key=lambda p: p.stat().st_mtime)
-    with latest.open("r", encoding="utf-8") as f:
+    with CONTENT_FILE.open("r", encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -53,10 +47,7 @@ def _season_counts_from_content(data: Dict) -> Dict[int, int]:
 
 
 def latest_content_path() -> Optional[Path]:
-    files = list_content_files()
-    if not files:
-        return None
-    return max(files, key=lambda p: p.stat().st_mtime)
+    return CONTENT_FILE if CONTENT_FILE.exists() else None
 
 
 def import_latest_content() -> int:
@@ -104,12 +95,10 @@ def reindex_chromadb() -> int:
 def status() -> int:
     print("=== Scraper Status ===")
 
-    # Content files
-    content_files = list_content_files()
-    print(f"Content JSON files: {len(content_files)}")
-    if content_files:
-        latest = max(content_files, key=lambda p: p.stat().st_mtime)
-        print(f"Latest content file: {latest.name}")
+    # Content file
+    if CONTENT_FILE.exists():
+        relative_path = CONTENT_FILE.relative_to(ROOT_DIR)
+        print(f"Content JSON file: {relative_path}")
         data = load_latest_content()
         season_counts = _season_counts_from_content(data)
         if season_counts:
@@ -120,7 +109,7 @@ def status() -> int:
         else:
             print("No season data found in latest content file.")
     else:
-        print("No content files found.")
+        print("Content JSON file: missing")
 
     # Document store
     print("\nDocument store:")
@@ -174,22 +163,24 @@ def crawl(target_seasons: Optional[Iterable[int]], force: bool) -> int:
         return 1
 
     seasons = sorted(set(target_seasons)) if target_seasons else None
-    coverage = latest_season_coverage() if seasons else {}
+    existing_data = load_latest_content()
+    coverage = _season_counts_from_content(existing_data)
 
     if seasons:
         season_labels = ", ".join(f"S{season}" for season in seasons)
         logger.info("Requested crawl for seasons: %s", season_labels)
-        if not force and coverage and set(seasons).issubset(coverage.keys()):
+        if not force and set(seasons).issubset(coverage.keys()):
             logger.warning("All requested seasons already present. Use --force to re-crawl.")
             return 0
     else:
         logger.info("Starting full crawl of all seasons")
-        if not force and list_content_files():
-            logger.warning("Content files already exist. Use --force to re-crawl.")
+        if not force and set(SEASON_RANGE).issubset(coverage.keys()):
+            logger.warning("Content file already contains all seasons. Use --force to re-crawl.")
             return 0
+        seasons = list(SEASON_RANGE)
 
     try:
-        metadata = fetch_parse_save_episodes(seasons)
+        metadata = fetch_parse_save_episodes(seasons, existing_data)
     except Exception as exc:
         logger.error("Crawl failed: %s", exc)
         return 1
@@ -202,6 +193,11 @@ def crawl(target_seasons: Optional[Iterable[int]], force: bool) -> int:
     print("=== Crawl Summary ===")
     for season, count in sorted(metadata.get("season_counts", {}).items()):
         print(f"Season {season}: {count} episodes")
+    combined_counts = metadata.get("combined_counts")
+    if combined_counts:
+        print("--- Combined Coverage ---")
+        for season, count in sorted(combined_counts.items()):
+            print(f"Season {season}: {count} episodes")
     print(f"Total episodes: {metadata.get('total_episodes', 'unknown')}")
     print(f"Saved to: {metadata.get('output_file')}")
     if metadata.get("validation_errors"):

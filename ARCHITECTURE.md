@@ -134,7 +134,7 @@ sequenceDiagram
 
 ## 5. Storage & Pipeline
 
-1. **Content JSON (`app/content/`)** – Raw scrape snapshots (`buffy_all_seasons_<timestamp>.json`).
+1. **Content JSON (`app/content/`)** – Aggregated scrape data (`btvs_all_seasons.json`).
 2. **Document Store (`app/data/episodes/`)** – Season files derived from latest content; embeddings cached in `app/data/embeddings/`.
 3. **ChromaDB (`app/data/chroma/`)** – Persistent vector collection (`buffy_episodes`) populated at startup when empty; reused afterwards.
 4. **Health & Monitoring** – `/health/vector-store`, `/health/model`, `/api/test`, and `scripts/scrape_episodes.py --status` provide diagnostics for each layer.

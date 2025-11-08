@@ -1,9 +1,10 @@
+import copy
 import json
 import requests
 from bs4 import BeautifulSoup
 from sentence_transformers import SentenceTransformer
 from typing import Any, Dict, Iterable, List, Optional, Tuple
-import time
+from pathlib import Path
 import re
 from numpy import float32
 import logging
@@ -25,6 +26,9 @@ logger = logging.getLogger(__name__)
 BASE_URL = "https://buffy.fandom.com/"
 ONE_MINUTE = 60
 MAX_REQUESTS_PER_MINUTE = 30
+ROOT_DIR = Path(__file__).resolve().parents[3]
+CONTENT_DIR = ROOT_DIR / "app/content"
+CONTENT_FILE = CONTENT_DIR / "btvs_all_seasons.json"
 
 @sleep_and_retry
 @limits(calls=MAX_REQUESTS_PER_MINUTE, period=ONE_MINUTE)
@@ -212,7 +216,10 @@ def _iter_episode_rows(table) -> Iterable[Any]:
             yield cells
 
 
-def fetch_parse_save_episodes(target_seasons: Optional[Iterable[int]] = None) -> Dict[str, Any]:
+def fetch_parse_save_episodes(
+    target_seasons: Optional[Iterable[int]] = None,
+    existing_dataset: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
     """Fetch, parse, and save episode data. Returns metadata about the crawl."""
     try:
         url = f"{BASE_URL}wiki/List_of_Buffy_the_Vampire_Slayer_episodes"
@@ -227,6 +234,7 @@ def fetch_parse_save_episodes(target_seasons: Optional[Iterable[int]] = None) ->
         validation_errors = []
         season_counts: Dict[int, int] = {}
         processed_seasons: List[int] = []
+        merged_dataset: Dict[str, Dict[str, Any]] = copy.deepcopy(existing_dataset) if existing_dataset else {}
 
         for season_num, table in _season_tables(soup):
             if season_filter and season_num not in season_filter:
@@ -329,24 +337,36 @@ def fetch_parse_save_episodes(target_seasons: Optional[Iterable[int]] = None) ->
             }
 
         try:
-            validated_data = validate_episode_data(result)
-            timestamp = str(int(time.time()))
-            save_to_filename = f"app/content/buffy_all_seasons_{timestamp}.json"
+            merged_dataset.update(result)
+            validated_data = validate_episode_data(merged_dataset)
+            validated_dict = validated_data.as_dict()
+            ordered_seasons = sorted(
+                validated_dict.items(),
+                key=lambda item: int(item[0].split("_")[1]) if item[0].split("_")[1].isdigit() else item[0],
+            )
+            ordered_dict = {key: value for key, value in ordered_seasons}
 
-            with open(save_to_filename, "w") as f:
-                json.dump(validated_data.as_dict(), f, indent=4)
+            CONTENT_DIR.mkdir(parents=True, exist_ok=True)
+            with CONTENT_FILE.open("w", encoding="utf-8") as f:
+                json.dump(ordered_dict, f, indent=4)
 
-            logger.info(f"Saved validated crawl results to {save_to_filename}")
+            logger.info(f"Saved validated crawl results to {CONTENT_FILE.relative_to(ROOT_DIR)}")
             if validation_errors:
                 logger.warning("Validation errors occurred:")
                 for error in validation_errors:
                     logger.warning(error)
 
-            total_episodes = sum(season_counts.values())
+            combined_counts = {
+                int(key.split("_")[1]): len(value)
+                for key, value in ordered_dict.items()
+                if key.startswith("season_") and key.split("_")[1].isdigit()
+            }
+            total_episodes = sum(combined_counts.values())
             return {
                 "saved": True,
-                "output_file": save_to_filename,
+                "output_file": str(CONTENT_FILE.relative_to(ROOT_DIR)),
                 "season_counts": season_counts,
+                "combined_counts": combined_counts,
                 "validation_errors": validation_errors,
                 "processed_seasons": processed_seasons,
                 "total_episodes": total_episodes,

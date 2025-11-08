@@ -99,8 +99,13 @@ class BuffyData(BaseModel):
 
     def validate_season_numbers(self) -> bool:
         """Validate that season numbers are sequential."""
-        season_numbers = [int(k.split('_')[1]) for k in self.seasons.keys()]
-        return season_numbers == list(range(1, len(season_numbers) + 1))
+        if not self.seasons:
+            return True
+        try:
+            season_numbers = sorted(int(k.split('_')[1]) for k in self.seasons.keys())
+        except (IndexError, ValueError):
+            return False
+        return len(season_numbers) == len(set(season_numbers)) and all(1 <= num <= 7 for num in season_numbers)
 
     def validate_episode_numbers(self) -> bool:
         """Validate that episode numbers are sequential within each season."""

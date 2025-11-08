@@ -13,7 +13,7 @@ from redis.commands.search.query import Query
 
 REDIS_HOST = "localhost"
 REDIS_PORT = 6379
-CONTENT_PATH = "app/content/buffy_all_seasons_1698524665.json"
+CONTENT_PATH = "app/content/btvs_all_seasons.json"
 VECTOR_DIMENSION = 768  # related to the chosen embedding model
 
 client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)

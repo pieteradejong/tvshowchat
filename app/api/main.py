@@ -10,6 +10,9 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from typing import Dict, Any
 
+ROOT_DIR = Path(__file__).resolve().parents[2]
+CONTENT_FILE = ROOT_DIR / "app/content/btvs_all_seasons.json"
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -45,15 +48,11 @@ async def startup_event():
         # Test store by checking if any seasons exist
         if not list(store.episodes_path.glob("season_*.json")):
             logger.info("Store empty, importing data...")
-            # Find latest JSON file
-            content_dir = Path("app/content")
-            json_files = list(content_dir.glob("buffy_all_seasons_*.json"))
-            if json_files:
-                latest_file = max(json_files, key=lambda p: p.stat().st_mtime)
-                store.import_from_json(str(latest_file))
-                logger.info(f"Imported data from {latest_file}")
+            if CONTENT_FILE.exists():
+                store.import_from_json(str(CONTENT_FILE))
+                logger.info(f"Imported data from {CONTENT_FILE.relative_to(ROOT_DIR)}")
             else:
-                logger.warning("No JSON data files found to import")
+                logger.warning(f"Content file missing at {CONTENT_FILE.relative_to(ROOT_DIR)}")
         
         service_status["store"]["status"] = "healthy"
         logger.info("Document store initialized successfully")
