@@ -1,273 +1,78 @@
 # Roadmap
 
-## Current Status Assessment
+## Current Snapshot (November 2025)
 
-### ✅ What Works:
-1. **ChromaDB Integration** - 12 episodes loaded and searchable
-2. **Backend API** - Search endpoints functional
-3. **Frontend UI** - React components exist
-4. **Document Store** - File-based storage working
-
-### ❌ What Needs Fixing:
-1. **API Route Conflict** - Two `/api/search` endpoints (different formats)
-2. **Frontend-Backend Mismatch** - Response format doesn't match
-3. **Crawler Not Integrated** - Manual only, not testable
-4. **Data Pipeline Gaps** - Not fully automated
-5. **Test Coverage** - Missing crawler and frontend tests
+- ✅ ChromaDB-backed search is live and stable (Season 1 data loaded)
+- ✅ Backend `/api/search` response matches the frontend contract
+- ✅ Frontend search + chat prototype work against the unified API
+- ✅ `./test.sh` covers health checks, search smoke tests, crawler status, and pipeline integrity counts
+- ⚠️ Multi-season data ingestion still pending (currently only Season 1)
+- ⚠️ Manual re-import / reindex helpers are limited
+- ⚠️ Automated frontend build/test pipeline not yet implemented
 
 ---
 
-## Implementation Plan
+## Completed Milestones
 
-### Phase 1: Fix API Response Format (Critical - Blocks Frontend)
+1. **API Alignment**
+   - Removed duplicate `/api/search` implementations
+   - Fixed `/api/test` sample episode handling and stats output
+   - Updated frontend components (`Search.tsx`, `ChatWindow.tsx`) for the new response shape
 
-**Problem:** Frontend expects array, but gets different format from different endpoints
+2. **Crawler & Pipeline Diagnostics**
+   - Added `scripts/scrape_episodes.py` with `--status`/`--all` modes
+   - Integrated crawler status + pipeline integrity verification into `./test.sh`
+   - Documented testing workflow (`docs/TESTING_GUIDE.md`) and pipeline overview (`docs/DATA_PIPELINE.md`)
 
-**Tasks:**
-1. Fix `/api/routes/search.py` to return correct format
-2. Remove duplicate `/api/search` in `app/api/api.py` or make it consistent
-3. Ensure response matches frontend `SearchResult` interface
-4. Fix `/api/test` endpoint error (`'season'` key issue)
-
-**Test:** `./test.sh` should verify search returns correct format
-
----
-
-### Phase 2: Functional Crawler Integration
-
-**Goal:** Make crawler testable and integrate into pipeline
-
-**Tasks:**
-1. Create crawler script: `scripts/scrape_episodes.py`
-2. Add crawler health check endpoint: `/api/health/crawler`
-3. Add crawler status endpoint: `/api/crawler/status`
-4. Integrate into `init.sh` (optional, or keep manual)
-5. Add data validation after scraping
-
-**Test:** `./test.sh` should verify:
-- Crawler can be invoked
-- Crawler saves data correctly
-- Data appears in document store
-- Data appears in ChromaDB
+3. **Docs & Tooling Refresh**
+   - Consolidated architecture diagrams into `ARCHITECTURE.md`
+  - Created `docs/ROADMAP.md` as the single source for planning
+   - Added README table of contents and documentation index for easier onboarding
 
 ---
 
-### Phase 3: Data Saving & Loading Verification
+## Focus Area: Multi-Season Pipeline Expansion
 
-**Goal:** Ensure complete data pipeline works end-to-end
+### Goals
+- Scrape and ingest Seasons 1–7
+- Re-import document store + regenerate/refresh ChromaDB collections
+- Extend automated tests to assert the larger dataset
 
-**Tasks:**
-1. Verify data saves correctly at each stage:
-   - Content JSON → Document Store
-   - Document Store → ChromaDB
-2. Add data integrity checks
-3. Add endpoint to verify data completeness
-4. Add endpoint to trigger re-indexing
+### Plan
+1. **Crawler Enhancements**
+   - Update `app/services/scraping/crawl.py` to iterate all season tables
+   - Support `scripts/scrape_episodes.py --season N` for targeted updates
+   - Improve logging / progress output for long runs
 
-**Test:** `./test.sh` should verify:
-- Data exists at each stage
-- Episode counts match
-- Embeddings are present
-- ChromaDB has correct data
+2. **Ingestion Helpers**
+   - Add CLI entry points to rerun `BuffyDocumentStore.import_from_json` and `_populate_chromadb()`
+   - Provide `--reindex` option to rebuild embeddings or purge stale ChromaDB data
 
----
+3. **Automated Testing Upgrades**
+   - Update `./test.sh` integrity checks to expect the full episode count (~144)
+   - Ensure API stats enumerate all seasons; fail fast if any are missing
+   - (Optional) Add frontend build smoke test (`npm run build`)
 
-### Phase 4: Frontend Integration & Testing
-
-**Goal:** Working frontend that can search and display results
-
-**Tasks:**
-1. Fix API response format to match frontend
-2. Test frontend can call backend
-3. Verify search results display correctly
-4. Add frontend build check to `test.sh`
-5. Test CORS is working
-
-**Test:** `./test.sh` should verify:
-- Frontend can be built
-- Frontend can call API
-- Search returns results
-- Results display correctly
+4. **Documentation Updates**
+   - Record new usage instructions in README + `docs/DATA_PIPELINE.md`
+   - Note season coverage/status in `docs/ROADMAP.md`
 
 ---
 
-## Detailed Step-by-Step Plan
+## Backlog / Nice-to-Haves
 
-### Step 1: Fix API Response Format (30 min)
-
-**Issue:** Frontend expects:
-```typescript
-interface SearchResult {
-  season: number;
-  episode: string;
-  title: string;
-  airdate: string;
-  content_type: string;
-  text: string;
-  score: number;
-  characters: string[];
-  themes: string[];
-  context: string;
-}
-```
-
-**Current:** `/api/routes/search.py` returns this format ✅
-**Problem:** `/api/api.py` also has `/api/search` with different format ❌
-
-**Fix:**
-1. Remove `/api/search` from `app/api/api.py` (keep only in routes)
-2. Ensure `/api/routes/search.py` returns correct format
-3. Fix `/api/test` endpoint to handle missing 'season' key
-
-**Test:**
-```bash
-curl -X POST http://localhost:8000/api/search \
-  -H "Content-Type: application/json" \
-  -d '{"query":"vampire","limit":2}' | python3.12 -m json.tool
-```
-
----
-
-### Step 2: Create Testable Crawler Script (1 hour)
-
-**Create:** `scripts/scrape_episodes.py`
-
-**Features:**
-- Can scrape single season or all seasons
-- Saves to content JSON
-- Validates data
-- Returns status/statistics
-- Can be called from command line
-
-**Usage:**
-```bash
-# Scrape Season 1
-python scripts/scrape_episodes.py --season 1
-
-# Scrape all seasons
-python scripts/scrape_episodes.py --all
-
-# Check status
-python scripts/scrape_episodes.py --status
-```
-
-**Add API Endpoints:**
-- `GET /api/crawler/status` - Check crawler status
-- `POST /api/crawler/scrape` - Trigger scraping (optional)
-
----
-
-### Step 3: Add Data Pipeline Tests to test.sh (30 min)
-
-**Add to test.sh:**
-1. **Crawler Test** - Verify crawler can run
-2. **Data Integrity Test** - Verify data at each stage:
-   - Content JSON files exist
-   - Document store has episodes
-   - ChromaDB has episodes
-   - Counts match across all stages
-3. **Frontend Build Test** - Verify frontend can build
-4. **End-to-End Search Test** - Test full flow
-
----
-
-### Step 4: Fix Frontend Integration (1 hour)
-
-**Tasks:**
-1. Verify API response format matches frontend
-2. Test CORS configuration
-3. Build frontend and verify it works
-4. Test search from frontend
-5. Add error handling
-
-**Test:** Manual + automated via test.sh
-
----
-
-### Step 5: Expand to All Seasons (After above works)
-
-**Tasks:**
-1. Run crawler for all 7 seasons
-2. Verify all data loads correctly
-3. Test search across all seasons
-4. Performance testing
-
----
-
-## Updated test.sh Structure
-
-```bash
-# 1. Health Endpoints (existing)
-# 2. System State (existing)
-# 3. Search Functionality (existing)
-# 4. Vector Store State (existing)
-# 5. Document Store (existing)
-
-# 6. NEW: Crawler Test
-# 7. NEW: Data Pipeline Integrity
-# 8. NEW: Frontend Build Test
-# 9. NEW: End-to-End Search Test
-```
-
----
-
-## Priority Order
-
-1. **Fix API Response Format** (Blocks frontend)
-2. **Add Crawler Tests** (Verify data pipeline)
-3. **Fix Frontend Integration** (Complete user flow)
-4. **Expand to All Seasons** (Scale up)
+- Incremental crawling (only fetch seasons missing from `app/content/`)
+- Automated nightly crawl and reindex script
+- Frontend UX polish (loading states, improved context display)
+- Chat UX evolution once semantic search is fully scoped
+- Performance benchmarking with the full dataset
 
 ---
 
 ## Success Criteria
 
-## Roadmap
-
-### Pipeline Expansion (Multi-Season Support)
-
-1. **Crawler Multi-Season Support**
-   - Update `app/services/scraping/crawl.py` to iterate seasons 1–7
-   - Adjust validation to handle season-specific episode counts (12 vs 22)
-   - Expand `scripts/scrape_episodes.py` with `--season N` and improve `--all` logging
-
-2. **Document Store Refresh CLI**
-   - Add helper or CLI to re-run `BuffyDocumentStore.import_from_json` on latest content
-   - Optionally add `--reindex` flag to clear and repopulate ChromaDB from disk
-
-3. **ChromaDB Reindex Command**
-   - Provide CLI command to reset collection and call `_populate_chromadb()`
-   - Ensure embeddings are regenerated or reused correctly
-
-4. **Test Suite Updates**
-   - Update `test.sh` pipeline integrity checks for new total episode counts (all seasons)
-   - Assert document store and API return all 7 season numbers
-
-5. **Manual Verification & Documentation**
-   - Scrape all seasons (`--all --force`), re-import, and reindex
-   - Update README, TESTING_GUIDE, DATA_PIPELINE with multi-season instructions
-
-
-
-✅ **Crawler:**
-- Can scrape episodes successfully
-- Saves data correctly
-- Validates data
-- Testable via `./test.sh`
-
-✅ **Data Pipeline:**
-- Content JSON → Document Store ✅
-- Document Store → ChromaDB ✅
-- All stages verifiable via `./test.sh`
-
-✅ **Frontend:**
-- Can search episodes
-- Displays results correctly
-- Error handling works
-- Testable via `./test.sh`
-
-✅ **Testing:**
-- `./test.sh` verifies all components
-- All tests pass
-- Can verify end-to-end flow
-
+- `scripts/scrape_episodes.py --status` reports Seasons 1–7 with correct episode counts
+- Document store (`app/data/episodes`) contains seven season files and matching embeddings
+- ChromaDB collection `buffy_episodes` reports the same total count via `/api/test`
+- `./test.sh` passes and highlights the expanded dataset in the summary
+- README and docs clearly describe how to ingest and verify all seasons
