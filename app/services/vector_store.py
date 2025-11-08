@@ -293,46 +293,57 @@ class AdvancedVectorStore:
                 query_embeddings=[query_embedding],
                 n_results=query_limit,
                 where=where_filter,
-                include=["documents", "metadatas", "distances"]
+                include=["metadatas", "distances"]
             )
         except Exception as e:
             logger.error(f"ChromaDB query failed: {e}, falling back to file-based search")
             return self._search_episodes_file_based(query, limit, season)
-        
-        if not chroma_results['ids'] or len(chroma_results['ids'][0]) == 0:
+
+        ids = chroma_results.get("ids") or []
+        if not ids or not ids[0]:
             logger.warning("No results from ChromaDB")
             return []
-        
+
+        metadatas = chroma_results.get("metadatas") or [[]]
+        distances = chroma_results.get("distances") or [[]]
+
+        metadata_list = metadatas[0] if metadatas else []
+        distance_list = distances[0] if distances else []
+
         results = []
-        
-        # Process ChromaDB results
-        for i, episode_id in enumerate(chroma_results['ids'][0]):
-            metadata = chroma_results['metadatas'][0][i]
-            document = chroma_results['documents'][0][i]
-            distance = chroma_results['distances'][0][i]
-            
-            # Convert distance to similarity score (ChromaDB uses cosine distance)
-            # Distance is 1 - cosine_similarity, so similarity = 1 - distance
-            similarity = 1.0 - distance
-            
-            # Get full episode data from document store for boosting
-            season_num = int(metadata['season'])
-            episode_num = metadata['episode']
-            episode = self.document_store.get_episode(season_num, episode_num)
-            
-            if not episode:
+
+        for idx, episode_id in enumerate(ids[0]):
+            metadata = metadata_list[idx] if idx < len(metadata_list) else {}
+            metadata = metadata or {}
+            distance = distance_list[idx] if idx < len(distance_list) else 1.0
+
+            similarity = 1.0 - float(distance)
+
+            season_raw = metadata.get("season")
+            try:
+                season_num = int(season_raw)
+            except (TypeError, ValueError):
+                logger.warning("Skipping result %s with invalid season metadata: %s", episode_id, season_raw)
                 continue
-            
-            # Boost score based on character/theme matches
+
+            episode_num = metadata.get("episode")
+            if not episode_num:
+                logger.warning("Skipping result %s with missing episode metadata", episode_id)
+                continue
+
+            episode = self.document_store.get_episode(season_num, episode_num)
+            if not episode:
+                logger.warning("Episode not found in document store for %s", episode_id)
+                continue
+
             boosted_score = self._boost_score_for_query(
                 similarity, episode, characters, themes, query_type
             )
-            
-            # Extract relevant content
+
             content_type, relevant_text = self._extract_relevant_content(
                 episode, query, characters, themes
             )
-            
+
             result = {
                 'season': season_num,
                 'episode': episode_num,
@@ -345,10 +356,9 @@ class AdvancedVectorStore:
                 'themes': self._extract_themes_from_episode(episode),
                 'context': self._generate_context(episode, query, characters)
             }
-            
+
             results.append(result)
-        
-        # Sort by boosted score and return top results
+
         results.sort(key=lambda x: x['score'], reverse=True)
         return results[:limit]
     
