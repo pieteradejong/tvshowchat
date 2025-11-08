@@ -96,9 +96,115 @@ else
     echo -e "${RED}✗ Crawler status command failed${NC}"
     cat "$CRAWLER_TMP_FILE"
     rm -f "$CRAWLER_TMP_FILE"
+
+echo -e "\n${YELLOW}7. Testing Data Pipeline Integrity${NC}"
+python3.12 <<'PYCODE'
+import glob
+import json
+import sys
+import urllib.request
+from pathlib import Path
+
+GREEN = '[0;32m'
+RED = '[0;31m'
+NC = '[0m'
+
+def fail(msg):
+    print(f"{RED}ERROR: {msg}{NC}")
+    sys.exit(1)
+
+content_files = sorted(glob.glob('app/content/buffy_all_seasons_*.json'))
+if not content_files:
+    fail('No content files found (run scraper)')
+latest = max(content_files, key=lambda p: Path(p).stat().st_mtime)
+with open(latest, 'r', encoding='utf-8') as f:
+    content_data = json.load(f)
+content_total = sum(len(season) for season in content_data.values())
+
+doc_files = sorted(glob.glob('app/data/episodes/season_*.json'))
+if not doc_files:
+    fail('No document store season files found')
+doc_total = 0
+for file in doc_files:
+    with open(file, 'r', encoding='utf-8') as f:
+        doc_total += len(json.load(f))
+
+try:
+    with urllib.request.urlopen('http://localhost:8000/api/test') as resp:
+        api_data = json.load(resp)
+except Exception as exc:
+    fail(f'Failed to fetch /api/test: {exc}')
+
+vector_total = api_data.get('vector_store', {}).get('total_episodes')
+chroma_total = api_data.get('vector_store', {}).get('chromadb_episodes', vector_total)
+
+print(f"Content episodes: {content_total}")
+print(f"Document store episodes: {doc_total}")
+print(f"Vector store episodes: {vector_total}")
+print(f"ChromaDB episodes: {chroma_total}")
+
+if None in (vector_total, chroma_total):
+    fail('Invalid API response for /api/test')
+
+if not (content_total == doc_total == vector_total == chroma_total):
+    fail('Episode counts do not match across pipeline')
+
+print(f"{GREEN}SUCCESS: Data pipeline integrity verified{NC}")
+PYCODE
     exit 1
 fi
 rm -f "$CRAWLER_TMP_FILE"
+
+echo -e "\n${YELLOW}7. Testing Data Pipeline Integrity${NC}"
+python3.12 <<'PYCODE'
+import glob
+import json
+import sys
+import urllib.request
+from pathlib import Path
+
+def fail(msg):
+    print(f"ERROR: {msg}")
+    sys.exit(1)
+
+content_files = sorted(glob.glob('app/content/buffy_all_seasons_*.json'))
+if not content_files:
+    fail('No content files found (run scraper)')
+latest = max(content_files, key=lambda p: Path(p).stat().st_mtime)
+with open(latest, 'r', encoding='utf-8') as f:
+    content_data = json.load(f)
+content_total = sum(len(season) for season in content_data.values())
+
+doc_files = sorted(glob.glob('app/data/episodes/season_*.json'))
+if not doc_files:
+    fail('No document store season files found')
+doc_total = 0
+for file in doc_files:
+    with open(file, 'r', encoding='utf-8') as f:
+        doc_total += len(json.load(f))
+
+try:
+    with urllib.request.urlopen('http://localhost:8000/api/test') as resp:
+        api_data = json.load(resp)
+except Exception as exc:
+    fail(f'Failed to fetch /api/test: {exc}')
+
+vector_total = api_data.get('vector_store', {}).get('total_episodes')
+chroma_total = api_data.get('vector_store', {}).get('chromadb_episodes', vector_total)
+
+print(f'Content episodes: {content_total}')
+print(f'Document store episodes: {doc_total}')
+print(f'Vector store episodes: {vector_total}')
+print(f'ChromaDB episodes: {chroma_total}')
+
+if None in (vector_total, chroma_total):
+    fail('Invalid API response for /api/test')
+
+if not (content_total == doc_total == vector_total == chroma_total):
+    fail('Episode counts do not match across pipeline')
+
+print('SUCCESS: Data pipeline integrity verified')
+PYCODE
 
 echo -e "\n${YELLOW}Test Summary:${NC}"
 echo "----------------------------------------"
@@ -107,6 +213,7 @@ echo "✓ System state verified"
 echo "✓ Search functionality tested"
 echo "✓ Vector store state checked"
 echo "✓ Document store verified"
+echo "✓ Data pipeline integrity verified"
 echo "----------------------------------------"
 
 echo -e "\n${GREEN}All tests completed!${NC}"
