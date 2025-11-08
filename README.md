@@ -2,6 +2,27 @@
 
 A semantic search and chat application for TV show transcripts, built with Python and React.
 
+## Table of Contents
+
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+  - [Backend](#backend)
+  - [Frontend](#frontend)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Running the Application](#running-the-application)
+  - [Backend](#backend-1)
+  - [Frontend](#frontend-1)
+- [Project Structure](#project-structure)
+- [Data Pipeline](#data-pipeline)
+- [Documentation](#documentation)
+- [Development](#development)
+  - [Adding New Episodes](#adding-new-episodes)
+  - [Testing](#testing)
+  - [Data Pipeline Utilities](#data-pipeline-utilities)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Features
 
 - **Semantic Search**: Find relevant episodes and scenes using natural language queries
