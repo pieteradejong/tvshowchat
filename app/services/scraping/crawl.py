@@ -344,7 +344,13 @@ def fetch_parse_save_episodes(
                 validated_dict.items(),
                 key=lambda item: int(item[0].split("_")[1]) if item[0].split("_")[1].isdigit() else item[0],
             )
-            ordered_dict = {key: value for key, value in ordered_seasons}
+            ordered_dict: Dict[str, Dict[str, Any]] = {}
+            for key, value in ordered_seasons:
+                if isinstance(value, dict) and "episodes" in value:
+                    season_payload = value["episodes"]
+                else:
+                    season_payload = value
+                ordered_dict[key] = season_payload
 
             CONTENT_DIR.mkdir(parents=True, exist_ok=True)
             with CONTENT_FILE.open("w", encoding="utf-8") as f:
