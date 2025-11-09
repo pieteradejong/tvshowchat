@@ -29,9 +29,8 @@ python3.12 scripts/scrape_episodes.py --all --force
 
 **Current State:**
 - ✅ Scraping code exists and works (`scripts/scrape_episodes.py`)
-- ✅ Content JSON file present: `btvs_all_seasons.json`
-- ⚠️  Scraping is **manual** (not automated in init.sh)
-- ⚠️  Only Season 1 data currently scraped (12 episodes)
+- ✅ Unified content snapshot `btvs_all_seasons.json` contains Seasons 1–7 (144 episodes)
+- ⚠️ Scraping / refresh is manual (not automated in `init.sh`)
 
 ---
 
@@ -56,9 +55,9 @@ python3.12 scripts/scrape_episodes.py --all --force
 ```
 
 **Current State:**
-- ✅ 4 timestamped JSON files exist
-- ✅ Latest file contains Season 1 (12 episodes)
-- ⚠️  Seasons 2-7 not yet scraped
+- ✅ Single canonical JSON file: `app/content/btvs_all_seasons.json`
+- ✅ Covers seven seasons with per-episode metadata and embeddings
+- ⚠️ No timestamped history retained (rerun crawl to refresh)
 
 ---
 
@@ -79,9 +78,9 @@ python3.12 scripts/scrape_episodes.py --all --force
 - This happens automatically when server starts
 
 **Current State:**
-- ✅ Season 1 loaded: `app/data/episodes/season_1.json` (12 episodes)
-- ✅ Embeddings file exists: `app/data/embeddings/season_1_embeddings.json`
-- ✅ Auto-import works on startup
+- ✅ Seasons 1–7 exported to `app/data/episodes/season_*.json` via `--import-latest`
+- ✅ Matching embeddings created in `app/data/embeddings/season_*_embeddings.json`
+- ✅ Auto-import on startup keeps document store in sync
 
 ---
 
@@ -102,9 +101,9 @@ python3.12 scripts/scrape_episodes.py --all --force
 - Happens on first startup or when ChromaDB is cleared
 
 **Current State:**
-- ✅ ChromaDB initialized: `app/data/chroma/chroma.sqlite3` (604 KB)
-- ✅ **12 episodes loaded** in ChromaDB collection `buffy_episodes`
-- ✅ Auto-population works
+- ✅ ChromaDB initialized: `app/data/chroma/chroma.sqlite3`
+- ✅ 144 episodes loaded in ChromaDB collection `buffy_episodes`
+- ✅ Auto-population works after document-store import
 - ✅ Search functionality uses ChromaDB
 
 ---
@@ -123,7 +122,7 @@ python3.12 scripts/scrape_episodes.py --all --force
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ 2. CONTENT STORAGE                                           │
-│    app/content/*.json (4 files, latest has Season 1)        │
+│    app/content/btvs_all_seasons.json (canonical snapshot)   │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -162,32 +161,27 @@ python3.12 scripts/scrape_episodes.py --all --force
    - Saves to content JSON files
 
 2. **Content Storage** ✅
-   - 4 content JSON files exist
-   - Latest file has Season 1 (12 episodes)
+   - Canonical snapshot: `app/content/btvs_all_seasons.json`
+   - Contains Seasons 1–7 (144 episodes + embeddings)
 
 3. **Document Store** ✅
    - Auto-imports from content JSON on startup
-   - Season 1 loaded: `app/data/episodes/season_1.json`
-   - Embeddings saved: `app/data/embeddings/season_1_embeddings.json`
+   - Seasons 1–7 present under `app/data/episodes/season_*.json`
+   - Embeddings saved in `app/data/embeddings/season_*_embeddings.json`
 
 4. **ChromaDB** ✅
-   - **12 episodes successfully loaded**
+   - 144 episodes loaded in collection `buffy_episodes`
    - Auto-populates from document store
    - Search functionality works
-   - File size: 604 KB
+   - File size grows with full dataset (~5.6 MB)
 
 ### ⚠️ **Gaps/Issues:**
 
 1. **Scraping Not Automated**
-   - Scraping is manual: `python app/services/scraping/crawl.py`
-   - Not integrated into `init.sh` or `scripts/init_data.py`
-   - Only Season 1 scraped (Seasons 2-7 missing)
+   - Refresh is manual: `./scripts/crawl.sh` (or Python CLI flags)
+   - Not integrated into `init.sh` or scheduled job
 
-2. **Incomplete Data**
-   - Only Season 1 available (12 episodes)
-   - Need to scrape Seasons 2-7 for complete dataset
-
-3. **Multiple Pipeline Implementations**
+2. **Multiple Pipeline Implementations**
    - `app/services/data_pipeline.py` - Different implementation (not used?)
    - `app/services/data_loader.py` - References VectorStore (different from AdvancedVectorStore?)
    - `app/services/scraping/crawl.py` - Actual scraping code
@@ -200,18 +194,23 @@ python3.12 scripts/scrape_episodes.py --all --force
 ### Option 1: Scrape All Seasons (Recommended)
 
 ```bash
-# Run scraping for all seasons
-python app/services/scraping/crawl.py
+# Crawl any seasons missing from btvs_all_seasons.json
+./scripts/crawl.sh
 
-# This will update: app/content/btvs_all_seasons.json
-# Then restart server - it will auto-import and populate ChromaDB
+# Force a clean re-crawl (expensive)
+./scripts/crawl.sh --all --force
+
+# Then refresh downstream stores
+python3.12 scripts/scrape_episodes.py --import-latest
+python3.12 scripts/scrape_episodes.py --reindex-chroma
 ```
 
 ### Option 2: Use Existing Content Files
 
 If you have content files with all seasons:
 1. Place them in `app/data/episodes/` as `season_*.json`
-2. Restart server - ChromaDB will auto-populate
+2. Place embedding backups in `app/data/embeddings/season_*_embeddings.json`
+3. Restart server - ChromaDB will auto-populate
 
 ### Option 3: Manual Import
 
@@ -260,12 +259,11 @@ curl http://localhost:8000/api/test | python3.12 -m json.tool | grep chromadb_ep
 3. Document Store → ChromaDB ✅ (auto if empty)
 
 **✅ YES - Data Successfully Loaded:**
-- ChromaDB has **12 episodes** (Season 1)
+- ChromaDB has 144 episodes (Seasons 1–7)
 - Search functionality works
 - All components operational
 
 **⚠️  Gaps:**
 - Scraping is manual (not automated)
-- Only Season 1 data (need Seasons 2-7)
 - Multiple pipeline implementations exist (some unused)
 

@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 import numpy as np
-from typing import List, Optional
+from typing import Dict, List, Optional
 from app.services.vector_store import get_vector_store
 from app.config.config import logger
 from pathlib import Path
@@ -34,6 +34,32 @@ with DATA_FILE.open("r", encoding="utf-8") as f:
     DATA = json.load(f).get("season_1", {})
 
 MODEL = SentenceTransformer(MODEL_NAME)
+
+
+def load_content_metadata() -> Dict[int, int]:
+    """Load season counts from the unified content file."""
+    with CONTENT_FILE.open("r", encoding="utf-8") as file:
+        data = json.load(file)
+    season_counts: Dict[int, int] = {}
+    for season_key, episodes in data.items():
+        if not season_key.startswith("season_"):
+            continue
+        try:
+            season_num = int(season_key.split("_")[1])
+        except (IndexError, ValueError):
+            logger.warning("Skipping unrecognized season key in content file: %s", season_key)
+            continue
+        season_counts[season_num] = len(episodes)
+    return season_counts
+
+
+def get_content_summary() -> Dict[str, Dict[int, int]]:
+    season_counts = load_content_metadata()
+    total = sum(season_counts.values())
+    return {
+        "total_episodes": total,
+        "season_counts": season_counts,
+    }
 
 # --- API Schema ---
 class SearchQuery(BaseModel):
@@ -107,6 +133,7 @@ async def test_system():
     try:
         # Get vector store stats
         stats = vector_store.get_stats()
+        content_summary = get_content_summary()
         
         # Get a sample episode
         sample_episode = None
@@ -119,6 +146,10 @@ async def test_system():
         
         return {
             "status": "healthy",
+            "content": {
+                "total_episodes": content_summary["total_episodes"],
+                "season_counts": content_summary["season_counts"],
+            },
             "vector_store": {
                 "total_episodes": stats["total_episodes"],
                 "seasons": stats["seasons"],

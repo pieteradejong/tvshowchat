@@ -5,9 +5,9 @@
 - ✅ ChromaDB-backed search is live and stable (Season 1 data loaded)
 - ✅ Backend `/api/search` response matches the frontend contract
 - ✅ Frontend search + chat prototype work against the unified API
-- ✅ `./test.sh` covers health checks, search smoke tests, crawler status, and pipeline integrity counts
-- ⚠️ Multi-season data ingestion still pending (currently only Season 1)
-- ⚠️ Manual re-import / reindex helpers are limited
+- ✅ Crawler now generates `btvs_all_seasons.json` (Seasons 1–7) and incremental wrapper `scripts/crawl.sh` handles missing-season detection
+- ⚠️ `./test.sh` and `/api/test` still assert Season 1 coverage; need to validate seven-season dataset
+- ⚠️ README and `docs/DATA_PIPELINE.md` describe the old single-season ingestion flow
 - ⚠️ Automated frontend build/test pipeline not yet implemented
 
 ---
@@ -36,7 +36,7 @@
 
 ---
 
-## Focus Area: Multi-Season Pipeline Expansion
+## Focus Area: Multi-Season Pipeline Expansion (in progress)
 
 ### Goals
 - Scrape and ingest Seasons 1–7
@@ -44,11 +44,12 @@
 - Extend automated tests to assert the larger dataset
 
 ### Plan
-1. **Crawler Enhancements**
-   1.1 Update `app/services/scraping/crawl.py` to iterate all season tables and handle varying episode counts (12 vs 22)
-   1.2 Add per-season crawl flag `--season N` (and `--force`) to `scripts/scrape_episodes.py`
-   1.3 Improve logging/progress output for long runs and add basic retry handling
-   1.4 Capture crawl metadata (season totals, timestamps) for later integrity checks
+1. **Crawler Enhancements** ✅
+   1.1 Update `app/services/scraping/crawl.py` to iterate all season tables and handle varying episode counts (12 vs 22)  
+   1.2 Add per-season crawl flag `--season N` (and `--force`) to `scripts/scrape_episodes.py`  
+   1.3 Improve logging/progress output for long runs and add basic retry handling  
+   1.4 Capture crawl metadata (season totals, timestamps) for later integrity checks  
+   _Delivered via the unified crawl workflow and latest `btvs_all_seasons.json` artifact._
 
 2. **Ingestion Helpers**
    2.1 Add CLI entry (or script flag) to rerun `BuffyDocumentStore.import_from_json` on latest content snapshot
@@ -56,16 +57,16 @@
    2.3 Ensure embeddings are regenerated only when missing and reuse cached vectors otherwise
    2.4 Expose helper to inspect collection stats (total episodes, season coverage)
 
-3. **Automated Testing Upgrades**
-   3.1 Update `./test.sh` integrity checks to expect ~144 episodes and 7 seasons
-   3.2 Extend integrity step to validate `app/data/embeddings` counts alongside episodes
-   3.3 Ensure `/api/test` returns season coverage list; fail if mismatched
+3. **Automated Testing Upgrades** (Next up)
+   3.1 Update `./test.sh` integrity checks to expect ~144 episodes and 7 seasons  
+   3.2 Extend integrity step to validate `app/data/embeddings` counts alongside episodes  
+   3.3 Ensure `/api/test` returns season coverage list; fail if mismatched  
    3.4 (Optional) Add frontend build smoke test (`npm run build`) and surface errors clearly
 
-4. **Documentation Updates**
-   4.1 Update README quick-start with multi-season ingestion workflow (crawl → import → reindex)
-   4.2 Expand `docs/DATA_PIPELINE.md` with new CLI commands and season coverage notes
-   4.3 Refresh `docs/TESTING_GUIDE.md` expected outputs (full dataset) and troubleshooting tips
+4. **Documentation Updates** (Next up)
+   4.1 Update README quick-start with multi-season ingestion workflow (crawl → import → reindex)  
+   4.2 Expand `docs/DATA_PIPELINE.md` with new CLI commands and season coverage notes  
+   4.3 Refresh `docs/TESTING_GUIDE.md` expected outputs (full dataset) and troubleshooting tips  
    4.4 Capture crawl/import/reindex runbook in `docs/ROADMAP.md` for future automation
 
 ---

@@ -150,20 +150,67 @@ def fail(msg):
     print(f"{RED}ERROR: {msg}{NC}")
     sys.exit(1)
 
+EXPECTED_EPISODES = {
+    1: 12,
+    2: 22,
+    3: 22,
+    4: 22,
+    5: 22,
+    6: 22,
+    7: 22,
+}
+EXPECTED_SEASON_KEYS = {f"season_{season}" for season in EXPECTED_EPISODES}
+EXPECTED_TOTAL = sum(EXPECTED_EPISODES.values())
+
+def validate_counts(label, counts):
+    missing = [season for season in EXPECTED_EPISODES if season not in counts]
+    if missing:
+        fail(f"{label}: missing seasons {missing}")
+    for season, expected in EXPECTED_EPISODES.items():
+        actual = counts[season]
+        if actual != expected:
+            fail(f"{label}: season {season} expected {expected} episodes, found {actual}")
+
 content_path = Path('app/content/btvs_all_seasons.json')
 if not content_path.exists():
     fail('Content file btvs_all_seasons.json not found (run scripts/crawl.sh)')
-with open(content_path, 'r', encoding='utf-8') as f:
+with content_path.open('r', encoding='utf-8') as f:
     content_data = json.load(f)
-content_total = sum(len(season) for season in content_data.values())
 
-doc_files = sorted(glob.glob('app/data/episodes/season_*.json'))
+if set(content_data.keys()) != EXPECTED_SEASON_KEYS:
+    fail(f"Content file seasons mismatch. Expected {sorted(EXPECTED_SEASON_KEYS)}, found {sorted(content_data.keys())}")
+
+content_counts = {
+    int(season_key.split('_')[1]): len(episodes)
+    for season_key, episodes in content_data.items()
+}
+validate_counts("Content JSON", content_counts)
+content_total = sum(content_counts.values())
+if content_total != EXPECTED_TOTAL:
+    fail(f"Content JSON total expected {EXPECTED_TOTAL}, found {content_total}")
+
+doc_dir = Path('app/data/episodes')
+doc_files = sorted(doc_dir.glob('season_*.json'))
 if not doc_files:
     fail('No document store season files found')
-doc_total = 0
+doc_counts = {}
 for file in doc_files:
-    with open(file, 'r', encoding='utf-8') as f:
-        doc_total += len(json.load(f))
+    season_num = int(file.stem.split('_')[1])
+    with file.open('r', encoding='utf-8') as f:
+        doc_counts[season_num] = len(json.load(f))
+validate_counts("Document store", doc_counts)
+doc_total = sum(doc_counts.values())
+
+embed_dir = Path('app/data/embeddings')
+embed_files = sorted(embed_dir.glob('season_*_embeddings.json'))
+if not embed_files:
+    fail('No embedding season files found')
+embedding_counts = {}
+for file in embed_files:
+    season_num = int(file.stem.split('_')[1])
+    with file.open('r', encoding='utf-8') as f:
+        embedding_counts[season_num] = len(json.load(f))
+validate_counts("Embeddings store", embedding_counts)
 
 try:
     with urllib.request.urlopen('http://localhost:8000/api/test') as resp:
@@ -171,18 +218,34 @@ try:
 except Exception as exc:
     fail(f'Failed to fetch /api/test: {exc}')
 
-vector_total = api_data.get('vector_store', {}).get('total_episodes')
-chroma_total = api_data.get('vector_store', {}).get('chromadb_episodes', vector_total)
+vector_section = api_data.get('vector_store', {})
+vector_total = vector_section.get('total_episodes')
+chroma_total = vector_section.get('chromadb_episodes', vector_total)
+api_content = api_data.get('content', {})
+api_total = api_content.get('total_episodes')
+api_counts = api_content.get('season_counts', {})
+if isinstance(api_counts, dict):
+    api_counts = {int(k): v for k, v in api_counts.items()}
 
-print(f"Content episodes: {content_total}")
-print(f"Document store episodes: {doc_total}")
-print(f"Vector store episodes: {vector_total}")
-print(f"ChromaDB episodes: {chroma_total}")
+print("Season coverage summary:")
+for season in sorted(EXPECTED_EPISODES):
+    print(
+        f"  Season {season}: content={content_counts.get(season)} "
+        f"doc={doc_counts.get(season)} "
+        f"embeddings={embedding_counts.get(season)} "
+        f"api={api_counts.get(season) if api_counts else None}"
+    )
 
-if None in (vector_total, chroma_total):
+print(f"Totals - Content: {content_total} | Document store: {doc_total} | Vector store: {vector_total} | ChromaDB: {chroma_total} | API content: {api_total}")
+
+if None in (vector_total, chroma_total, api_total) or not api_counts:
     fail('Invalid API response for /api/test')
 
-if not (content_total == doc_total == vector_total == chroma_total):
+validate_counts("API content summary", api_counts)
+if api_total != EXPECTED_TOTAL:
+    fail(f"API content total expected {EXPECTED_TOTAL}, found {api_total}")
+
+if not (content_total == doc_total == vector_total == chroma_total == EXPECTED_TOTAL):
     fail('Episode counts do not match across pipeline')
 
 print(f"{GREEN}SUCCESS: Data pipeline integrity verified{NC}")

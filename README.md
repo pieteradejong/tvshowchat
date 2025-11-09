@@ -195,6 +195,15 @@ python3.12 scripts/scrape_episodes.py --all --force      # re-crawl and regenera
 ./scripts/crawl.sh --all --force                         # force a full re-crawl
 ```
 
+### Multi-Season Refresh Workflow
+
+The canonical dataset lives at `app/content/btvs_all_seasons.json`. To regenerate embeddings and Chroma for all seven seasons:
+
+1. `./scripts/crawl.sh` — fetch missing seasons (no-op if coverage is complete).
+2. `python3.12 scripts/scrape_episodes.py --import-latest` — sync the document store (`app/data/episodes` + embeddings).
+3. `python3.12 scripts/scrape_episodes.py --reindex-chroma` — rebuild the `buffy_episodes` collection from the document store.
+4. `./test.sh` — validates that content, document store, embeddings, vector store, and API all report 144 episodes across Seasons 1–7.
+
 ## Contributing
 
 1. Fork the repository
