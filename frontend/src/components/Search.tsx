@@ -2,24 +2,12 @@
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { DEFAULT_PROMPT_CATEGORIES } from './PromptExamples';
+import { TimelineView } from './TimelineView';
+import { SearchResult } from '../types/search';
 
 interface SearchProps {
   pendingPrompt?: string;
   onPromptConsumed?: () => void;
-}
-
-interface SearchResult {
-  season: number;
-  episode: string;
-  title: string;
-  airdate: string;
-  content_type: string;
-  text: string;
-  snippets?: string[];
-  score: number;
-  characters: string[];
-  themes: string[];
-  context: string;
 }
 
 const Search: FC<SearchProps> = ({ pendingPrompt, onPromptConsumed }) => {
@@ -27,6 +15,7 @@ const Search: FC<SearchProps> = ({ pendingPrompt, onPromptConsumed }) => {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list');
 
   const allExamplePrompts = useMemo(
     () => DEFAULT_PROMPT_CATEGORIES.flatMap((category) => category.prompts),
@@ -126,6 +115,40 @@ const Search: FC<SearchProps> = ({ pendingPrompt, onPromptConsumed }) => {
         </div>
       </div>
 
+      {searchResults.length > 0 && (
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <p className="text-sm text-gray-600">
+            {searchResults.length} {searchResults.length === 1 ? 'episode' : 'episodes'} found
+          </p>
+          <div className="inline-flex rounded-lg border border-blue-200 bg-white p-1 text-xs font-medium text-blue-700">
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              className={`rounded-md px-3 py-1 transition ${
+                viewMode === 'list'
+                  ? 'bg-blue-600 text-white shadow'
+                  : 'text-blue-700 hover:bg-blue-50'
+              }`}
+              aria-pressed={viewMode === 'list'}
+            >
+              List view
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('timeline')}
+              className={`rounded-md px-3 py-1 transition ${
+                viewMode === 'timeline'
+                  ? 'bg-blue-600 text-white shadow'
+                  : 'text-blue-700 hover:bg-blue-50'
+              }`}
+              aria-pressed={viewMode === 'timeline'}
+            >
+              Timeline view
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-2 mb-6">
         <input
           type="text"
@@ -150,71 +173,75 @@ const Search: FC<SearchProps> = ({ pendingPrompt, onPromptConsumed }) => {
         </div>
       )}
 
-      <div className="space-y-4">
-        {searchResults.map((result) => (
-          <div
-            key={`${result.season}-${result.episode}-${result.title}`}
-            className="p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
-          >
-            <div className="flex justify-between items-start mb-2">
-              <h3 className="text-lg font-semibold text-gray-900">
-                S{String(result.season).padStart(2, '0')}E{result.episode}. {result.title}
-              </h3>
-              <span className="text-sm text-gray-500">
-                Score: {Math.round(result.score * 100)}%
-              </span>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
-              <span className="rounded bg-blue-50 px-2 py-1 uppercase tracking-wide text-blue-600">
-                {result.content_type}
-              </span>
-              {result.context && <span>{result.context}</span>}
-            </div>
-            <div className="prose prose-sm max-w-none">
-              <div className="mb-2 text-sm text-gray-500">Aired: {result.airdate}</div>
+      {viewMode === 'list' ? (
+        <div className="space-y-4">
+          {searchResults.map((result) => (
+            <div
+              key={`${result.season}-${result.episode}-${result.title}`}
+              className="p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+            >
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  S{String(result.season).padStart(2, '0')}E{result.episode}. {result.title}
+                </h3>
+                <span className="text-sm text-gray-500">
+                  Score: {Math.round(result.score * 100)}%
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                <span className="rounded bg-blue-50 px-2 py-1 uppercase tracking-wide text-blue-600">
+                  {result.content_type}
+                </span>
+                {result.context && <span>{result.context}</span>}
+              </div>
+              <div className="prose prose-sm max-w-none">
+                <div className="mb-2 text-sm text-gray-500">Aired: {result.airdate}</div>
 
-              {result.characters.length > 0 && (
-                <div className="mb-2">
-                  <span className="text-xs font-medium text-blue-600">Characters: </span>
-                  <span className="text-xs text-gray-600">{result.characters.join(', ')}</span>
-                </div>
-              )}
-
-              {result.themes.length > 0 && (
-                <div className="mb-2">
-                  <span className="text-xs font-medium text-green-600">Themes: </span>
-                  <span className="text-xs text-gray-600">{result.themes.join(', ')}</span>
-                </div>
-              )}
-
-              <div className="mt-3 space-y-3">
-                <div className="rounded-lg border-l-4 border-amber-400 bg-amber-50 p-4 text-sm text-gray-800 shadow-sm">
-                  <p className="font-medium uppercase tracking-wide text-amber-700 text-xs mb-1">Primary match</p>
-                  <p className="leading-relaxed whitespace-pre-line">{result.text}</p>
-                </div>
-
-                {result.snippets && result.snippets.length > 0 && (
-                  <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      Supporting snippets
-                    </p>
-                    <ul className="mt-2 space-y-2">
-                      {result.snippets.map((snippet, index) => (
-                        <li
-                          key={`${result.title}-snippet-${index}`}
-                          className="rounded-md border border-gray-200 bg-white p-3 text-sm text-gray-700 shadow-sm"
-                        >
-                          <span className="block whitespace-pre-line leading-relaxed">{snippet}</span>
-                        </li>
-                      ))}
-                    </ul>
+                {result.characters.length > 0 && (
+                  <div className="mb-2">
+                    <span className="text-xs font-medium text-blue-600">Characters: </span>
+                    <span className="text-xs text-gray-600">{result.characters.join(', ')}</span>
                   </div>
                 )}
+
+                {result.themes.length > 0 && (
+                  <div className="mb-2">
+                    <span className="text-xs font-medium text-green-600">Themes: </span>
+                    <span className="text-xs text-gray-600">{result.themes.join(', ')}</span>
+                  </div>
+                )}
+
+                <div className="mt-3 space-y-3">
+                  <div className="rounded-lg border-l-4 border-amber-400 bg-amber-50 p-4 text-sm text-gray-800 shadow-sm">
+                    <p className="font-medium uppercase tracking-wide text-amber-700 text-xs mb-1">Primary match</p>
+                    <p className="leading-relaxed whitespace-pre-line">{result.text}</p>
+                  </div>
+
+                  {result.snippets && result.snippets.length > 0 && (
+                    <div className="rounded-lg bg-gray-50 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        Supporting snippets
+                      </p>
+                      <ul className="mt-2 space-y-2">
+                        {result.snippets.map((snippet, index) => (
+                          <li
+                            key={`${result.title}-snippet-${index}`}
+                            className="rounded-md border border-gray-200 bg-white p-3 text-sm text-gray-700 shadow-sm"
+                          >
+                            <span className="block whitespace-pre-line leading-relaxed">{snippet}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <TimelineView results={searchResults} />
+      )}
 
       {searchResults.length === 0 && !isLoading && !error && searchQuery && (
         <div className="text-center text-gray-500 mt-8">

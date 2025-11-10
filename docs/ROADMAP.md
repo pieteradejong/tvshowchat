@@ -98,6 +98,7 @@
 - Timeline mode for multi-episode queries (e.g., “Spike redemption”) with chronological markers.
 - Threaded view where each episode is a node containing the key moment and optional expansion.
 - Ability to pin episodes into a saved collection/timeline for later viewing.
+- Provide a front-end–only prototype that derives episode ordering and grouping from existing `/api/search` data.
 
 ### Interaction Enhancements
 - Hover previews that show the first sentence without expanding the card.
@@ -105,6 +106,28 @@
 - Quick actions to add an episode to a watchlist or export a timeline.
 
 _Captured @UI_IDEAS for future iteration._
+
+---
+
+## UI Initiative: Timeline Mode (Front-End First)
+
+### Goals
+- Give users a chronological view of multi-episode arcs entirely in the client.
+- Keep existing `/api/search` response contract; no backend changes required for phase one.
+- Provide a fast way to switch between list and timeline layouts.
+
+### Phase 1 – Threaded Timeline Prototype
+1. Add a list/timeline toggle within the Search tab (remember selection in component state).
+2. Create a client-side transformer that groups search hits by episode (`season`, `episode`), sorts by airdate, and merges snippets.
+3. Implement a vertical “thread” view: spine, nodes per episode, compact card with title, labels, primary snippet, expandable details.
+4. Reuse existing chips (themes, characters) inside the timeline nodes for quick context.
+5. Ensure responsiveness (mobile column vs. desktop thread) and keyboard navigation parity.
+
+### Phase 2 – Enhanced Interactions (post-prototype)
+- Add filters (by season, character) and per-node quick actions (save to watchlist / open in chat).
+- Introduce optional horizontal timeline for wide screens.
+- Support deep links (`?view=timeline&query=...`) and persistent layout preference.
+- Explore arc detection callouts (e.g., “View as timeline” when multiple seasons detected).
 
 ---
 
