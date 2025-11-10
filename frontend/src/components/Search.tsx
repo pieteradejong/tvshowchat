@@ -1,6 +1,7 @@
 // Search.tsx
-import { FC, useCallback, useEffect, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import { DEFAULT_PROMPT_CATEGORIES } from './PromptExamples';
 
 interface SearchProps {
   pendingPrompt?: string;
@@ -26,6 +27,29 @@ const Search: FC<SearchProps> = ({ pendingPrompt, onPromptConsumed }) => {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const allExamplePrompts = useMemo(
+    () => DEFAULT_PROMPT_CATEGORIES.flatMap((category) => category.prompts),
+    []
+  );
+
+  const pickSuggestions = useCallback(() => {
+    if (allExamplePrompts.length <= 3) {
+      return allExamplePrompts.slice();
+    }
+
+    const pool = [...allExamplePrompts];
+    const selections: string[] = [];
+
+    while (pool.length > 0 && selections.length < 3) {
+      const index = Math.floor(Math.random() * pool.length);
+      selections.push(pool.splice(index, 1)[0]);
+    }
+
+    return selections;
+  }, [allExamplePrompts]);
+
+  const [suggestions, setSuggestions] = useState<string[]>(() => pickSuggestions());
 
   const executeSearch = useCallback(
     async (query: string) => {
@@ -75,12 +99,31 @@ const Search: FC<SearchProps> = ({ pendingPrompt, onPromptConsumed }) => {
   return (
     <div className="max-w-4xl mx-auto p-4">
       <div className="mb-4 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
-        <p className="font-medium text-blue-800">Try searches like:</p>
-        <ul className="mt-2 space-y-1 list-disc pl-5">
-          <li>"Comfort episodes after a tough day"</li>
-          <li>"Spike redemption storyline episodes"</li>
-          <li>"Episodes exploring grief and loss"</li>
-        </ul>
+        <div className="flex items-center justify-between gap-4">
+          <p className="font-medium text-blue-800">Try searches like:</p>
+          <button
+            type="button"
+            onClick={() => setSuggestions(pickSuggestions())}
+            className="rounded-md border border-blue-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700 transition hover:border-blue-300 hover:text-blue-900"
+          >
+            Shuffle suggestions
+          </button>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {suggestions.map((suggestion) => (
+            <button
+              key={suggestion}
+              type="button"
+              onClick={() => {
+                setSearchQuery(suggestion);
+                void executeSearch(suggestion);
+              }}
+              className="rounded-full border border-blue-200 bg-white px-4 py-1 text-sm font-medium text-blue-700 transition hover:border-blue-300 hover:bg-blue-100"
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="flex gap-2 mb-6">

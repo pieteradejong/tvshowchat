@@ -81,6 +81,33 @@
 
 ---
 
+## UI Ideas
+
+### Compact Search Results
+- Collapse each result into a two-line summary (title + relevance blurb + score) with a “show details” toggle.
+- Promote top match cues (theme chips, character badges, similarity heat bar) directly beside the title.
+- Consider a list-and-preview layout: tight list on the left, expanded detail panel on the right.
+- Provide hover tooltips or keyboard navigation to skim results quickly.
+
+### Context Presentation
+- Primary paragraph plus carousel or inline chips for supporting snippets instead of large text blocks.
+- Icons/labels (🎵 musical, 💔 breakup) derived from detected themes for instant readability.
+- Allow grouping/sorting by theme, character, or season to cluster related hits.
+
+### Timeline / Arc Views
+- Timeline mode for multi-episode queries (e.g., “Spike redemption”) with chronological markers.
+- Threaded view where each episode is a node containing the key moment and optional expansion.
+- Ability to pin episodes into a saved collection/timeline for later viewing.
+
+### Interaction Enhancements
+- Hover previews that show the first sentence without expanding the card.
+- Keyboard shortcuts to move between results and toggle details.
+- Quick actions to add an episode to a watchlist or export a timeline.
+
+_Captured @UI_IDEAS for future iteration._
+
+---
+
 ## Success Criteria
 
 - `scripts/scrape_episodes.py --status` reports Seasons 1–7 with correct episode counts
