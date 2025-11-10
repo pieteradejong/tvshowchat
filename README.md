@@ -4,6 +4,7 @@ A semantic search and chat application for TV show transcripts, built with Pytho
 
 ## Table of Contents
 
+- [Quick Start](#quick-start)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
   - [Backend](#backend)
@@ -22,6 +23,36 @@ A semantic search and chat application for TV show transcripts, built with Pytho
   - [Data Pipeline Utilities](#data-pipeline-utilities)
 - [Contributing](#contributing)
 - [License](#license)
+
+## Quick Start
+
+The repository already includes the full `btvs_all_seasons.json` dataset (Seasons 1–7). You only need to crawl if you want to refresh the source data.
+
+1. **Initialize dependencies & environment**
+   ```bash
+   ./init.sh
+   ```
+   Creates/updates the Python 3.12 virtualenv, installs requirements, prepares data directories, and downloads the embedding model.
+
+2. **Run the backend (FastAPI + Chroma)**
+   ```bash
+   ./run.sh
+   ```
+   Starts the API at http://localhost:8000 and ensures the document store/ChromaDB are populated from the existing dataset.
+
+3. **Run the frontend (React/Vite)**
+   ```bash
+   ./run_frontend.sh
+   ```
+   Serves the UI at http://localhost:5173 and proxies API calls to the backend.
+
+4. **Run the integrated test suite (optional)**
+   ```bash
+   ./test.sh
+   ```
+   Requires the backend to be running. Verifies health endpoints, search, document store, embeddings, and ensures the content/Chroma counts match (144 total episodes).
+
+To refresh the dataset later, follow the [Multi-Season Refresh Workflow](#multi-season-refresh-workflow); otherwise no scraping is required.
 
 ## Features
 
