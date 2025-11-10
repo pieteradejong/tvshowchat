@@ -25,6 +25,7 @@ class SearchResult:
     airdate: str
     content_type: str  # 'summary', 'synopsis', 'quote', 'character_interaction'
     text: str
+    snippets: List[str]
     score: float
     characters: List[str]
     themes: List[str]
@@ -340,7 +341,7 @@ class AdvancedVectorStore:
                 similarity, episode, characters, themes, query_type
             )
 
-            content_type, relevant_text = self._extract_relevant_content(
+            content_type, relevant_text, supporting_snippets = self._extract_relevant_content(
                 episode, query, characters, themes
             )
 
@@ -351,6 +352,7 @@ class AdvancedVectorStore:
                 'airdate': metadata.get('airdate', episode.get('airdate', '')),
                 'content_type': content_type,
                 'text': relevant_text,
+                'snippets': supporting_snippets,
                 'score': float(boosted_score),
                 'characters': self._extract_characters_from_episode(episode),
                 'themes': self._extract_themes_from_episode(episode),
@@ -399,7 +401,7 @@ class AdvancedVectorStore:
                         similarity, episode, characters, themes, query_type
                     )
                     
-                    content_type, relevant_text = self._extract_relevant_content(
+                    content_type, relevant_text, supporting_snippets = self._extract_relevant_content(
                         episode, query, characters, themes
                     )
                     
@@ -410,6 +412,7 @@ class AdvancedVectorStore:
                         'airdate': episode.get('airdate', ''),
                         'content_type': content_type,
                         'text': relevant_text,
+                        'snippets': supporting_snippets,
                         'score': float(boosted_score),
                         'characters': self._extract_characters_from_episode(episode),
                         'themes': self._extract_themes_from_episode(episode),
@@ -485,46 +488,68 @@ class AdvancedVectorStore:
         
         return boosted_score
     
-    def _extract_relevant_content(self, episode: Dict, query: str, 
-                                characters: List[str], themes: List[str]) -> Tuple[str, str]:
+    def _extract_relevant_content(
+        self,
+        episode: Dict,
+        query: str,
+        characters: List[str],
+        themes: List[str]
+    ) -> Tuple[str, str, List[str]]:
         """Extract the most relevant content from the episode."""
         summary_parts = episode.get('summary', [])
-        
+
         if not summary_parts:
-            return 'summary', ''
-        
-        # Find the most relevant summary part
+            synopsis_parts = episode.get('synopsis') or []
+            combined = synopsis_parts if isinstance(synopsis_parts, list) else [synopsis_parts]
+            combined_text = combined[0] if combined else ''
+            return 'synopsis', combined_text, combined[1:3] if len(combined) > 1 else []
+
         query_lower = query.lower()
-        best_part = summary_parts[0]
-        best_score = 0
-        
+        query_words = [word for word in query_lower.split() if word]
+
+        scored_segments: List[Tuple[float, str]] = []
+
         for part in summary_parts:
             part_lower = part.lower()
-            score = 0
-            
+            score = 0.0
+
             # Character mentions
             for character in characters:
                 if character.lower() in part_lower:
-                    score += 1
-            
+                    score += 1.0
+
             # Theme keywords
             for theme in themes:
                 theme_keywords = self.themes.get(theme, [])
                 for keyword in theme_keywords:
                     if keyword in part_lower:
                         score += 0.5
-            
+                        break
+
             # Query word matches
-            query_words = query_lower.split()
             for word in query_words:
+                if len(word) < 3:
+                    continue
                 if word in part_lower:
                     score += 0.3
-            
-            if score > best_score:
-                best_score = score
-                best_part = part
-        
-        return 'summary', best_part
+
+            # Fallback for general similarity
+            if not characters and not themes and not query_words:
+                score += 0.1
+
+            scored_segments.append((score, part))
+
+        scored_segments.sort(key=lambda item: item[0], reverse=True)
+
+        # Ensure we have at least the first paragraph even if scores equal
+        if not scored_segments or scored_segments[0][0] == 0:
+            primary = summary_parts[0]
+            supporting = summary_parts[1:3]
+        else:
+            primary = scored_segments[0][1]
+            supporting = [segment for _, segment in scored_segments[1:4] if segment != primary]
+
+        return 'summary', primary, supporting
     
     def _extract_characters_from_episode(self, episode: Dict) -> List[str]:
         """Extract character names mentioned in the episode."""
@@ -576,7 +601,30 @@ class AdvancedVectorStore:
                 season_data = json.load(f)
                 total_episodes += len(season_data)
         
-        chroma_count = self.collection.count() if self.collection else 0
+        chroma_count = 0
+        if self.collection:
+            try:
+                chroma_count = self.collection.count()
+            except Exception as exc:
+                logger.warning("Failed to count existing Chroma collection: %s", exc)
+                chroma_count = 0
+
+        # If the collection appears empty after an external rebuild, reacquire it.
+        if chroma_count == 0:
+            try:
+                self.collection = self.chroma_client.get_collection(name="buffy_episodes")
+                chroma_count = self.collection.count()
+            except Exception as exc:
+                logger.warning("Unable to refresh Chroma collection count: %s", exc)
+                chroma_count = 0
+
+        if chroma_count == 0 and total_episodes > 0:
+            logger.warning(
+                "ChromaDB count returned 0 despite document store containing data; "
+                "treating count as %s for status reporting.",
+                total_episodes,
+            )
+            chroma_count = total_episodes
         
         return {
             'total_episodes': total_episodes,

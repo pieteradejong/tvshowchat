@@ -1,6 +1,6 @@
 import json
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sentence_transformers import SentenceTransformer
 import numpy as np
 from typing import Dict, List, Optional
@@ -74,6 +74,7 @@ class SearchResult(BaseModel):
     airdate: str
     content_type: str
     text: str
+    snippets: List[str] = Field(default_factory=list)
     score: float
     characters: List[str]
     themes: List[str]

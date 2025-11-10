@@ -1,6 +1,11 @@
 // Search.tsx
-import { FC, useState } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
+
+interface SearchProps {
+  pendingPrompt?: string;
+  onPromptConsumed?: () => void;
+}
 
 interface SearchResult {
   season: number;
@@ -9,37 +14,57 @@ interface SearchResult {
   airdate: string;
   content_type: string;
   text: string;
+  snippets?: string[];
   score: number;
   characters: string[];
   themes: string[];
   context: string;
 }
 
-const Search: FC = () => {
+const Search: FC<SearchProps> = ({ pendingPrompt, onPromptConsumed }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const executeSearch = useCallback(
+    async (query: string) => {
+      if (!query.trim()) return;
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await axios.post('http://localhost:8000/api/search', {
+          query,
+          limit: 5,
+        });
+        setSearchResults(response.data || []);
+      } catch (error) {
+        console.error('Search error:', error);
+        setError('Failed to perform search. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
-    
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const response = await axios.post('http://localhost:8000/api/search', { 
-        query: searchQuery,
-        limit: 5 
-      });
-      setSearchResults(response.data || []);
-    } catch (error) {
-      console.error('Search error:', error);
-      setError('Failed to perform search. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+
+    await executeSearch(searchQuery);
   };
+
+  useEffect(() => {
+    if (!pendingPrompt || !pendingPrompt.trim()) {
+      return;
+    }
+
+    setSearchQuery(pendingPrompt);
+    void executeSearch(pendingPrompt);
+    onPromptConsumed?.();
+  }, [pendingPrompt, executeSearch, onPromptConsumed]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -49,6 +74,15 @@ const Search: FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-4">
+      <div className="mb-4 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
+        <p className="font-medium text-blue-800">Try searches like:</p>
+        <ul className="mt-2 space-y-1 list-disc pl-5">
+          <li>"Comfort episodes after a tough day"</li>
+          <li>"Spike redemption storyline episodes"</li>
+          <li>"Episodes exploring grief and loss"</li>
+        </ul>
+      </div>
+
       <div className="flex gap-2 mb-6">
         <input
           type="text"
@@ -58,7 +92,7 @@ const Search: FC = () => {
           placeholder="Search Buffy episodes... (e.g., 'Buffy and Angel romantic scenes', 'Willow uses magic', 'episodes with vampires')"
           className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <button 
+        <button
           onClick={handleSearch}
           disabled={isLoading}
           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
@@ -75,7 +109,7 @@ const Search: FC = () => {
 
       <div className="space-y-4">
         {searchResults.map((result) => (
-          <div 
+          <div
             key={`${result.season}-${result.episode}-${result.title}`}
             className="p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
           >
@@ -87,34 +121,53 @@ const Search: FC = () => {
                 Score: {Math.round(result.score * 100)}%
               </span>
             </div>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+              <span className="rounded bg-blue-50 px-2 py-1 uppercase tracking-wide text-blue-600">
+                {result.content_type}
+              </span>
+              {result.context && <span>{result.context}</span>}
+            </div>
             <div className="prose prose-sm max-w-none">
-              <div className="mb-2 text-sm text-gray-500">
-                Aired: {result.airdate}
-              </div>
-              
+              <div className="mb-2 text-sm text-gray-500">Aired: {result.airdate}</div>
+
               {result.characters.length > 0 && (
                 <div className="mb-2">
                   <span className="text-xs font-medium text-blue-600">Characters: </span>
                   <span className="text-xs text-gray-600">{result.characters.join(', ')}</span>
                 </div>
               )}
-              
+
               {result.themes.length > 0 && (
                 <div className="mb-2">
                   <span className="text-xs font-medium text-green-600">Themes: </span>
                   <span className="text-xs text-gray-600">{result.themes.join(', ')}</span>
                 </div>
               )}
-              
-              <div className="mt-3">
-                <p className="text-gray-700 text-sm leading-relaxed">{result.text}</p>
-              </div>
-              
-              {result.context && (
-                <div className="mt-2 text-xs text-gray-500 italic">
-                  {result.context}
+
+              <div className="mt-3 space-y-3">
+                <div className="rounded-lg border-l-4 border-amber-400 bg-amber-50 p-4 text-sm text-gray-800 shadow-sm">
+                  <p className="font-medium uppercase tracking-wide text-amber-700 text-xs mb-1">Primary match</p>
+                  <p className="leading-relaxed whitespace-pre-line">{result.text}</p>
                 </div>
-              )}
+
+                {result.snippets && result.snippets.length > 0 && (
+                  <div className="rounded-lg bg-gray-50 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Supporting snippets
+                    </p>
+                    <ul className="mt-2 space-y-2">
+                      {result.snippets.map((snippet, index) => (
+                        <li
+                          key={`${result.title}-snippet-${index}`}
+                          className="rounded-md border border-gray-200 bg-white p-3 text-sm text-gray-700 shadow-sm"
+                        >
+                          <span className="block whitespace-pre-line leading-relaxed">{snippet}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ))}

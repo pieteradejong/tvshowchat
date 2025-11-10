@@ -1,6 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChatInput } from './ChatInput';
 import { ChatMessage } from './ChatMessage';
+import { PromptExamples } from './PromptExamples';
+
+interface SearchApiResult {
+  season: number;
+  episode: string;
+  title: string;
+  airdate: string;
+  text: string;
+  snippets?: string[];
+}
 
 interface Message {
   id: string;
@@ -13,12 +23,42 @@ interface Message {
     episode: string;
     airdate: string;
   };
+  snippet?: string;
+  extraSnippets?: string[];
 }
 
 export function ChatWindow() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const promptCategories = [
+    {
+      title: 'Mood-Based Watching',
+      prompts: [
+        'Comfort episodes after a tough day',
+        'Need a spooky Buffy marathon tonight',
+        'Lighthearted episodes with musical moments',
+      ],
+    },
+    {
+      title: 'Character Arcs',
+      description: 'Ask for multi-episode lists that chart a character’s growth.',
+      prompts: [
+        'Series of episodes to watch for Willow’s magic arc',
+        'Trace Buffy’s leadership journey across the series',
+        'Spike’s redemption episodes in order',
+      ],
+    },
+    {
+      title: 'Themes',
+      prompts: [
+        'Episodes exploring grief and loss',
+        'Stories about friendship saving the world',
+        'Episodes tackling power and responsibility',
+      ],
+    },
+  ];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -48,7 +88,7 @@ export function ChatWindow() {
         body: JSON.stringify({ query: text }),
       });
 
-      const data = await response.json();
+      const data: SearchApiResult[] = await response.json();
 
       // Backend returns array of results
       if (Array.isArray(data) && data.length > 0) {
@@ -64,6 +104,8 @@ export function ChatWindow() {
             episode: firstResult.episode,
             airdate: firstResult.airdate,
           },
+          snippet: firstResult.text,
+          extraSnippets: firstResult.snippets || [],
         };
         setMessages((prev) => [...prev, botMessage]);
       } else {
@@ -89,6 +131,10 @@ export function ChatWindow() {
     }
   };
 
+  const handlePromptSelect = (prompt: string) => {
+    void handleSendMessage(prompt);
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       <header className="bg-white border-b p-4">
@@ -97,6 +143,13 @@ export function ChatWindow() {
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.length === 0 && (
+          <PromptExamples
+            heading="Not sure where to start?"
+            categories={promptCategories}
+            onSelectPrompt={handlePromptSelect}
+          />
+        )}
         {messages.map((message) => (
           <ChatMessage
             key={message.id}
@@ -104,6 +157,8 @@ export function ChatWindow() {
             isUser={message.isUser}
             timestamp={message.timestamp}
             episodeInfo={message.episodeInfo}
+            snippet={message.snippet}
+            extraSnippets={message.extraSnippets}
           />
         ))}
         <div ref={messagesEndRef} />
