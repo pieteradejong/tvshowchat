@@ -6,7 +6,7 @@
 - ✅ Backend `/api/search` response matches the frontend contract
 - ✅ Frontend search + chat prototype work against the unified API
 - ✅ Crawler now generates `btvs_all_seasons.json` (Seasons 1–7) and incremental wrapper `scripts/crawl.sh` handles missing-season detection
-- ⚠️ `./test.sh` and `/api/test` still assert Season 1 coverage; need to validate seven-season dataset
+- ✅ `./test.sh` now validates seven-season coverage end-to-end
 - ⚠️ README and `docs/DATA_PIPELINE.md` describe the old single-season ingestion flow
 - ⚠️ Automated frontend build/test pipeline not yet implemented
 
@@ -57,11 +57,12 @@
    2.3 Ensure embeddings are regenerated only when missing and reuse cached vectors otherwise
    2.4 Expose helper to inspect collection stats (total episodes, season coverage)
 
-3. **Automated Testing Upgrades** (Next up)
-   3.1 Update `./test.sh` integrity checks to expect ~144 episodes and 7 seasons  
-   3.2 Extend integrity step to validate `app/data/embeddings` counts alongside episodes  
+3. **Automated Testing Upgrades** (in progress)
+   3.1 ✅ Update `./test.sh` integrity checks to expect ~144 episodes and 7 seasons  
+   3.2 ✅ Extend integrity step to validate `app/data/embeddings` counts alongside episodes  
    3.3 Ensure `/api/test` returns season coverage list; fail if mismatched  
-   3.4 (Optional) Add frontend build smoke test (`npm run build`) and surface errors clearly
+   3.4 (Optional) Add frontend build smoke test (`npm run build`) and surface errors clearly  
+   _3.1–3.2 delivered via the enhanced multi-season validation in `test.sh`._
 
 4. **Documentation Updates** (Next up)
    4.1 Update README quick-start with multi-season ingestion workflow (crawl → import → reindex)  

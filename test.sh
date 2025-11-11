@@ -7,6 +7,8 @@ RED='[0;31m'
 YELLOW='[1;33m'
 NC='[0m' # No Color
 
+EXPECTED_SEASONS=7
+
 # Use Python 3.12 for JSON formatting (required)
 if ! command -v python3.12 &> /dev/null; then
     echo -e "${RED}Error: Python 3.12 is required but not found${NC}"
@@ -88,11 +90,37 @@ fi
 
 echo -e "
 ${YELLOW}5. Testing Document Store${NC}"
+if [ -f "app/content/btvs_all_seasons.json" ]; then
+    echo -e "${GREEN}✓ Found aggregated content file (btvs_all_seasons.json)${NC}"
+else
+    echo -e "${RED}✗ Aggregated content file btvs_all_seasons.json not found${NC}"
+    echo "Run scripts/crawl.sh to generate it."
+    exit 1
+fi
+
 if [ -d "app/data/episodes" ]; then
     episode_files=$(ls app/data/episodes/season_*.json 2>/dev/null | wc -l)
-    echo -e "${GREEN}✓ Found ${episode_files} season files${NC}"
+    if [ "$episode_files" -eq "$EXPECTED_SEASONS" ]; then
+        echo -e "${GREEN}✓ Found ${episode_files} season files in document store${NC}"
+    else
+        echo -e "${RED}✗ Document store has ${episode_files} season files; expected ${EXPECTED_SEASONS}${NC}"
+        exit 1
+    fi
 else
     echo -e "${RED}✗ Episode directory not found${NC}"
+    exit 1
+fi
+
+if [ -d "app/data/embeddings" ]; then
+    embedding_files=$(ls app/data/embeddings/season_*_embeddings.json 2>/dev/null | wc -l)
+    if [ "$embedding_files" -eq "$EXPECTED_SEASONS" ]; then
+        echo -e "${GREEN}✓ Found ${embedding_files} season embedding files${NC}"
+    else
+        echo -e "${RED}✗ Embedding store has ${embedding_files} files; expected ${EXPECTED_SEASONS}${NC}"
+        exit 1
+    fi
+else
+    echo -e "${RED}✗ Embedding directory not found${NC}"
     exit 1
 fi
 
@@ -212,6 +240,7 @@ for file in embed_files:
     with file.open('r', encoding='utf-8') as f:
         embedding_counts[season_num] = len(json.load(f))
 validate_counts("Embeddings store", embedding_counts)
+embedding_total = sum(embedding_counts.values())
 
 try:
     with urllib.request.urlopen('http://localhost:8000/api/test') as resp:
@@ -237,7 +266,18 @@ for season in sorted(EXPECTED_EPISODES):
         f"api={api_counts.get(season) if api_counts else None}"
     )
 
-print(f"Totals - Content: {content_total} | Document store: {doc_total} | Vector store: {vector_total} | ChromaDB: {chroma_total} | API content: {api_total}")
+print(
+    "Totals - Content: {content} | Document store: {doc} | "
+    "Embeddings: {embed} | Vector store: {vector} | "
+    "ChromaDB: {chroma} | API content: {api}".format(
+        content=content_total,
+        doc=doc_total,
+        embed=embedding_total,
+        vector=vector_total,
+        chroma=chroma_total,
+        api=api_total,
+    )
+)
 
 if None in (vector_total, chroma_total, api_total) or not api_counts:
     fail('Invalid API response for /api/test')
@@ -246,7 +286,14 @@ validate_counts("API content summary", api_counts)
 if api_total != EXPECTED_TOTAL:
     fail(f"API content total expected {EXPECTED_TOTAL}, found {api_total}")
 
-if not (content_total == doc_total == vector_total == chroma_total == EXPECTED_TOTAL):
+if not (
+    content_total
+    == doc_total
+    == embedding_total
+    == vector_total
+    == chroma_total
+    == EXPECTED_TOTAL
+):
     fail('Episode counts do not match across pipeline')
 
 print(f"{GREEN}SUCCESS: Data pipeline integrity verified{NC}")
