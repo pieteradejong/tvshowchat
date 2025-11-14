@@ -74,7 +74,14 @@ class BuffyDocumentStore:
         self.episodes_path = self.base_path / "episodes"
         self.embeddings_path = self.base_path / "embeddings"
         self._ensure_dirs()
-        self.embedder = SentenceTransformer("all-MiniLM-L6-v2")
+        self._embedder = None  # Lazy-loaded to save memory
+    
+    @property
+    def embedder(self):
+        """Lazy-load the embedder only when needed."""
+        if self._embedder is None:
+            self._embedder = SentenceTransformer("all-MiniLM-L6-v2")
+        return self._embedder
 
     def _ensure_dirs(self):
         """Ensure storage directories exist."""

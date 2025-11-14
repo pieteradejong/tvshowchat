@@ -62,12 +62,13 @@ async def startup_event():
         service_status["store"]["error"] = str(e)
         logger.error(f"Document store initialization failed: {e}")
 
-    # Initialize Vector Store (ChromaDB)
+    # Initialize Vector Store (ChromaDB) - lazy initialization
+    # Don't call get_stats() here as it does expensive file I/O
+    # Stats will be computed on first request if needed
     try:
         vector_store = get_vector_store()
-        # Test vector store by getting stats
-        stats = vector_store.get_stats()
-        logger.info(f"Vector store initialized: {stats.get('chromadb_episodes', 0)} episodes in ChromaDB")
+        # Just verify the store can be accessed, don't compute stats
+        _ = vector_store.collection  # Access collection to trigger init
         service_status["vector_store"]["status"] = "healthy"
         service_status["chromadb"]["status"] = "healthy"
         logger.info("Vector store (ChromaDB) initialized successfully")
@@ -78,14 +79,18 @@ async def startup_event():
         service_status["chromadb"]["error"] = str(e)
         logger.error(f"Vector store initialization failed: {e}")
 
-    # Verify model
+    # Verify model through vector store (model is already loaded there)
     try:
-        from sentence_transformers import SentenceTransformer
-        embedder = SentenceTransformer("all-MiniLM-L6-v2")
-        # Test model with a simple string
-        embedder.encode("test")
-        service_status["model"]["status"] = "healthy"
-        logger.info("Model verification successful")
+        if service_status["vector_store"]["status"] == "healthy":
+            # Test model by encoding a simple string using the vector store's embedder
+            vector_store = get_vector_store()
+            vector_store.embedder.encode("test")
+            service_status["model"]["status"] = "healthy"
+            logger.info("Model verification successful (via vector store)")
+        else:
+            service_status["model"]["status"] = "unhealthy"
+            service_status["model"]["error"] = "Vector store not initialized"
+            logger.warning("Model verification skipped: vector store not healthy")
     except Exception as e:
         service_status["model"]["status"] = "unhealthy"
         service_status["model"]["error"] = str(e)

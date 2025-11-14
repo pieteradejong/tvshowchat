@@ -60,10 +60,11 @@ class AdvancedVectorStore:
             metadata={"hnsw:space": "cosine"}
         )
         
-        # Character and relationship mappings
-        self.character_embeddings = {}
-        self.relationship_graph = {}
-        self.theme_embeddings = {}
+        # Character and relationship mappings - lazy loaded to save memory/CPU at startup
+        self._character_embeddings = None
+        self._relationship_graph = None
+        self._theme_embeddings = None
+        self._chromadb_populated = False  # Track if we've checked/populated ChromaDB
         
         # Buffy universe knowledge base
         self.main_characters = {
@@ -94,27 +95,46 @@ class AdvancedVectorStore:
             'sacrifice': ['sacrifice', 'give up', 'lose', 'abandon', 'forsake']
         }
         
-        self._build_character_embeddings()
-        self._build_relationship_graph()
-        self._build_theme_embeddings()
-        
-        # Populate ChromaDB if empty
-        if self.collection.count() == 0:
-            logger.info("ChromaDB collection is empty, populating from document store...")
-            self._populate_chromadb()
+        # Defer expensive operations:
+        # - Character/theme embeddings: built on first use
+        # - Relationship graph: built on first use (very expensive, reads all files)
+        # - ChromaDB population: checked on first search
+    
+    @property
+    def character_embeddings(self) -> Dict[str, np.ndarray]:
+        """Lazy-load character embeddings."""
+        if self._character_embeddings is None:
+            self._build_character_embeddings()
+        return self._character_embeddings
+    
+    @property
+    def relationship_graph(self) -> Dict[str, Any]:
+        """Lazy-load relationship graph (expensive - reads all episode files)."""
+        if self._relationship_graph is None:
+            self._build_relationship_graph()
+        return self._relationship_graph
+    
+    @property
+    def theme_embeddings(self) -> Dict[str, np.ndarray]:
+        """Lazy-load theme embeddings."""
+        if self._theme_embeddings is None:
+            self._build_theme_embeddings()
+        return self._theme_embeddings
     
     def _build_character_embeddings(self):
         """Build embeddings for character names and descriptions."""
-        logger.info("Building character embeddings...")
+        logger.info("Building character embeddings (lazy-loaded)...")
+        self._character_embeddings = {}
         
         for character in self.main_characters:
             # Create character description for better semantic matching
             char_desc = f"Character {character} from Buffy the Vampire Slayer"
-            self.character_embeddings[character] = self.embedder.encode(char_desc)
+            self._character_embeddings[character] = self.embedder.encode(char_desc)
     
     def _build_relationship_graph(self):
-        """Build relationship graph from episode data."""
-        logger.info("Building character relationship graph...")
+        """Build relationship graph from episode data (expensive - lazy-loaded)."""
+        logger.info("Building character relationship graph (lazy-loaded, may take a moment)...")
+        self._relationship_graph = {}
         
         for season_file in self.document_store.episodes_path.glob("season_*.json"):
             season_num = int(season_file.stem.split('_')[1])
@@ -140,8 +160,8 @@ class AdvancedVectorStore:
                         
                         if relationship_type:
                             key = f"{char1}-{char2}"
-                            if key not in self.relationship_graph:
-                                self.relationship_graph[key] = {
+                            if key not in self._relationship_graph:
+                                self._relationship_graph[key] = {
                                     'characters': (char1, char2),
                                     'type': relationship_type,
                                     'episodes': [],
@@ -149,9 +169,9 @@ class AdvancedVectorStore:
                                     'descriptions': []
                                 }
                             
-                            self.relationship_graph[key]['episodes'].append(f"S{season:02d}E{episode}")
-                            self.relationship_graph[key]['strength'] += 1.0
-                            self.relationship_graph[key]['descriptions'].append(text)
+                            self._relationship_graph[key]['episodes'].append(f"S{season:02d}E{episode}")
+                            self._relationship_graph[key]['strength'] += 1.0
+                            self._relationship_graph[key]['descriptions'].append(text)
     
     def _detect_relationship_type(self, text: str, char1: str, char2: str) -> Optional[str]:
         """Detect relationship type between two characters based on context."""
@@ -182,12 +202,13 @@ class AdvancedVectorStore:
         return None
     
     def _build_theme_embeddings(self):
-        """Build embeddings for themes and storylines."""
-        logger.info("Building theme embeddings...")
+        """Build embeddings for themes and storylines (lazy-loaded)."""
+        logger.info("Building theme embeddings (lazy-loaded)...")
+        self._theme_embeddings = {}
         
         for theme, keywords in self.themes.items():
             theme_text = f"Theme {theme}: {', '.join(keywords)}"
-            self.theme_embeddings[theme] = self.embedder.encode(theme_text)
+            self._theme_embeddings[theme] = self.embedder.encode(theme_text)
     
     def _populate_chromadb(self):
         """Populate ChromaDB collection from document store."""
@@ -272,6 +293,13 @@ class AdvancedVectorStore:
             List of search results with rich metadata
         """
         logger.info(f"Searching episodes with query: '{query}'")
+        
+        # Lazy-check and populate ChromaDB if needed (deferred from startup)
+        if not self._chromadb_populated:
+            if self.collection.count() == 0:
+                logger.info("ChromaDB collection is empty, populating from document store...")
+                self._populate_chromadb()
+            self._chromadb_populated = True
         
         # Encode the query
         query_embedding = self.embedder.encode(query).tolist()
@@ -592,15 +620,33 @@ class AdvancedVectorStore:
         """Get statistics about the vector store."""
         total_episodes = 0
         seasons = set()
-        
+        season_counts: Dict[int, int] = {}
+        embedding_counts: Dict[int, int] = {}
+
         for season_file in self.document_store.episodes_path.glob("season_*.json"):
             season_num = int(season_file.stem.split('_')[1])
             seasons.add(season_num)
-            
+
             with open(season_file, 'r') as f:
                 season_data = json.load(f)
-                total_episodes += len(season_data)
-        
+                episode_count = len(season_data)
+                total_episodes += episode_count
+                season_counts[season_num] = episode_count
+
+            embeddings_file = self.document_store._get_embeddings_file(season_num)
+            embed_count = 0
+            if embeddings_file.exists():
+                with open(embeddings_file, 'r') as f:
+                    embeddings_data = json.load(f)
+                    embed_count = len(embeddings_data)
+            embedding_counts[season_num] = embed_count
+
+        # Ensure embedding counts account for all tracked seasons
+        for season in seasons:
+            embedding_counts.setdefault(season, 0)
+
+        embeddings_total = sum(embedding_counts.values())
+
         chroma_count = 0
         if self.collection:
             try:
@@ -629,6 +675,9 @@ class AdvancedVectorStore:
         return {
             'total_episodes': total_episodes,
             'seasons': sorted(list(seasons)),
+            'season_counts': season_counts,
+            'embedding_counts': embedding_counts,
+            'embedding_total': embeddings_total,
             'collection_name': 'buffy_episodes',
             'embedding_model': 'all-MiniLM-L6-v2',
             'chromadb_episodes': chroma_count,
