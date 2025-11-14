@@ -48,7 +48,9 @@ const Search: FC<SearchProps> = ({ pendingPrompt, onPromptConsumed }) => {
       setError(null);
 
       try {
-        const response = await axios.post('http://localhost:8000/api/search', {
+        // Use relative URL - works in both dev (proxy) and production (same domain)
+        const apiUrl = import.meta.env.VITE_API_URL || '/api/search';
+        const response = await axios.post(apiUrl, {
           query,
           limit: 5,
         });

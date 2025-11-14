@@ -1,7 +1,20 @@
 # Multi-stage Dockerfile for TV Show Chat FastAPI app
 # Optimized for production deployment on Render
 
-# Stage 1: Build stage
+# Stage 1: Build frontend
+FROM node:20-slim as frontend-builder
+
+WORKDIR /frontend
+
+# Copy frontend files
+COPY frontend/package.json frontend/package-lock.json* ./
+RUN npm ci
+
+# Copy frontend source and build
+COPY frontend/ ./
+RUN npm run build
+
+# Stage 2: Build Python dependencies
 FROM python:3.12-slim as builder
 
 # Set working directory
@@ -22,7 +35,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Stage 2: Production stage
+# Stage 3: Production stage
 FROM python:3.12-slim
 
 # Set working directory
@@ -45,8 +58,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY app/ ./app/
 COPY runtime.txt ./
 
-# Create necessary directories (including static if it doesn't exist)
-RUN mkdir -p app/data/episodes app/data/embeddings app/data/chroma app/logs app/static
+# Copy frontend build to static directory
+COPY --from=frontend-builder /frontend/dist ./app/static
+
+# Create necessary directories
+RUN mkdir -p app/data/episodes app/data/embeddings app/data/chroma app/logs
 
 # Expose port (Render will set PORT env var, but default to 8000)
 EXPOSE 8000

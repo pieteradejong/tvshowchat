@@ -15,16 +15,33 @@ class SuccessResponse(BaseModel):
     message: str
 
 
-@router.get("/", response_model=SuccessResponse, status_code=status.HTTP_200_OK)
+@router.get("/", response_class=HTMLResponse)
 async def root():
-    logger.info("Received root request")
-    return SuccessResponse(
-        status="success", message="This application is a TV Show Q&A engine."
-    )
+    """Serve the frontend React app."""
+    static_index = Path(__file__).parent.parent.absolute() / "static" / "index.html"
+    if static_index.exists():
+        return FileResponse(static_index)
+    else:
+        # Return a simple HTML response if static files aren't available
+        logger.warning("Static files not found, returning fallback HTML")
+        return HTMLResponse(content="<html><body><h1>TV Show Chat API</h1><p>Frontend not available. API is running.</p><p>Try <a href='/health'>/health</a> or <a href='/api/search'>/api/search</a></p></body></html>")
+
+
+@router.get("/vite.svg")
+async def vite_svg():
+    """Serve the Vite SVG icon."""
+    static_dir = Path(__file__).parent.parent.absolute() / "static"
+    vite_svg_path = static_dir / "vite.svg"
+    if vite_svg_path.exists():
+        return FileResponse(vite_svg_path)
+    else:
+        from fastapi.responses import Response
+        return Response(status_code=404, content="Not found")
 
 
 @router.get("/vite", response_class=HTMLResponse)
 async def index():
+    """Legacy endpoint - redirects to root."""
     static_index = Path(__file__).parent.parent.absolute() / "static" / "index.html"
     if static_index.exists():
         return FileResponse(static_index)

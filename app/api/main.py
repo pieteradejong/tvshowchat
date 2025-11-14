@@ -21,12 +21,26 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.include_router(api.router)
-app.include_router(search_router.router, prefix="/api")
 
-# Mount static files only if directory exists (for production builds)
+# Include API routes FIRST (before static files) so they take precedence
+app.include_router(search_router.router, prefix="/api")
+app.include_router(api.router)  # Root route must come after API routes
+
+# Mount static files for frontend assets (CSS, JS, images, etc.)
+# This serves files from app/static/assets/ and other static files
 static_dir = Path(__file__).parent.parent.absolute() / "static"
 if static_dir.exists() and static_dir.is_dir():
+    # Mount assets directory for Vite-built assets
+    assets_dir = static_dir / "assets"
+    if assets_dir.exists():
+        app.mount(
+            "/assets",
+            StaticFiles(directory=assets_dir),
+            name="assets",
+        )
+        logger.info(f"Assets mounted from {assets_dir}")
+    
+    # Also mount root static directory for other static files (vite.svg, etc.)
     app.mount(
         "/static",
         StaticFiles(directory=static_dir),

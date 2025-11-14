@@ -80,7 +80,9 @@ export function ChatWindow() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/search', {
+      // Use relative URL - works in both dev (proxy) and production (same domain)
+      const apiUrl = import.meta.env.VITE_API_URL || '/api/search';
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

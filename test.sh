@@ -256,6 +256,33 @@ api_total = api_content.get('total_episodes')
 api_counts = api_content.get('season_counts', {})
 if isinstance(api_counts, dict):
     api_counts = {int(k): v for k, v in api_counts.items()}
+api_expected_total = api_data.get('expected_total_episodes')
+
+vector_api_counts = vector_section.get('season_counts', {})
+if not vector_api_counts:
+    fail('API vector store missing season_counts')
+vector_api_counts = {int(k): v for k, v in vector_api_counts.items()}
+validate_counts("API vector store summary", vector_api_counts)
+vector_api_total = sum(vector_api_counts.values())
+
+embedding_api_counts = vector_section.get('embedding_counts', {})
+if not embedding_api_counts:
+    fail('API vector store missing embedding_counts')
+embedding_api_counts = {int(k): v for k, v in embedding_api_counts.items()}
+validate_counts("API vector embeddings summary", embedding_api_counts)
+embedding_api_total = sum(embedding_api_counts.values())
+
+if vector_total != vector_api_total:
+    fail(
+        f"API vector store totals mismatch: top-level={vector_total}, "
+        f"season-sum={vector_api_total}"
+    )
+
+if embedding_api_total != EXPECTED_TOTAL:
+    fail(
+        f"API embedding totals mismatch: expected {EXPECTED_TOTAL}, "
+        f"found {embedding_api_total}"
+    )
 
 print("Season coverage summary:")
 for season in sorted(EXPECTED_EPISODES):
@@ -263,17 +290,21 @@ for season in sorted(EXPECTED_EPISODES):
         f"  Season {season}: content={content_counts.get(season)} "
         f"doc={doc_counts.get(season)} "
         f"embeddings={embedding_counts.get(season)} "
-        f"api={api_counts.get(season) if api_counts else None}"
+        f"api={api_counts.get(season) if api_counts else None} "
+        f"vector_api={vector_api_counts.get(season)} "
+        f"embed_api={embedding_api_counts.get(season)}"
     )
 
 print(
     "Totals - Content: {content} | Document store: {doc} | "
-    "Embeddings: {embed} | Vector store: {vector} | "
-    "ChromaDB: {chroma} | API content: {api}".format(
+    "Embeddings: {embed} (api={embed_api}) | Vector store: {vector} "
+    "(api={vector_api}) | ChromaDB: {chroma} | API content: {api}".format(
         content=content_total,
         doc=doc_total,
         embed=embedding_total,
+        embed_api=embedding_api_total,
         vector=vector_total,
+        vector_api=vector_api_total,
         chroma=chroma_total,
         api=api_total,
     )
@@ -281,6 +312,12 @@ print(
 
 if None in (vector_total, chroma_total, api_total) or not api_counts:
     fail('Invalid API response for /api/test')
+
+if api_expected_total not in (None, EXPECTED_TOTAL):
+    fail(
+        f"API reported expected_total_episodes={api_expected_total}, "
+        f"expected {EXPECTED_TOTAL}"
+    )
 
 validate_counts("API content summary", api_counts)
 if api_total != EXPECTED_TOTAL:
@@ -292,6 +329,9 @@ if not (
     == embedding_total
     == vector_total
     == chroma_total
+    == api_total
+    == vector_api_total
+    == embedding_api_total
     == EXPECTED_TOTAL
 ):
     fail('Episode counts do not match across pipeline')

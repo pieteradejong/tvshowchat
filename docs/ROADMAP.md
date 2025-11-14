@@ -60,9 +60,9 @@
 3. **Automated Testing Upgrades** (in progress)
    3.1 ✅ Update `./test.sh` integrity checks to expect ~144 episodes and 7 seasons  
    3.2 ✅ Extend integrity step to validate `app/data/embeddings` counts alongside episodes  
-   3.3 Ensure `/api/test` returns season coverage list; fail if mismatched  
+   3.3 ✅ Ensure `/api/test` returns season coverage list; fail if mismatched  
    3.4 (Optional) Add frontend build smoke test (`npm run build`) and surface errors clearly  
-   _3.1–3.2 delivered via the enhanced multi-season validation in `test.sh`._
+   _3.1–3.3 delivered via the enhanced multi-season validation in `test.sh` and tighter `/api/test` checks._
 
 4. **Documentation Updates** (Next up)
    4.1 Update README quick-start with multi-season ingestion workflow (crawl → import → reindex)  
