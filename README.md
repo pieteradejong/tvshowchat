@@ -32,7 +32,7 @@ The repository already includes the full `btvs_all_seasons.json` dataset (Season
    ```bash
    ./init.sh
    ```
-   Creates/updates the Python 3.12 virtualenv, installs requirements, prepares data directories, and downloads the embedding model.
+   Creates/updates the Python 3.11+ virtualenv, installs requirements, prepares data directories, and downloads the embedding model.
 
 2. **Run the backend (FastAPI + Chroma)**
    ```bash
@@ -64,7 +64,7 @@ To refresh the dataset later, follow the [Multi-Season Refresh Workflow](#multi-
 ## Tech Stack
 
 ### Backend
-- Python 3.12
+- Python 3.11+ (3.11 recommended for deployment platforms)
 - FastAPI 0.104.1
 - ChromaDB 0.4.22 (Vector Database)
 - Sentence Transformers (Embeddings)
@@ -78,7 +78,7 @@ To refresh the dataset later, follow the [Multi-Season Refresh Workflow](#multi-
 
 ## Prerequisites
 
-- Python 3.12 or later
+- Python 3.11 or later (3.11 recommended for deployment platforms)
 - pip (Python package manager)
 - git
 
@@ -234,6 +234,100 @@ The canonical dataset lives at `app/content/btvs_all_seasons.json`. To regenerat
 2. `python3.12 scripts/scrape_episodes.py --import-latest` — sync the document store (`app/data/episodes` + embeddings).
 3. `python3.12 scripts/scrape_episodes.py --reindex-chroma` — rebuild the `buffy_episodes` collection from the document store.
 4. `./test.sh` — validates that content, document store, embeddings, vector store, and API all report 144 episodes across Seasons 1–7.
+
+## Docker Deployment
+
+The project includes Docker configuration for consistent, reproducible deployments on Render or any Docker-compatible platform.
+
+### Local Docker Testing
+
+Test the Docker setup locally before deploying:
+
+```bash
+# Build and run with Docker Compose
+docker-compose up --build
+
+# Or build and run directly
+docker build -t tvshowchat-api .
+docker run -p 8000:8000 tvshowchat-api
+```
+
+The API will be available at `http://localhost:8000`.
+
+### Deploying to Render
+
+Render supports Docker deployments for maximum consistency. Two options:
+
+#### Option 1: Using Dockerfile (Recommended)
+
+1. **Connect your repository** to Render
+2. **Create a new Web Service**
+3. **Set the following:**
+   - **Environment**: Docker
+   - **Dockerfile Path**: `./Dockerfile` (or leave blank if in root)
+   - **Docker Context**: `.` (root directory)
+   - **Plan**: Starter (512MB) or Standard (2GB recommended)
+   - **Health Check Path**: `/health`
+
+4. **Environment Variables** (optional, defaults work):
+   - `PORT=8000` (Render sets this automatically)
+   - `PYTHONUNBUFFERED=1`
+   - `PYTHONDONTWRITEBYTECODE=1`
+
+5. **Deploy!** Render will:
+   - Build the Docker image from your Dockerfile
+   - Run the container with the optimized settings
+   - Handle health checks automatically
+
+#### Option 2: Using render.yaml (Blueprint)
+
+The repository includes a `render.yaml` blueprint for automated setup:
+
+1. In Render Dashboard, click **New** → **Blueprint**
+2. Connect your repository
+3. Render will automatically detect `render.yaml` and create the service
+
+The blueprint is configured for:
+- **Starter tier** (512MB RAM) - should work after memory optimizations
+- **Standard tier** (2GB RAM) - recommended for production (uncomment in render.yaml)
+
+### Docker Features
+
+- **Multi-stage build**: Smaller final image size (~500MB vs ~2GB)
+- **Optimized layers**: Better caching for faster rebuilds
+- **Health checks**: Automatic container health monitoring
+- **Production-ready**: Only production dependencies included
+- **Memory optimized**: Lazy-loading of expensive operations
+
+### Data Persistence
+
+For production deployments, ensure data persistence:
+
+1. **Mount volumes** for `app/data/` (episodes, embeddings, ChromaDB)
+2. **Use Render's disk storage** or external storage (S3, etc.)
+3. **Backup strategy**: Regular backups of `app/data/` directory
+
+The Docker setup creates necessary directories but data should be:
+- Pre-populated in the image, OR
+- Mounted from persistent storage, OR
+- Loaded on first startup (current behavior)
+
+### Troubleshooting
+
+**Out of memory errors:**
+- Upgrade to Standard tier (2GB RAM)
+- Check memory usage: `docker stats`
+- Review lazy-loading optimizations in code
+
+**Slow startup:**
+- First request may take 2-5s longer (builds embeddings on demand)
+- Subsequent requests are fast
+- Consider pre-warming on deployment
+
+**Health check failures:**
+- Check logs: `docker logs <container-id>`
+- Verify port is correct (Render sets PORT env var)
+- Ensure `/health` endpoint is accessible
 
 ## Contributing
 

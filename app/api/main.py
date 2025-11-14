@@ -23,11 +23,18 @@ app.add_middleware(
 )
 app.include_router(api.router)
 app.include_router(search_router.router, prefix="/api")
-app.mount(
-    "/static",
-    StaticFiles(directory=Path(__file__).parent.parent.absolute() / "static"),
-    name="static",
-)
+
+# Mount static files only if directory exists (for production builds)
+static_dir = Path(__file__).parent.parent.absolute() / "static"
+if static_dir.exists() and static_dir.is_dir():
+    app.mount(
+        "/static",
+        StaticFiles(directory=static_dir),
+        name="static",
+    )
+    logger.info(f"Static files mounted from {static_dir}")
+else:
+    logger.warning(f"Static directory not found at {static_dir}, skipping static file mount")
 
 # Track service status
 service_status: Dict[str, Any] = {

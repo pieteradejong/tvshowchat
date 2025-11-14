@@ -25,7 +25,12 @@ async def root():
 
 @router.get("/vite", response_class=HTMLResponse)
 async def index():
-    return FileResponse(Path(__file__).parent.parent.absolute() / "static" / "index.html")
+    static_index = Path(__file__).parent.parent.absolute() / "static" / "index.html"
+    if static_index.exists():
+        return FileResponse(static_index)
+    else:
+        # Return a simple HTML response if static files aren't available
+        return HTMLResponse(content="<html><body><h1>TV Show Chat API</h1><p>Static files not available. API is running.</p></body></html>")
 
 @router.get("/health", response_model=SuccessResponse, status_code=status.HTTP_200_OK)
 async def health_check():

@@ -1,0 +1,24 @@
+# Render Blueprint Configuration
+# This file defines the services for deployment on Render
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: tvshowchat-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter  # 512MB RAM - should work after optimizations
+    # plan: standard  # 2GB RAM - recommended for production
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: PYTHONDONTWRITEBYTECODE
+        value: 1
+      - key: PORT
+        value: 8000
+    healthCheckPath: /health
+    autoDeploy: true
+    # Build command is handled by Dockerfile
+    # Start command is handled by Dockerfile CMD
+

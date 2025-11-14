@@ -1,0 +1,91 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+app/logs/
+logs/
+*.log.*
+
+# Data files (will be mounted or copied separately if needed)
+app/data/backup_*/
+app/data/chroma/
+app/dump.rdb
+
+# Frontend
+frontend/
+node_modules/
+frontend.pid
+*.pid
+
+# Documentation
+docs/
+*.md
+!README.md
+ARCHITECTURE.md
+PROJECT_STATUS.md
+blog.txt
+
+# Scripts (not needed in production)
+scripts/
+init.sh
+run.sh
+run_frontend.sh
+test.sh
+crawl.sh
+
+# Tests
+tests/
+test/
+app/test/
+
+# Development files
+.cursorrules
+.editorconfig
+.env.local
+.env.development
+.env.test
+
+# Build artifacts
+*.pyc
+*.pyo
+*.pyd
+.coverage
+htmlcov/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+
