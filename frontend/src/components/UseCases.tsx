@@ -68,25 +68,34 @@ export const UseCases: FC<UseCasesProps> = ({ onSelectPrompt }) => {
         </p>
       </header>
 
-      {groupedCategories.map(({ heading, intro, categories }) => (
-        <section key={heading}>
-          <PromptExamples
-            heading={heading}
-            intro={intro}
-            categories={categories}
-            layout="grid"
-            onSelectPrompt={onSelectPrompt}
-          />
-        </section>
-      ))}
-
-      <div className="rounded-lg border border-dashed border-gray-300 bg-white p-4 sm:p-6 text-xs sm:text-sm text-gray-600">
-        <h2 className="text-sm sm:text-base font-semibold text-gray-900">Tips</h2>
-        <ul className="mt-3 space-y-2 list-disc pl-4 sm:pl-5">
+      {/* Tips section moved to top */}
+      <div className="rounded-lg border-2 border-blue-200 bg-blue-50/50 p-4 sm:p-6 text-xs sm:text-sm text-gray-700 shadow-sm">
+        <h2 className="text-sm sm:text-base font-semibold text-blue-900 mb-3 flex items-center gap-2">
+          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+          Tips
+        </h2>
+        <ul className="space-y-2 list-disc pl-4 sm:pl-5 text-gray-700">
           <li>Combine keywords to mix moods and characters, e.g., "Spike redemption episodes with musical elements."</li>
           <li>Ask follow-up questions in Chat to refine character arcs or compare themes across seasons.</li>
           <li>Use Search to gather a list, then paste the same prompt into Chat for a quick summary of top results.</li>
         </ul>
+      </div>
+
+      {/* Suggestion areas - visually distinct */}
+      <div className="space-y-6 sm:space-y-8">
+        {groupedCategories.map(({ heading, intro, categories }) => (
+          <section key={heading} className="rounded-lg border border-gray-200 bg-gray-50/30 p-4 sm:p-6">
+            <PromptExamples
+              heading={heading}
+              intro={intro}
+              categories={categories}
+              layout="grid"
+              onSelectPrompt={onSelectPrompt}
+            />
+          </section>
+        ))}
       </div>
     </div>
   );

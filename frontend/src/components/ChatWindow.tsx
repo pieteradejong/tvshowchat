@@ -148,6 +148,11 @@ export function ChatWindow() {
 
   return (
     <div className="flex flex-col min-h-[400px] max-h-[calc(100vh-12rem)] sm:max-h-[calc(100vh-8rem)] bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+      {/* Input area - visually distinct */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b-2 border-blue-200 shadow-sm">
+        <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+      </div>
+
       <header className="bg-white border-b p-3 sm:p-4">
         <h1 className="text-lg sm:text-xl font-semibold text-gray-900">Buffy Chat</h1>
         <p className="text-xs sm:text-sm text-gray-500">Ask me anything about Buffy the Vampire Slayer</p>
@@ -155,11 +160,13 @@ export function ChatWindow() {
 
       <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
         {messages.length === 0 && (
-          <PromptExamples
-            heading="Not sure where to start?"
-            categories={promptCategories}
-            onSelectPrompt={handlePromptSelect}
-          />
+          <div className="rounded-lg border border-gray-200 bg-gray-50/50 p-4 sm:p-6">
+            <PromptExamples
+              heading="Not sure where to start?"
+              categories={promptCategories}
+              onSelectPrompt={handlePromptSelect}
+            />
+          </div>
         )}
         {messages.map((message) => (
           <ChatMessage
@@ -174,8 +181,6 @@ export function ChatWindow() {
         ))}
         <div ref={messagesEndRef} />
       </div>
-
-      <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
     </div>
   );
 } 
