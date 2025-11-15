@@ -138,13 +138,13 @@ export function ChatWindow() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      <header className="bg-white border-b p-4">
-        <h1 className="text-xl font-semibold text-gray-900">Buffy Chat</h1>
-        <p className="text-sm text-gray-500">Ask me anything about Buffy the Vampire Slayer</p>
+    <div className="flex flex-col min-h-[400px] max-h-[calc(100vh-12rem)] sm:max-h-[calc(100vh-8rem)] bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+      <header className="bg-white border-b p-3 sm:p-4">
+        <h1 className="text-lg sm:text-xl font-semibold text-gray-900">Buffy Chat</h1>
+        <p className="text-xs sm:text-sm text-gray-500">Ask me anything about Buffy the Vampire Slayer</p>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
         {messages.length === 0 && (
           <PromptExamples
             heading="Not sure where to start?"

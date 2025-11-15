@@ -127,8 +127,8 @@ export const TimelineView: FC<TimelineViewProps> = ({ results }) => {
 
   return (
     <div className="relative">
-      <div className="absolute left-3 top-0 h-full w-px bg-blue-100" aria-hidden />
-      <div className="space-y-6">
+      <div className="absolute left-2 sm:left-3 top-0 h-full w-px bg-blue-100" aria-hidden />
+      <div className="space-y-4 sm:space-y-6">
         {nodes.map((node, index) => {
           const isExpanded = expandedNodes[node.id] ?? false;
           const contextPieces = node.primary.context
@@ -136,18 +136,18 @@ export const TimelineView: FC<TimelineViewProps> = ({ results }) => {
             : [];
 
           return (
-            <div key={node.id} className="relative pl-12">
+            <div key={node.id} className="relative pl-8 sm:pl-12">
               <span
-                className="absolute left-1 top-3 flex h-5 w-5 items-center justify-center rounded-full border-2 border-blue-500 bg-blue-50 text-xs font-semibold text-blue-700"
+                className="absolute left-0 sm:left-1 top-3 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full border-2 border-blue-500 bg-blue-50 text-xs font-semibold text-blue-700"
                 aria-hidden
               >
                 {index + 1}
               </span>
 
-              <div className="rounded-lg border border-blue-100 bg-white p-4 shadow-sm">
-                <header className="flex flex-wrap items-start justify-between gap-3">
+              <div className="rounded-lg border border-blue-100 bg-white p-3 sm:p-4 shadow-sm">
+                <header className="flex flex-col sm:flex-row sm:flex-wrap sm:items-start sm:justify-between gap-2 sm:gap-3">
                   <div>
-                    <h3 className="text-base font-semibold text-gray-900">
+                    <h3 className="text-sm sm:text-base font-semibold text-gray-900">
                       S{String(node.season).padStart(2, '0')}E{node.episode}. {node.title}
                     </h3>
                     <p className="text-xs text-gray-500">{node.airdate || 'Airdate unknown'}</p>
@@ -164,7 +164,7 @@ export const TimelineView: FC<TimelineViewProps> = ({ results }) => {
                 </header>
 
                 <div className="mt-3 space-y-2">
-                  <p className="rounded-lg border-l-4 border-amber-400 bg-amber-50 p-3 text-sm leading-relaxed text-gray-800">
+                  <p className="rounded-lg border-l-4 border-amber-400 bg-amber-50 p-2 sm:p-3 text-xs sm:text-sm leading-relaxed text-gray-800 break-words">
                     {node.primary.text}
                   </p>
 
@@ -201,7 +201,7 @@ export const TimelineView: FC<TimelineViewProps> = ({ results }) => {
                     </button>
 
                     {isExpanded && (
-                      <div className="mt-3 space-y-3 text-sm text-gray-700">
+                      <div className="mt-3 space-y-3 text-xs sm:text-sm text-gray-700">
                         {contextPieces.length > 0 && (
                           <div>
                             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -209,7 +209,7 @@ export const TimelineView: FC<TimelineViewProps> = ({ results }) => {
                             </p>
                             <ul className="mt-1 space-y-1">
                               {contextPieces.map((piece, pieceIndex) => (
-                                <li key={`${node.id}-context-${pieceIndex}`}>{piece}</li>
+                                <li key={`${node.id}-context-${pieceIndex}`} className="break-words">{piece}</li>
                               ))}
                             </ul>
                           </div>
@@ -224,7 +224,7 @@ export const TimelineView: FC<TimelineViewProps> = ({ results }) => {
                               {node.supportingSnippets.map((snippet, snippetIndex) => (
                                 <li
                                   key={`${node.id}-snippet-${snippetIndex}`}
-                                  className="rounded-md border border-gray-200 bg-gray-50 p-3 text-gray-700"
+                                  className="rounded-md border border-gray-200 bg-gray-50 p-2 sm:p-3 text-gray-700 break-words"
                                 >
                                   {snippet}
                                 </li>
