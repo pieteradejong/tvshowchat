@@ -6,12 +6,16 @@ FROM node:20-slim as frontend-builder
 
 WORKDIR /frontend
 
-# Copy frontend files
+# Copy frontend package files first (for better caching)
 COPY frontend/package.json frontend/package-lock.json* ./
-RUN npm ci
 
-# Copy frontend source and build
+# Install dependencies
+RUN npm ci --prefer-offline --no-audit
+
+# Copy all frontend source files (excluding node_modules via .dockerignore)
 COPY frontend/ ./
+
+# Build the frontend
 RUN npm run build
 
 # Stage 2: Build Python dependencies
