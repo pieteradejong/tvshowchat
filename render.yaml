@@ -8,6 +8,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
+    branch: main  # Ensure we use the latest main branch
     plan: starter  # 512MB RAM - should work after optimizations
     # plan: standard  # 2GB RAM - recommended for production
     envVars:
