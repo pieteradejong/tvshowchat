@@ -90,7 +90,16 @@ export function ChatWindow() {
         body: JSON.stringify({ query: text }),
       });
 
-      const data: SearchApiResult[] = await response.json();
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
+
+      const textData = await response.text();
+      if (!textData) {
+        throw new Error('Empty response from server');
+      }
+
+      const data: SearchApiResult[] = JSON.parse(textData);
 
       // Backend returns array of results
       if (Array.isArray(data) && data.length > 0) {
