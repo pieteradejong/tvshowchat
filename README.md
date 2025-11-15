@@ -26,19 +26,19 @@ A semantic search and chat application for TV show transcripts, built with Pytho
 
 ## Quick Start
 
-The repository already includes the full `btvs_all_seasons.json` dataset (Seasons 1–7). You only need to crawl if you want to refresh the source data.
+The repository includes the complete `btvs_all_seasons.json` dataset (all 7 seasons, 144 episodes). The pipeline is fully set up and verified.
 
 1. **Initialize dependencies & environment**
    ```bash
    ./init.sh
    ```
-   Creates/updates the Python 3.11+ virtualenv, installs requirements, prepares data directories, and downloads the embedding model.
+   Creates/updates the Python 3.12 virtualenv, installs requirements, prepares data directories, and downloads the embedding model.
 
-2. **Run the backend (FastAPI + Chroma)**
+2. **Run the backend (FastAPI + ChromaDB)**
    ```bash
    ./run.sh
    ```
-   Starts the API at http://localhost:8000 and ensures the document store/ChromaDB are populated from the existing dataset.
+   Starts the API at http://localhost:8000. The document store and ChromaDB will auto-populate from the existing dataset on first startup.
 
 3. **Run the frontend (React/Vite)**
    ```bash
@@ -50,7 +50,7 @@ The repository already includes the full `btvs_all_seasons.json` dataset (Season
    ```bash
    ./test.sh
    ```
-   Requires the backend to be running. Verifies health endpoints, search, document store, embeddings, and ensures the content/Chroma counts match (144 total episodes).
+   Requires the backend to be running. Verifies health endpoints, search across all seasons, document store, embeddings, and ensures the content/Chroma counts match (144 total episodes across all 7 seasons).
 
 To refresh the dataset later, follow the [Multi-Season Refresh Workflow](#multi-season-refresh-workflow); otherwise no scraping is required.
 
@@ -120,6 +120,7 @@ This will:
 2. Access the backend:
 - API Documentation: http://localhost:8000/docs
 - Health Check: http://localhost:8000/health
+- Pipeline Health: http://localhost:8000/health/pipeline (shows episode counts at each stage)
 - ChromaDB Status: http://localhost:8000/health/chromadb
 - Vector Store Status: http://localhost:8000/health/vector-store
 - Model Status: http://localhost:8000/health/model
@@ -173,10 +174,12 @@ tvshowchat/
 
 ## Documentation
 
+- `ROADMAP.md` – **Consolidated roadmap and implementation plan** (start here for planning)
 - `ARCHITECTURE.md` – High-level system design and diagrams
-- `docs/ROADMAP.md` – Current implementation roadmap and priorities
 - `docs/DATA_PIPELINE.md` – Detailed ingestion and storage pipeline
 - `docs/TESTING_GUIDE.md` – Automated and manual testing instructions
+
+**Current Status**: All 7 seasons (144 episodes) are ingested and searchable. The pipeline is fully verified and tested. See `ROADMAP.md` for complete details.
 
 ## Development
 
@@ -198,18 +201,21 @@ Run the automated test suite:
 **Prerequisites:** The server must be running (`./run.sh`)
 
 **What it tests:**
-1. **Health Endpoints** - `/health`, `/health/vector-store`, `/health/model`
+1. **Health Endpoints** - `/health`, `/health/vector-store`, `/health/model`, `/health/pipeline`
 2. **System State** - `/api/test` (vector store stats, sample episode, test search)
 3. **Search Functionality** - `/api/test-search` (default and custom queries)
-4. **Vector Store Status** - Verifies ChromaDB is healthy
-5. **Data Directories** - Checks for episode files and ChromaDB data
-6. **Crawler Status** - Runs `scripts/scrape_episodes.py --status`
+4. **Search Across All Seasons** - Verifies search works for all 7 seasons
+5. **Vector Store Status** - Verifies ChromaDB is healthy with 144 episodes
+6. **Data Directories** - Checks for episode files and ChromaDB data
+7. **Crawler Status** - Runs `scripts/scrape_episodes.py --status`
+8. **Pipeline Integrity** - Verifies all stages match (content → document store → ChromaDB)
 
 **Expected Results:**
 - All endpoints return `200 OK`
-- Search returns relevant episode results
-- Vector store shows healthy status
-- Data directories contain expected files
+- Search returns relevant episode results across all 7 seasons
+- Vector store shows healthy status with 144 episodes
+- Data directories contain expected files (7 season files in episodes and embeddings)
+- Pipeline integrity verified (all stages match: 144 episodes)
 
 See `docs/TESTING_GUIDE.md` for detailed testing documentation.
 

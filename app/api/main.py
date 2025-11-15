@@ -191,5 +191,138 @@ async def store_health_check():
         detail=f"Document store is unhealthy: {service_status['store']['error']}"
     )
 
+@app.get("/health/pipeline")
+async def pipeline_health_check():
+    """Pipeline health check endpoint showing episode counts at each stage."""
+    try:
+        from app.services.vector_store import get_vector_store
+        from app.services.storage.document_store import get_store
+        from pathlib import Path
+        import json
+        
+        pipeline_status = {
+            "status": "healthy",
+            "stages": {}
+        }
+        
+        # Stage 1: Content JSON
+        content_file = ROOT_DIR / "app" / "content" / "btvs_all_seasons.json"
+        if content_file.exists():
+            with content_file.open("r", encoding="utf-8") as f:
+                content_data = json.load(f)
+            content_counts = {
+                int(k.split("_")[1]): len(v)
+                for k, v in content_data.items()
+                if k.startswith("season_")
+            }
+            pipeline_status["stages"]["content"] = {
+                "status": "healthy",
+                "file": str(content_file.relative_to(ROOT_DIR)),
+                "total_episodes": sum(content_counts.values()),
+                "season_counts": content_counts,
+                "seasons": len(content_counts)
+            }
+        else:
+            pipeline_status["stages"]["content"] = {
+                "status": "missing",
+                "file": str(content_file.relative_to(ROOT_DIR)),
+                "error": "Content file not found"
+            }
+            pipeline_status["status"] = "degraded"
+        
+        # Stage 2: Document Store
+        try:
+            store = get_store()
+            doc_counts = {}
+            episodes_dir = store.episodes_path
+            if episodes_dir.exists():
+                for season_file in sorted(episodes_dir.glob("season_*.json")):
+                    season_num = int(season_file.stem.split("_")[1])
+                    with season_file.open("r", encoding="utf-8") as f:
+                        doc_counts[season_num] = len(json.load(f))
+                
+                # Check embeddings
+                embed_counts = {}
+                embeddings_dir = store.embeddings_path
+                if embeddings_dir.exists():
+                    for embed_file in sorted(embeddings_dir.glob("season_*_embeddings.json")):
+                        season_num = int(embed_file.stem.split("_")[1])
+                        with embed_file.open("r", encoding="utf-8") as f:
+                            embed_counts[season_num] = len(json.load(f))
+                
+                pipeline_status["stages"]["document_store"] = {
+                    "status": "healthy",
+                    "total_episodes": sum(doc_counts.values()),
+                    "season_counts": doc_counts,
+                    "seasons": len(doc_counts),
+                    "embeddings": {
+                        "total": sum(embed_counts.values()),
+                        "season_counts": embed_counts,
+                        "seasons": len(embed_counts)
+                    } if embed_counts else None
+                }
+            else:
+                pipeline_status["stages"]["document_store"] = {
+                    "status": "missing",
+                    "error": "Document store directory not found"
+                }
+                pipeline_status["status"] = "degraded"
+        except Exception as e:
+            pipeline_status["stages"]["document_store"] = {
+                "status": "error",
+                "error": str(e)
+            }
+            pipeline_status["status"] = "degraded"
+        
+        # Stage 3: ChromaDB
+        try:
+            vector_store = get_vector_store()
+            stats = vector_store.get_stats()
+            pipeline_status["stages"]["chromadb"] = {
+                "status": "healthy",
+                "total_episodes": stats.get("total_episodes", 0),
+                "chromadb_episodes": stats.get("chromadb_episodes", 0),
+                "season_counts": {
+                    int(k): v for k, v in stats.get("season_counts", {}).items()
+                },
+                "seasons": len(stats.get("seasons", [])),
+                "collection_name": stats.get("collection_name", "unknown")
+            }
+        except Exception as e:
+            pipeline_status["stages"]["chromadb"] = {
+                "status": "error",
+                "error": str(e)
+            }
+            pipeline_status["status"] = "degraded"
+        
+        # Validate consistency
+        stages = pipeline_status["stages"]
+        if all(s.get("status") == "healthy" for s in stages.values()):
+            totals = [
+                stages.get("content", {}).get("total_episodes"),
+                stages.get("document_store", {}).get("total_episodes"),
+                stages.get("chromadb", {}).get("total_episodes")
+            ]
+            if totals and all(t == totals[0] for t in totals if t is not None):
+                pipeline_status["status"] = "healthy"
+                pipeline_status["consistency"] = "all_stages_match"
+            else:
+                pipeline_status["status"] = "degraded"
+                pipeline_status["consistency"] = "counts_mismatch"
+                pipeline_status["totals"] = {
+                    "content": totals[0],
+                    "document_store": totals[1],
+                    "chromadb": totals[2]
+                }
+        
+        return pipeline_status
+        
+    except Exception as e:
+        logger.error(f"Pipeline health check failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Pipeline health check failed: {str(e)}"
+        )
+
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)

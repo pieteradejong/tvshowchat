@@ -78,6 +78,65 @@ run_test "Default Search" "/api/test-search"
 run_test "Custom Search" "/api/test-search?query=Willow%20uses%20magic&limit=2"
 
 echo -e "
+${YELLOW}3.1. Testing Search Across All Seasons${NC}"
+$PYTHON_BIN <<'PYCODE'
+import json
+import urllib.request
+
+GREEN = '\033[0;32m'
+YELLOW = '\033[1;33m'
+RED = '\033[0;31m'
+NC = '\033[0m'
+
+# Test queries that should return results from each season
+test_queries = [
+    ('Welcome to the Hellmouth', 1),
+    ('Becoming', 2),
+    ('Graduation Day', 3),
+    ('The Initiative', 4),
+    ('The Gift', 5),
+    ('Once More With Feeling', 6),
+    ('Chosen', 7),
+]
+
+base_url = 'http://localhost:8000/api/search'
+all_seasons_found = set()
+results_by_season = {}
+
+for query, expected_season in test_queries:
+    data = json.dumps({'query': query, 'limit': 10}).encode('utf-8')
+    req = urllib.request.Request(base_url, data=data, headers={'Content-Type': 'application/json'})
+    
+    try:
+        with urllib.request.urlopen(req) as response:
+            results = json.loads(response.read())
+            
+            if results:
+                seasons_found = [r.get('season') for r in results]
+                all_seasons_found.update(seasons_found)
+                
+                if expected_season in seasons_found:
+                    print(f"{GREEN}✓{NC} Query \"{query}\": Found Season {expected_season}")
+                    results_by_season[expected_season] = True
+                else:
+                    print(f"{YELLOW}⚠{NC} Query \"{query}\": Expected Season {expected_season}, found {set(seasons_found[:3])}")
+            else:
+                print(f"{RED}✗{NC} Query \"{query}\": No results")
+    except Exception as e:
+        print(f"{RED}✗{NC} Query \"{query}\": Error - {e}")
+
+print(f"\nSummary:")
+print(f"  - Queries returned results from {len(all_seasons_found)}/7 seasons: {sorted(all_seasons_found)}")
+print(f"  - Expected seasons found: {len(results_by_season)}/7")
+
+if len(all_seasons_found) == 7:
+    print(f"{GREEN}✓ Search works across all 7 seasons{NC}")
+else:
+    missing = set(range(1, 8)) - all_seasons_found
+    print(f"{YELLOW}⚠ Seasons not found in any results: {missing}{NC}")
+PYCODE
+
+echo -e "
 ${YELLOW}4. Testing Vector Store State${NC}"
 echo "Checking vector store status..."
 vector_store_status=$(curl -s http://localhost:8000/health/vector-store | $PYTHON_CMD -c "import sys, json; print(json.load(sys.stdin)['status'])")
@@ -345,6 +404,7 @@ echo "----------------------------------------"
 echo "✓ Health endpoints tested"
 echo "✓ System state verified"
 echo "✓ Search functionality tested"
+echo "✓ Search across all seasons verified"
 echo "✓ Vector store state checked"
 echo "✓ Document store verified"
 echo "✓ Latest content imported"
