@@ -43,8 +43,11 @@ app/data/chroma/
 app/dump.rdb
 
 # Frontend
-frontend/
-node_modules/
+# NOTE: frontend/ is needed for Docker build, so NOT ignoring it
+# Only ignore node_modules and build artifacts
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
 frontend.pid
 *.pid
 
