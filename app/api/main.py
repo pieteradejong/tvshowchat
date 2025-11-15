@@ -16,7 +16,11 @@ CONTENT_FILE = ROOT_DIR / "app/content/btvs_all_seasons.json"
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5175"],  # React dev server
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5175",  # React dev server
+        "https://tvshowchat1.onrender.com",  # Production deployment
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
