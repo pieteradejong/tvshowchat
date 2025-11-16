@@ -3,15 +3,19 @@ import uvicorn
 from app.config.config import logger
 from app.api import api
 from app.api.routes import search as search_router
+from app.api.routes import series as series_router
 from fastapi.middleware.cors import CORSMiddleware
 from app.services.storage.document_store import get_store
 from app.services.vector_store import get_vector_store
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from typing import Dict, Any
+from app.services.series_vis_data import build_v1_datasets
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 CONTENT_FILE = ROOT_DIR / "app/content/btvs_all_seasons.json"
+EPISODES_LIST_FILE = ROOT_DIR / "app/data/episodes/episodes.json"
+CHAR_ARCS_FILE = ROOT_DIR / "app/data/episodes/character_arcs.json"
 
 app = FastAPI()
 app.add_middleware(
@@ -28,6 +32,7 @@ app.add_middleware(
 
 # Include API routes FIRST (before static files) so they take precedence
 app.include_router(search_router.router, prefix="/api")
+app.include_router(series_router.router, prefix="/api")
 app.include_router(api.router)  # Root route must come after API routes
 
 # Mount static files for frontend assets (CSS, JS, images, etc.)
@@ -127,6 +132,18 @@ async def startup_event():
         service_status["data"]["status"] = "healthy"
     else:
         service_status["data"]["status"] = "unhealthy"
+
+    # Build v1 visualization datasets if missing (lightweight, fast)
+    try:
+        if not (EPISODES_LIST_FILE.exists() and CHAR_ARCS_FILE.exists()):
+            logger.info("Building v1 visualization datasets...")
+            build_v1_datasets(
+                episodes_dir=ROOT_DIR / "app/data/episodes",
+                output_dir=ROOT_DIR / "app/data/episodes",
+            )
+            logger.info("Visualization datasets created.")
+    except Exception as e:
+        logger.error(f"Failed to build visualization datasets: {e}")
 
 @app.on_event("shutdown")
 async def shutdown_event():
