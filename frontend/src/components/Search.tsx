@@ -1,44 +1,21 @@
 // Search.tsx
-import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
-import { DEFAULT_PROMPT_CATEGORIES } from './PromptExamples';
 import { TimelineView } from './TimelineView';
 import { SearchResult } from '../types/search';
 
 interface SearchProps {
   pendingPrompt?: string;
   onPromptConsumed?: () => void;
+  onSwitchToExplore?: () => void;
 }
 
-const Search: FC<SearchProps> = ({ pendingPrompt, onPromptConsumed }) => {
+const Search: FC<SearchProps> = ({ pendingPrompt, onPromptConsumed, onSwitchToExplore }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list');
-
-  const allExamplePrompts = useMemo(
-    () => DEFAULT_PROMPT_CATEGORIES.flatMap((category) => category.prompts),
-    []
-  );
-
-  const pickSuggestions = useCallback(() => {
-    if (allExamplePrompts.length <= 3) {
-      return allExamplePrompts.slice();
-    }
-
-    const pool = [...allExamplePrompts];
-    const selections: string[] = [];
-
-    while (pool.length > 0 && selections.length < 3) {
-      const index = Math.floor(Math.random() * pool.length);
-      selections.push(pool.splice(index, 1)[0]);
-    }
-
-    return selections;
-  }, [allExamplePrompts]);
-
-  const [suggestions, setSuggestions] = useState<string[]>(() => pickSuggestions());
 
   const executeSearch = useCallback(
     async (query: string) => {
@@ -89,33 +66,22 @@ const Search: FC<SearchProps> = ({ pendingPrompt, onPromptConsumed }) => {
 
   return (
     <div className="max-w-4xl mx-auto p-3 sm:p-4">
-      <div className="mb-4 rounded-lg border border-blue-100 bg-blue-50 p-3 sm:p-4 text-sm text-blue-900">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
-          <p className="font-medium text-blue-800">Try searches like:</p>
-          <button
-            type="button"
-            onClick={() => setSuggestions(pickSuggestions())}
-            className="self-start sm:self-auto rounded-md border border-blue-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700 transition hover:border-blue-300 hover:text-blue-900"
-          >
-            Shuffle suggestions
-          </button>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {suggestions.map((suggestion) => (
+      {/* Subtle hint about Explore tab */}
+      {searchResults.length === 0 && !isLoading && !searchQuery && (
+        <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50/50 p-3 sm:p-4 text-xs sm:text-sm text-gray-600">
+          <p>
+            <span className="font-medium text-gray-700">Tip:</span> Not sure what to search? Check out the{' '}
             <button
-              key={suggestion}
               type="button"
-              onClick={() => {
-                setSearchQuery(suggestion);
-                void executeSearch(suggestion);
-              }}
-              className="rounded-full border border-blue-200 bg-white px-3 sm:px-4 py-1 text-xs sm:text-sm font-medium text-blue-700 transition hover:border-blue-300 hover:bg-blue-100"
+              onClick={onSwitchToExplore}
+              className="text-blue-600 hover:text-blue-800 underline font-medium"
             >
-              {suggestion}
-            </button>
-          ))}
+              Explore tab
+            </button>{' '}
+            for sample queries and inspiration.
+          </p>
         </div>
-      </div>
+      )}
 
       {searchResults.length > 0 && (
         <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">

@@ -1,7 +1,7 @@
 import { FC, useMemo } from 'react';
 import { PromptExamples, PromptCategory, DEFAULT_PROMPT_CATEGORIES } from './PromptExamples';
 
-interface UseCasesProps {
+interface ExploreProps {
   onSelectPrompt?: (prompt: string) => void;
 }
 
@@ -41,13 +41,13 @@ const HOW_IT_WORKS: PromptCategory[] = [
   },
 ];
 
-export const UseCases: FC<UseCasesProps> = ({ onSelectPrompt }) => {
+export const Explore: FC<ExploreProps> = ({ onSelectPrompt }) => {
   const groupedCategories = useMemo(() => {
     return [
       {
         heading: 'Start with a goal',
         intro:
-          'Pick a story angle and we will prompt you with ready-to-run queries. Use these to jump straight into the search or chat tabs.',
+          'Pick a story angle and click any prompt to try it in Search. These queries are ready to use.',
         categories: HOW_IT_WORKS,
       },
       {
@@ -61,10 +61,9 @@ export const UseCases: FC<UseCasesProps> = ({ onSelectPrompt }) => {
   return (
     <div className="space-y-6 sm:space-y-10">
       <header className="rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-4 sm:p-6 text-white shadow-lg">
-        <h1 className="text-xl sm:text-2xl font-semibold">Buffy Use Cases & Prompt Library</h1>
+        <h1 className="text-xl sm:text-2xl font-semibold">Explore Buffy Episodes</h1>
         <p className="mt-2 max-w-2xl text-xs sm:text-sm text-indigo-100">
-          Browse curated scenarios to kickstart semantic search or chat. Click any prompt to copy it, then
-          paste into the Search or Chat tab—or keep this page open alongside your discovery session.
+          Discover what's possible. Browse sample queries, explore themes, and get inspired. Click any prompt to try it in Search.
         </p>
       </header>
 
@@ -78,8 +77,8 @@ export const UseCases: FC<UseCasesProps> = ({ onSelectPrompt }) => {
         </h2>
         <ul className="space-y-2 list-disc pl-4 sm:pl-5 text-gray-700">
           <li>Combine keywords to mix moods and characters, e.g., "Spike redemption episodes with musical elements."</li>
-          <li>Ask follow-up questions in Chat to refine character arcs or compare themes across seasons.</li>
-          <li>Use Search to gather a list, then paste the same prompt into Chat for a quick summary of top results.</li>
+          <li>Click any prompt below to try it in Search and see results across all seasons.</li>
+          <li>Use Timeline view in Search to see multi-episode arcs chronologically.</li>
         </ul>
       </div>
 
