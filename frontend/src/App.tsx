@@ -4,6 +4,8 @@ import { useState, useCallback } from 'react';
 import Search from './components/Search';
 import { Explore } from './components/Explore';
 import { SeriesVis } from './components/SeriesVis';
+import { Experiments } from './components/Experiments';
+import { Reminiscence } from './components/reminiscence/Reminiscence';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -14,7 +16,7 @@ const queryClient = new QueryClient({
   },
 });
 
-type Tab = 'search' | 'explore' | 'series';
+type Tab = 'search' | 'explore' | 'series' | 'experiments' | 'reminiscence';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('search');
@@ -43,6 +45,8 @@ export default function App() {
                 <option value="search">Search</option>
                 <option value="explore">Explore</option>
                 <option value="series">Series</option>
+                <option value="experiments">Experiments</option>
+                <option value="reminiscence">Reminiscence</option>
               </select>
             </div>
             <div className="hidden sm:block">
@@ -77,6 +81,26 @@ export default function App() {
                 >
                   Series
                 </button>
+                <button
+                  onClick={() => setActiveTab('experiments')}
+                  className={`${
+                    activeTab === 'experiments'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-500 hover:text-gray-700'
+                  } px-2 sm:px-3 py-2 font-medium text-xs sm:text-sm rounded-md`}
+                >
+                  Experiments
+                </button>
+                <button
+                  onClick={() => setActiveTab('reminiscence')}
+                  className={`${
+                    activeTab === 'reminiscence'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-500 hover:text-gray-700'
+                  } px-2 sm:px-3 py-2 font-medium text-xs sm:text-sm rounded-md`}
+                >
+                  Reminiscence
+                </button>
               </nav>
             </div>
             <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-gray-500">
@@ -84,7 +108,11 @@ export default function App() {
                 ? 'Search directly when you know what you want.'
                 : activeTab === 'explore'
                 ? 'Explore sample queries and get inspired.'
-                : 'Browse the series timeline, character arcs, and details.'}
+                : activeTab === 'series'
+                ? 'Browse the series timeline, character arcs, and details.'
+                : activeTab === 'experiments'
+                ? 'Interactive data visualizations exploring characters, relationships, themes, and episodes.'
+                : 'Explore memorable quotes, character moments, and compare seasons to relive your favorite show.'}
             </p>
           </div>
 
@@ -98,6 +126,8 @@ export default function App() {
             )}
             {activeTab === 'explore' && <Explore onSelectPrompt={handlePromptSelect} />}
             {activeTab === 'series' && <SeriesVis />}
+            {activeTab === 'experiments' && <Experiments />}
+            {activeTab === 'reminiscence' && <Reminiscence />}
           </div>
         </div>
       </div>

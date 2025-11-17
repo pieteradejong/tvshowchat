@@ -64,22 +64,52 @@ const Search: FC<SearchProps> = ({ pendingPrompt, onPromptConsumed, onSwitchToEx
     }
   };
 
+  const exampleQueries = [
+    "episode where Buffy dies",
+    "musical episode",
+    "Spike first appears",
+    "episode with Willow and Tara",
+    "that episode where Xander becomes a hyena",
+  ];
+
   return (
     <div className="max-w-4xl mx-auto p-3 sm:p-4">
-      {/* Subtle hint about Explore tab */}
+      {/* Memory Helper Section */}
       {searchResults.length === 0 && !isLoading && !searchQuery && (
-        <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50/50 p-3 sm:p-4 text-xs sm:text-sm text-gray-600">
-          <p>
-            <span className="font-medium text-gray-700">Tip:</span> Not sure what to search? Check out the{' '}
-            <button
-              type="button"
-              onClick={onSwitchToExplore}
-              className="text-blue-600 hover:text-blue-800 underline font-medium"
-            >
-              Explore tab
-            </button>{' '}
-            for sample queries and inspiration.
-          </p>
+        <div className="mb-4 space-y-3">
+          <div className="rounded-lg border border-indigo-200 bg-indigo-50/50 p-3 sm:p-4">
+            <p className="text-xs sm:text-sm text-indigo-900 mb-2">
+              <span className="font-medium">Memory Helper:</span> Can't remember the exact episode? Try these example queries:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {exampleQueries.map((example, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery(example);
+                    void executeSearch(example);
+                  }}
+                  className="text-xs px-3 py-1 bg-white border border-indigo-300 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors"
+                >
+                  {example}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-lg border border-gray-200 bg-gray-50/50 p-3 sm:p-4 text-xs sm:text-sm text-gray-600">
+            <p>
+              <span className="font-medium text-gray-700">Tip:</span> Not sure what to search? Check out the{' '}
+              <button
+                type="button"
+                onClick={onSwitchToExplore}
+                className="text-blue-600 hover:text-blue-800 underline font-medium"
+              >
+                Explore tab
+              </button>{' '}
+              for sample queries and inspiration.
+            </p>
+          </div>
         </div>
       )}
 

@@ -1,4 +1,5 @@
 import json
+import re
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional
@@ -69,8 +70,11 @@ vector_store = get_vector_store()
 async def search_episodes(query: SearchQuery) -> List[SearchResult]:
     """Search episodes using advanced semantic search."""
     try:
+        # Enhance query for memory-friendly searches
+        enhanced_query = _enhance_memory_query(query.query)
+        
         results = vector_store.search_episodes(
-            query=query.query,
+            query=enhanced_query,
             limit=query.limit,
             season=query.season
         )
@@ -81,6 +85,34 @@ async def search_episodes(query: SearchQuery) -> List[SearchResult]:
             status_code=500,
             detail=f"Search failed: {str(e)}"
         )
+
+
+def _enhance_memory_query(query: str) -> str:
+    """
+    Enhance query for memory-friendly searches.
+    Expands common memory patterns like "episode where X" or "that episode with Y".
+    """
+    query_lower = query.lower().strip()
+    
+    # Pattern: "episode where X happens" -> extract X and search for it
+    if "episode where" in query_lower or "episode in which" in query_lower:
+        # Remove the "episode where" part and search for the actual content
+        query = re.sub(r"episode\s+(where|in\s+which)\s+", "", query, flags=re.IGNORECASE)
+    
+    # Pattern: "that episode with X" -> search for X
+    if "that episode with" in query_lower or "episode with" in query_lower:
+        query = re.sub(r"(that\s+)?episode\s+with\s+", "", query, flags=re.IGNORECASE)
+    
+    # Pattern: "musical episode" -> add theme keywords
+    if "musical" in query_lower:
+        query = f"{query} singing song music"
+    
+    # Pattern: "first appearance" or "first time" -> add character context
+    if "first appearance" in query_lower or "first time" in query_lower:
+        # Keep original query but it will match first_appearances data
+        pass
+    
+    return query
 
 @router.get("/test-search")
 async def test_search(query: str = "Willow uses magic", limit: int = 3) -> dict:
