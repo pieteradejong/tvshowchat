@@ -5,7 +5,11 @@ import { SeasonComparison } from "./SeasonComparison";
 
 type ReminiscenceTab = "quotes" | "moments" | "seasons";
 
-export const Reminiscence: React.FC = () => {
+interface ReminiscenceProps {
+  onNavigateToEpisode?: (episodeId: string) => void;
+}
+
+export const Reminiscence: React.FC<ReminiscenceProps> = ({ onNavigateToEpisode }) => {
   const [activeTab, setActiveTab] = React.useState<ReminiscenceTab>("quotes");
 
   const tabs = [
@@ -41,8 +45,8 @@ export const Reminiscence: React.FC = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        {activeTab === "quotes" && <QuoteExplorer />}
-        {activeTab === "moments" && <CharacterMomentsTimeline />}
+        {activeTab === "quotes" && <QuoteExplorer onNavigateToEpisode={onNavigateToEpisode} />}
+        {activeTab === "moments" && <CharacterMomentsTimeline onNavigateToEpisode={onNavigateToEpisode} />}
         {activeTab === "seasons" && <SeasonComparison />}
       </div>
     </div>

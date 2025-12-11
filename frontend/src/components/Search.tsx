@@ -8,9 +8,10 @@ interface SearchProps {
   pendingPrompt?: string;
   onPromptConsumed?: () => void;
   onSwitchToExplore?: () => void;
+  onNavigateToEpisode?: (episodeId: string) => void;
 }
 
-const Search: FC<SearchProps> = ({ pendingPrompt, onPromptConsumed, onSwitchToExplore }) => {
+const Search: FC<SearchProps> = ({ pendingPrompt, onPromptConsumed, onSwitchToExplore, onNavigateToEpisode }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -173,13 +174,19 @@ const Search: FC<SearchProps> = ({ pendingPrompt, onPromptConsumed, onSwitchToEx
 
       {viewMode === 'list' ? (
         <div className="space-y-3 sm:space-y-4">
-          {searchResults.map((result) => (
+          {searchResults.map((result) => {
+            const episodeId = `s${String(result.season).padStart(2, '0')}e${String(result.episode).padStart(2, '0')}`;
+            return (
             <div
               key={`${result.season}-${result.episode}-${result.title}`}
               className="p-3 sm:p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
             >
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                <h3 
+                  className="text-base sm:text-lg font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+                  onClick={() => onNavigateToEpisode?.(episodeId)}
+                  title="Click to view episode details"
+                >
                   S{String(result.season).padStart(2, '0')}E{result.episode}. {result.title}
                 </h3>
                 <span className="text-xs sm:text-sm text-gray-500">
@@ -235,10 +242,11 @@ const Search: FC<SearchProps> = ({ pendingPrompt, onPromptConsumed, onSwitchToEx
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
-        <TimelineView results={searchResults} />
+        <TimelineView results={searchResults} onNavigateToEpisode={onNavigateToEpisode} />
       )}
 
       {searchResults.length === 0 && !isLoading && !error && searchQuery && (

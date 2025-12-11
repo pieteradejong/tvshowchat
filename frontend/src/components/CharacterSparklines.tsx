@@ -35,9 +35,9 @@ export const CharacterSparklines: React.FC<Props> = ({
   }, [arcs, characters]);
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2" role="region" aria-label="Character presence arcs">
       {charactersList.map((name) => (
-        <SparklineRow
+        <LazySparklineRow
           key={name}
           name={name}
           series={arcs[name] || []}
@@ -48,6 +48,61 @@ export const CharacterSparklines: React.FC<Props> = ({
     </div>
   );
 };
+
+// Lazy-render sparklines below the fold using IntersectionObserver
+function LazySparklineRow({
+  name,
+  series,
+  order,
+  highlightEpisodeId,
+}: {
+  name: string;
+  series: { episode_id: string; presence_score: number }[];
+  order: string[];
+  highlightEpisodeId?: string;
+}) {
+  const [isVisible, setIsVisible] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    if (!ref.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "50px" } // Start loading slightly before visible
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={ref} className="flex items-center gap-3 min-h-[40px]">
+      {isVisible ? (
+        <SparklineRow
+          name={name}
+          series={series}
+          order={order}
+          highlightEpisodeId={highlightEpisodeId}
+        />
+      ) : (
+        <SkeletonSparklineRow name={name} />
+      )}
+    </div>
+  );
+}
+
+function SkeletonSparklineRow({ name }: { name: string }) {
+  return (
+    <>
+      <div className="w-28 text-sm text-gray-400">{name}</div>
+      <div className="w-[220px] h-[40px] bg-gray-100 rounded animate-pulse" aria-hidden="true" />
+    </>
+  );
+}
 
 function SparklineRow({
   name,

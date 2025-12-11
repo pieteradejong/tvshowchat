@@ -31,6 +31,12 @@ export default function App() {
     setPendingPrompt(null);
   }, []);
 
+  const handleNavigateToEpisode = useCallback((episodeId: string) => {
+    setActiveTab('series');
+    // Update hash to select the episode (SeriesVis will pick this up)
+    window.location.hash = episodeId;
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-gray-50">
@@ -122,12 +128,13 @@ export default function App() {
                 pendingPrompt={pendingPrompt ?? undefined} 
                 onPromptConsumed={handlePromptConsumed}
                 onSwitchToExplore={() => setActiveTab('explore')}
+                onNavigateToEpisode={handleNavigateToEpisode}
               />
             )}
             {activeTab === 'explore' && <Explore onSelectPrompt={handlePromptSelect} />}
             {activeTab === 'series' && <SeriesVis />}
             {activeTab === 'experiments' && <Experiments />}
-            {activeTab === 'reminiscence' && <Reminiscence />}
+            {activeTab === 'reminiscence' && <Reminiscence onNavigateToEpisode={handleNavigateToEpisode} />}
           </div>
         </div>
       </div>

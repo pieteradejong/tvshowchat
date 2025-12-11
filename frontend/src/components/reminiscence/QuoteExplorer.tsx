@@ -7,7 +7,11 @@ const MAIN_CHARACTERS = [
   "Oz", "Anya", "Faith", "Dawn", "Tara", "Riley", "Joyce",
 ];
 
-export const QuoteExplorer: React.FC = () => {
+interface QuoteExplorerProps {
+  onNavigateToEpisode?: (episodeId: string) => void;
+}
+
+export const QuoteExplorer: React.FC<QuoteExplorerProps> = ({ onNavigateToEpisode }) => {
   const [characterFilter, setCharacterFilter] = React.useState<string>("");
   const [seasonFilter, setSeasonFilter] = React.useState<number | undefined>(undefined);
   const [searchText, setSearchText] = React.useState<string>("");
@@ -138,7 +142,11 @@ const QuoteCard: React.FC<{ quote: Quote }> = ({ quote }) => {
                 {quote.character}
               </span>
             )}
-            <span>
+            <span
+              className="cursor-pointer hover:text-blue-600 hover:underline transition-colors"
+              onClick={() => onNavigateToEpisode?.(quote.episode_id)}
+              title="Click to view episode details"
+            >
               S{quote.season.toString().padStart(2, "0")}E{quote.episode.toString().padStart(2, "0")}: {quote.title}
             </span>
           </div>

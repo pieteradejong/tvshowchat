@@ -200,11 +200,17 @@ class BuffyDocumentStore:
             # Search through all seasons
             results = []
             for season_file in self.episodes_path.glob("season_*.json"):
+                if season_file.name == "season_stats.json":
+                    continue
+                try:
+                    season_num = int(season_file.stem.split('_')[1])
+                except (ValueError, IndexError):
+                    continue
+                
                 with open(season_file, 'r') as f:
                     season_data = json.load(f)
                 
                 # Get embeddings for this season
-                season_num = int(season_file.stem.split('_')[1])
                 embeddings_file = self._get_embeddings_file(season_num)
                 embeddings_data = {}
                 if embeddings_file.exists():

@@ -137,7 +137,12 @@ class AdvancedVectorStore:
         self._relationship_graph = {}
         
         for season_file in self.document_store.episodes_path.glob("season_*.json"):
-            season_num = int(season_file.stem.split('_')[1])
+            if season_file.name == "season_stats.json":
+                continue
+            try:
+                season_num = int(season_file.stem.split('_')[1])
+            except (ValueError, IndexError):
+                continue
             
             with open(season_file, 'r') as f:
                 season_data = json.load(f)
@@ -220,7 +225,12 @@ class AdvancedVectorStore:
         ids = []
         
         for season_file in self.document_store.episodes_path.glob("season_*.json"):
-            season_num = int(season_file.stem.split('_')[1])
+            if season_file.name == "season_stats.json":
+                continue
+            try:
+                season_num = int(season_file.stem.split('_')[1])
+            except (ValueError, IndexError):
+                continue
             
             with open(season_file, 'r') as f:
                 season_data = json.load(f)
@@ -404,7 +414,12 @@ class AdvancedVectorStore:
         results = []
         
         for season_file in self.document_store.episodes_path.glob("season_*.json"):
-            season_num = int(season_file.stem.split('_')[1])
+            if season_file.name == "season_stats.json":
+                continue
+            try:
+                season_num = int(season_file.stem.split('_')[1])
+            except (ValueError, IndexError):
+                continue
             
             if season and season_num != season:
                 continue
@@ -624,7 +639,12 @@ class AdvancedVectorStore:
         embedding_counts: Dict[int, int] = {}
 
         for season_file in self.document_store.episodes_path.glob("season_*.json"):
-            season_num = int(season_file.stem.split('_')[1])
+            if season_file.name == "season_stats.json":
+                continue
+            try:
+                season_num = int(season_file.stem.split('_')[1])
+            except (ValueError, IndexError):
+                continue
             seasons.add(season_num)
 
             with open(season_file, 'r') as f:

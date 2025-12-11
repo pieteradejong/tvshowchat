@@ -4,6 +4,7 @@ from app.config.config import logger
 from app.api import api
 from app.api.routes import search as search_router
 from app.api.routes import series as series_router
+from app.api.routes import experiments as experiments_router
 from fastapi.middleware.cors import CORSMiddleware
 from app.services.storage.document_store import get_store
 from app.services.vector_store import get_vector_store
@@ -33,6 +34,7 @@ app.add_middleware(
 # Include API routes FIRST (before static files) so they take precedence
 app.include_router(search_router.router, prefix="/api")
 app.include_router(series_router.router, prefix="/api")
+app.include_router(experiments_router.router, prefix="/api")
 app.include_router(api.router)  # Root route must come after API routes
 
 # Mount static files for frontend assets (CSS, JS, images, etc.)
@@ -75,8 +77,9 @@ async def startup_event():
     # Initialize Document Store
     try:
         store = get_store()
-        # Test store by checking if any seasons exist
-        if not list(store.episodes_path.glob("season_*.json")):
+        # Test store by checking if any seasons exist (exclude season_stats.json)
+        season_files = [f for f in store.episodes_path.glob("season_*.json") if f.name != "season_stats.json"]
+        if not season_files:
             logger.info("Store empty, importing data...")
             if CONTENT_FILE.exists():
                 store.import_from_json(str(CONTENT_FILE))
@@ -254,7 +257,12 @@ async def pipeline_health_check():
             episodes_dir = store.episodes_path
             if episodes_dir.exists():
                 for season_file in sorted(episodes_dir.glob("season_*.json")):
-                    season_num = int(season_file.stem.split("_")[1])
+                    if season_file.name == "season_stats.json":
+                        continue
+                    try:
+                        season_num = int(season_file.stem.split("_")[1])
+                    except (ValueError, IndexError):
+                        continue
                     with season_file.open("r", encoding="utf-8") as f:
                         doc_counts[season_num] = len(json.load(f))
                 

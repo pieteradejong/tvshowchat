@@ -72,6 +72,73 @@
 
 ---
 
+## Refactoring Priorities
+
+### Data Organization: Separate Raw Data from Aggregated Stats
+
+**Problem**: Currently, `season_stats.json` is stored alongside raw season data files (`season_*.json`) in `app/data/episodes/`, causing confusion and requiring defensive code to filter it out when iterating season files.
+
+**Goal**: Establish clear separation between:
+- **Raw/primary data**: Episode transcripts, metadata, embeddings
+- **Derived/aggregated data**: Statistics, analytics, computed metrics
+
+**Proposed Structure**:
+
+```
+app/data/
+├── episodes/                    # Raw episode data only
+│   ├── season_1.json
+│   ├── season_2.json
+│   └── ...
+├── embeddings/                   # Raw embeddings only
+│   ├── season_1_embeddings.json
+│   └── ...
+├── stats/                        # Aggregated/computed data
+│   ├── season_stats.json
+│   ├── character_arcs.json
+│   ├── character_moments.json
+│   ├── quotes.json
+│   └── episodes.json            # Aggregated episode index
+└── chroma/                       # Vector store (unchanged)
+```
+
+**Implementation Plan**:
+
+1. **Directory Restructure**
+   - Create `app/data/stats/` directory
+   - Move `season_stats.json`, `character_arcs.json`, `character_moments.json`, `quotes.json`, `episodes.json` to `app/data/stats/`
+   - Update `.gitignore` if needed
+
+2. **Code Updates**
+   - Update `app/services/series_vis_data.py` to write stats files to `app/data/stats/`
+   - Update `app/api/routes/series.py` to read from `app/data/stats/`
+   - Remove all defensive `season_stats.json` filtering code (no longer needed)
+   - Update any hardcoded paths in scripts and services
+
+3. **Documentation**
+   - Update `docs/DATA_PIPELINE.md` with new directory structure
+   - Update README if it references data locations
+   - Document the distinction between raw data and derived stats
+
+4. **Testing**
+   - Update `test.sh` to verify stats directory structure
+   - Ensure all stats endpoints still work after migration
+   - Verify no regressions in data generation pipelines
+
+**Benefits**:
+- Clearer data organization and purpose
+- Eliminates need for defensive filtering code
+- Easier to understand what's raw vs. computed
+- Better separation of concerns
+- Easier to add new stat types without cluttering episode directory
+
+**Related Issues**:
+- Currently requires filtering `season_stats.json` in multiple places (vector_store.py, main.py, document_store.py, etc.)
+- Risk of accidentally processing stats files as season data
+- Unclear which files are source data vs. derived data
+
+---
+
 ## Backlog / Nice-to-Haves
 
 - Incremental crawling (only fetch seasons missing from `app/content/`)

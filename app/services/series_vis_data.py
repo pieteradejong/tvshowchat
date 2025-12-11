@@ -78,7 +78,12 @@ def build_v1_datasets(
 
     # Iterate all seasons
     for season_file in sorted(episodes_dir.glob("season_*.json")):
-        season_num = int(season_file.stem.split("_")[1])
+        if season_file.name == "season_stats.json":
+            continue
+        try:
+            season_num = int(season_file.stem.split("_")[1])
+        except (ValueError, IndexError):
+            continue
         with season_file.open("r", encoding="utf-8") as f:
             season_data = json.load(f)
 

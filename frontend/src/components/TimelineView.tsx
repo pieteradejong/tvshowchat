@@ -3,6 +3,7 @@ import { SearchResult } from '../types/search';
 
 interface TimelineViewProps {
   results: SearchResult[];
+  onNavigateToEpisode?: (episodeId: string) => void;
 }
 
 interface TimelineNode {
@@ -40,7 +41,7 @@ const mergeUnique = (base: string[], incoming: string[]) => {
   incoming.forEach((value) => addUnique(base, value));
 };
 
-export const TimelineView: FC<TimelineViewProps> = ({ results }) => {
+export const TimelineView: FC<TimelineViewProps> = ({ results, onNavigateToEpisode }) => {
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
   const nodeRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -262,7 +263,14 @@ export const TimelineView: FC<TimelineViewProps> = ({ results }) => {
                       }`}>
                         <header className="flex flex-col sm:flex-row sm:flex-wrap sm:items-start sm:justify-between gap-3 sm:gap-4 mb-3">
                           <div className="flex-1">
-                            <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1">
+                            <h3 
+                              className="text-base sm:text-lg font-bold text-gray-900 mb-1 cursor-pointer hover:text-blue-600 transition-colors"
+                              onClick={() => {
+                                const episodeId = `s${String(node.season).padStart(2, '0')}e${String(node.episode).padStart(2, '0')}`;
+                                onNavigateToEpisode?.(episodeId);
+                              }}
+                              title="Click to view episode details"
+                            >
                               S{String(node.season).padStart(2, '0')}E{node.episode}. {node.title}
                             </h3>
                             <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-2">

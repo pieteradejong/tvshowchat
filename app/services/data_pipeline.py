@@ -114,10 +114,15 @@ class DataPipeline:
         }
         
         for season_file in self.episodes_dir.glob("season_*.json"):
+            if season_file.name == "season_stats.json":
+                continue
+            try:
+                season_num = int(season_file.stem.split('_')[1])
+            except (ValueError, IndexError):
+                continue
+            
             with open(season_file, 'r') as f:
                 season_data = json.load(f)
-            
-            season_num = int(season_file.stem.split('_')[1])
             expected_episodes = 22 if season_num != 7 else 22  # Adjust for season 7
             
             # Check for missing episodes

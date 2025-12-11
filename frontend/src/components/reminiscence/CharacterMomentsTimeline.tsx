@@ -7,7 +7,11 @@ const MAIN_CHARACTERS = [
   "Oz", "Anya", "Faith", "Dawn", "Tara", "Riley", "Joyce",
 ];
 
-export const CharacterMomentsTimeline: React.FC = () => {
+interface CharacterMomentsTimelineProps {
+  onNavigateToEpisode?: (episodeId: string) => void;
+}
+
+export const CharacterMomentsTimeline: React.FC<CharacterMomentsTimelineProps> = ({ onNavigateToEpisode }) => {
   const [characterFilter, setCharacterFilter] = React.useState<string>("");
 
   const { data, isLoading, error } = useQuery({
@@ -138,6 +142,7 @@ export const CharacterMomentsTimeline: React.FC = () => {
                     moments={momentsBySeason[parseInt(season)]}
                     getMomentColor={getMomentColor}
                     getMomentLabel={getMomentLabel}
+                    onNavigateToEpisode={onNavigateToEpisode}
                   />
                 ))}
             </div>
@@ -153,7 +158,8 @@ const SeasonTimeline: React.FC<{
   moments: CharacterMoment[];
   getMomentColor: (type: string) => string;
   getMomentLabel: (type: string) => string;
-}> = ({ season, moments, getMomentColor, getMomentLabel }) => {
+  onNavigateToEpisode?: (episodeId: string) => void;
+}> = ({ season, moments, getMomentColor, getMomentLabel, onNavigateToEpisode }) => {
   return (
     <div className="border-l-2 border-gray-300 pl-4 space-y-3">
       <h3 className="font-semibold text-gray-800">Season {season}</h3>
@@ -170,7 +176,11 @@ const SeasonTimeline: React.FC<{
                 {getMomentLabel(moment.type)}
               </span>
             </div>
-            <div className="text-sm text-gray-600">
+            <div 
+              className="text-sm text-gray-600 cursor-pointer hover:text-blue-600 hover:underline transition-colors"
+              onClick={() => onNavigateToEpisode?.(moment.episode_id)}
+              title="Click to view episode details"
+            >
               S{moment.season.toString().padStart(2, "0")}E{moment.episode.toString().padStart(2, "0")}: {moment.title}
             </div>
           </div>

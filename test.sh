@@ -51,11 +51,11 @@ run_test() {
     fi
 
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✓ Request successful${NC}"
+        echo -e "${GREEN}? Request successful${NC}"
         echo "Response:"
         echo "$response" | $PYTHON_CMD -m json.tool
     else
-        echo -e "${RED}✗ Request failed${NC}"
+        echo -e "${RED}? Request failed${NC}"
         exit 1
     fi
     echo "----------------------------------------"
@@ -116,24 +116,24 @@ for query, expected_season in test_queries:
                 all_seasons_found.update(seasons_found)
                 
                 if expected_season in seasons_found:
-                    print(f"{GREEN}✓{NC} Query \"{query}\": Found Season {expected_season}")
+                    print(f"{GREEN}?{NC} Query \"{query}\": Found Season {expected_season}")
                     results_by_season[expected_season] = True
                 else:
-                    print(f"{YELLOW}⚠{NC} Query \"{query}\": Expected Season {expected_season}, found {set(seasons_found[:3])}")
+                    print(f"{YELLOW}?{NC} Query \"{query}\": Expected Season {expected_season}, found {set(seasons_found[:3])}")
             else:
-                print(f"{RED}✗{NC} Query \"{query}\": No results")
+                print(f"{RED}?{NC} Query \"{query}\": No results")
     except Exception as e:
-        print(f"{RED}✗{NC} Query \"{query}\": Error - {e}")
+        print(f"{RED}?{NC} Query \"{query}\": Error - {e}")
 
 print(f"\nSummary:")
 print(f"  - Queries returned results from {len(all_seasons_found)}/7 seasons: {sorted(all_seasons_found)}")
 print(f"  - Expected seasons found: {len(results_by_season)}/7")
 
 if len(all_seasons_found) == 7:
-    print(f"{GREEN}✓ Search works across all 7 seasons{NC}")
+    print(f"{GREEN}? Search works across all 7 seasons{NC}")
 else:
     missing = set(range(1, 8)) - all_seasons_found
-    print(f"{YELLOW}⚠ Seasons not found in any results: {missing}{NC}")
+    print(f"{YELLOW}? Seasons not found in any results: {missing}{NC}")
 PYCODE
 
 echo -e "
@@ -141,52 +141,52 @@ ${YELLOW}4. Testing Vector Store State${NC}"
 echo "Checking vector store status..."
 vector_store_status=$(curl -s http://localhost:8000/health/vector-store | $PYTHON_CMD -c "import sys, json; print(json.load(sys.stdin)['status'])")
 if [ "$vector_store_status" = "healthy" ]; then
-    echo -e "${GREEN}✓ Vector store is healthy${NC}"
+    echo -e "${GREEN}? Vector store is healthy${NC}"
 else
-    echo -e "${RED}✗ Vector store is not healthy${NC}"
+    echo -e "${RED}? Vector store is not healthy${NC}"
     exit 1
 fi
 
 echo -e "
 ${YELLOW}5. Testing Document Store${NC}"
 if [ -f "app/content/btvs_all_seasons.json" ]; then
-    echo -e "${GREEN}✓ Found aggregated content file (btvs_all_seasons.json)${NC}"
+    echo -e "${GREEN}? Found aggregated content file (btvs_all_seasons.json)${NC}"
 else
-    echo -e "${RED}✗ Aggregated content file btvs_all_seasons.json not found${NC}"
+    echo -e "${RED}? Aggregated content file btvs_all_seasons.json not found${NC}"
     echo "Run scripts/crawl.sh to generate it."
     exit 1
 fi
 
 if [ -d "app/data/episodes" ]; then
-    episode_files=$(ls app/data/episodes/season_*.json 2>/dev/null | wc -l)
+    episode_files=$(ls app/data/episodes/season_*.json 2>/dev/null | grep -v season_stats.json | wc -l)
     if [ "$episode_files" -eq "$EXPECTED_SEASONS" ]; then
-        echo -e "${GREEN}✓ Found ${episode_files} season files in document store${NC}"
+        echo -e "${GREEN}? Found ${episode_files} season files in document store${NC}"
     else
-        echo -e "${RED}✗ Document store has ${episode_files} season files; expected ${EXPECTED_SEASONS}${NC}"
+        echo -e "${RED}? Document store has ${episode_files} season files; expected ${EXPECTED_SEASONS}${NC}"
         exit 1
     fi
 else
-    echo -e "${RED}✗ Episode directory not found${NC}"
+    echo -e "${RED}? Episode directory not found${NC}"
     exit 1
 fi
 
 if [ -d "app/data/embeddings" ]; then
     embedding_files=$(ls app/data/embeddings/season_*_embeddings.json 2>/dev/null | wc -l)
     if [ "$embedding_files" -eq "$EXPECTED_SEASONS" ]; then
-        echo -e "${GREEN}✓ Found ${embedding_files} season embedding files${NC}"
+        echo -e "${GREEN}? Found ${embedding_files} season embedding files${NC}"
     else
-        echo -e "${RED}✗ Embedding store has ${embedding_files} files; expected ${EXPECTED_SEASONS}${NC}"
+        echo -e "${RED}? Embedding store has ${embedding_files} files; expected ${EXPECTED_SEASONS}${NC}"
         exit 1
     fi
 else
-    echo -e "${RED}✗ Embedding directory not found${NC}"
+    echo -e "${RED}? Embedding directory not found${NC}"
     exit 1
 fi
 
 if [ -d "app/data/chroma" ]; then
-    echo -e "${GREEN}✓ ChromaDB data directory exists${NC}"
+    echo -e "${GREEN}? ChromaDB data directory exists${NC}"
 else
-    echo -e "${RED}✗ ChromaDB data directory not found${NC}"
+    echo -e "${RED}? ChromaDB data directory not found${NC}"
     exit 1
 fi
 
@@ -194,10 +194,10 @@ echo -e "
 ${YELLOW}6. Testing Crawler Status${NC}"
 CRAWLER_TMP_FILE=$(mktemp)
 if $PYTHON_BIN scripts/scrape_episodes.py --status > "$CRAWLER_TMP_FILE"; then
-    echo -e "${GREEN}✓ Crawler status command succeeded${NC}"
+    echo -e "${GREEN}? Crawler status command succeeded${NC}"
     head -n 10 "$CRAWLER_TMP_FILE"
 else
-    echo -e "${RED}✗ Crawler status command failed${NC}"
+    echo -e "${RED}? Crawler status command failed${NC}"
     cat "$CRAWLER_TMP_FILE"
     rm -f "$CRAWLER_TMP_FILE"
     exit 1
@@ -207,18 +207,18 @@ rm -f "$CRAWLER_TMP_FILE"
 echo -e "
 ${YELLOW}7. Importing Latest Content into Document Store${NC}"
 if $PYTHON_BIN scripts/scrape_episodes.py --import-latest; then
-    echo -e "${GREEN}✓ Import succeeded${NC}"
+    echo -e "${GREEN}? Import succeeded${NC}"
 else
-    echo -e "${RED}✗ Import failed${NC}"
+    echo -e "${RED}? Import failed${NC}"
     exit 1
 fi
 
 echo -e "
 ${YELLOW}8. Reindexing ChromaDB${NC}"
 if $PYTHON_BIN scripts/scrape_episodes.py --reindex-chroma; then
-    echo -e "${GREEN}✓ Reindex succeeded${NC}"
+    echo -e "${GREEN}? Reindex succeeded${NC}"
 else
-    echo -e "${RED}✗ Reindex failed${NC}"
+    echo -e "${RED}? Reindex failed${NC}"
     exit 1
 fi
 
@@ -278,7 +278,7 @@ if content_total != EXPECTED_TOTAL:
     fail(f"Content JSON total expected {EXPECTED_TOTAL}, found {content_total}")
 
 doc_dir = Path('app/data/episodes')
-doc_files = sorted(doc_dir.glob('season_*.json'))
+doc_files = sorted([f for f in doc_dir.glob('season_*.json') if f.name != 'season_stats.json'])
 if not doc_files:
     fail('No document store season files found')
 doc_counts = {}
@@ -401,15 +401,15 @@ PYCODE
 echo -e "
 ${YELLOW}Test Summary:${NC}"
 echo "----------------------------------------"
-echo "✓ Health endpoints tested"
-echo "✓ System state verified"
-echo "✓ Search functionality tested"
-echo "✓ Search across all seasons verified"
-echo "✓ Vector store state checked"
-echo "✓ Document store verified"
-echo "✓ Latest content imported"
-echo "✓ ChromaDB reindexed"
-echo "✓ Data pipeline integrity verified"
+echo "? Health endpoints tested"
+echo "? System state verified"
+echo "? Search functionality tested"
+echo "? Search across all seasons verified"
+echo "? Vector store state checked"
+echo "? Document store verified"
+echo "? Latest content imported"
+echo "? ChromaDB reindexed"
+echo "? Data pipeline integrity verified"
 echo "----------------------------------------"
 
 echo -e "
