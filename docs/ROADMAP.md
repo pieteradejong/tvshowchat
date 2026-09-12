@@ -199,6 +199,55 @@ _Captured @UI_IDEAS for future iteration._
 
 ---
 
+## UI Initiative: Series Grid Visualization
+
+### Goals
+- Create a universal coordinate system (season, episode) for visualizing all series data
+- Provide a grid-based view where every arc, quote, relationship, and moment can be precisely located
+- Enable multiple visualization layers (quotes, characters, arcs, relationships) on a single grid
+
+### Phase 1: Foundation ✅
+1. ✅ Create `SeriesGrid` base component with dynamic layout (12, 22, 22, 22, 22, 22, 22 episodes)
+2. ✅ Implement `GridCell` component with hover/click interactions
+3. ✅ Add API endpoint `/api/grid/quotes-density` for quote counts per episode
+4. ✅ Add Grid tab to App.tsx
+5. ✅ Implement quote density heatmap visualization
+6. ✅ Create grid-optimized data layer (`grid_episodes.json`) with all metrics precomputed
+7. ✅ Add API endpoint `/api/grid/episodes` for unified grid data
+
+### Phase 2: Core Visualizations (Next)
+6. Character presence heatmap layer
+7. Arc path visualization (manual arc definitions)
+8. Search result highlighting on grid
+9. Episode detail panel integration
+
+### Phase 3: Advanced Features
+10. Character trajectory lines (smooth curves through presence scores)
+11. Character relationship overlays (interaction intensity per episode)
+12. Multi-layer system with toggleable overlays
+13. Theme heatmap layer
+14. Episode connection network (continuity references)
+
+### Phase 4: Polish & Enhancement
+15. Arc auto-detection from character data
+16. Interaction type detection (romance/friendship/enmity)
+17. Pattern detection for search results (arc clusters, season groups)
+18. Keyboard navigation (arrow keys between episodes)
+19. Performance optimization for large datasets
+
+### Technical Details
+- **Grid Layout**: CSS Grid with 7 rows × 22 max columns
+- **Color Encoding**: d3-scale-chromatic for perceptually uniform colors
+- **SVG Overlays**: For arcs, trajectories, and relationship lines
+- **Component Structure**: `SeriesGrid` → `GridCell` → Layer components
+- **API Endpoints**: `/api/grid/quotes-density` (more to come)
+
+### Documentation
+- `docs/GRID_VISUALIZATION_IDEAS.md` - 14 visualization concepts
+- `docs/GRID_IMPLEMENTATION_GUIDE.md` - Detailed technical specifications
+
+---
+
 ## Success Criteria
 
 - `scripts/scrape_episodes.py --status` reports Seasons 1–7 with correct episode counts

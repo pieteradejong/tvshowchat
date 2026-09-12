@@ -5,6 +5,7 @@ from app.config.config import logger
 import json
 from typing import Optional, List
 from app.services.series_vis_data import build_v1_datasets, build_quotes_dataset, build_character_moments_dataset, build_season_stats
+from app.services.grid_data import build_grid_episodes_dataset
 
 
 router = APIRouter()
@@ -155,4 +156,77 @@ async def get_season_comparison():
     except Exception as e:
         logger.error(f"Failed to load season stats: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to load season stats: {str(e)}")
+
+
+@router.get("/grid/quotes-density")
+async def get_quotes_density():
+    """Return quote counts per episode for grid visualization."""
+    try:
+        quotes_path = DATA_DIR / "quotes.json"
+        if not quotes_path.exists():
+            logger.warning("quotes.json not found at %s; building dataset...", quotes_path)
+            build_quotes_dataset()
+            if not quotes_path.exists():
+                raise HTTPException(status_code=404, detail="quotes.json not found")
+        
+        with quotes_path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+        
+        quotes = data.get("quotes", [])
+        
+        # Aggregate quote counts by episode_id
+        quote_counts: dict[str, int] = {}
+        for quote in quotes:
+            episode_id = quote.get("episode_id", "")
+            quote_counts[episode_id] = quote_counts.get(episode_id, 0) + 1
+        
+        return JSONResponse(content=quote_counts)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to load quotes density: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to load quotes density: {str(e)}")
+
+
+@router.get("/grid/episodes")
+async def get_grid_episodes():
+    """Return grid-optimized episode data with all metrics precomputed."""
+    try:
+        grid_path = DATA_DIR / "grid_episodes.json"
+        if not grid_path.exists():
+            logger.warning("grid_episodes.json not found at %s; building dataset...", grid_path)
+            # Ensure prerequisite datasets exist
+            episodes_path = DATA_DIR / "episodes.json"
+            arcs_path = DATA_DIR / "character_arcs.json"
+            quotes_path = DATA_DIR / "quotes.json"
+            moments_path = DATA_DIR / "character_moments.json"
+            
+            if not episodes_path.exists() or not arcs_path.exists():
+                build_v1_datasets(episodes_dir=DATA_DIR, output_dir=DATA_DIR)
+            if not quotes_path.exists():
+                build_quotes_dataset()
+            if not moments_path.exists():
+                build_character_moments_dataset()
+            
+            # Build grid dataset
+            build_grid_episodes_dataset(
+                episodes_path=episodes_path,
+                arcs_path=arcs_path,
+                quotes_path=quotes_path,
+                moments_path=moments_path if moments_path.exists() else None,
+                output_dir=DATA_DIR,
+            )
+            
+            if not grid_path.exists():
+                raise HTTPException(status_code=404, detail="grid_episodes.json not found")
+        
+        with grid_path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+        
+        return JSONResponse(content=data)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to load grid episodes: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to load grid episodes: {str(e)}")
 
