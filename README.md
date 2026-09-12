@@ -345,7 +345,12 @@ The Docker setup creates necessary directories but data should be:
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+The **code** in this project is licensed under the MIT License - see the LICENSE file for details.
+
+The **episode datasets** are derived from the [Buffyverse Wiki](https://buffy.fandom.com/) and
+remain under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/), which requires
+attribution and share-alike on any redistribution. See [NOTICE.md](NOTICE.md) for the full
+statement and what it means if you reuse the data.
 
 
 

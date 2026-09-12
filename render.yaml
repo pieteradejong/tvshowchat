@@ -19,7 +19,10 @@ services:
       - key: PORT
         value: 8000
     healthCheckPath: /health
-    autoDeploy: true
+    # Disabled during the multi-show / lightweight-engine refactor: the starter plan
+    # has no headroom and the test suite cannot yet catch a bad deploy. Re-enable
+    # once the Vercel cutover is verified.
+    autoDeploy: false
     # Build command is handled by Dockerfile
     # Start command is handled by Dockerfile CMD
 
