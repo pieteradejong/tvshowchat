@@ -64,7 +64,7 @@ export const EpisodeSimilarityMap: React.FC<Props> = ({ data, isLoading }) => {
 
     // Draw episode nodes
     const nodeG = svg.append("g").attr("class", "nodes");
-    const nodes = nodeG
+    nodeG
       .selectAll("circle")
       .data(data.episodes)
       .enter()
@@ -78,10 +78,11 @@ export const EpisodeSimilarityMap: React.FC<Props> = ({ data, isLoading }) => {
       .style("cursor", "pointer")
       .on("mouseover", function (event, d) {
         d3.select(this).attr("r", 8);
+        const [mx, my] = d3.pointer(event, svg.node() as any);
         const tooltip = svg
           .append("g")
           .attr("class", "tooltip")
-          .attr("transform", `translate(${xScale(d.season) + 10},${yScale(d.episode)})`);
+          .attr("transform", `translate(${mx + 10},${my})`);
         tooltip
           .append("rect")
           .attr("width", 200)

@@ -16,15 +16,6 @@ export const SeasonComparison: React.FC = () => {
       .sort((a, b) => a - b);
   }, [seasons]);
 
-  // Get all characters across all seasons for consistent comparison
-  const allCharacters = React.useMemo(() => {
-    const charSet = new Set<string>();
-    Object.values(seasons).forEach((stats: SeasonStats) => {
-      Object.keys(stats.characters || {}).forEach((char) => charSet.add(char));
-    });
-    return Array.from(charSet).sort();
-  }, [seasons]);
-
   return (
     <div className="space-y-6">
       <div>
@@ -45,7 +36,7 @@ export const SeasonComparison: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {seasonNumbers.map((seasonNum) => {
             const stats = seasons[seasonNum.toString()] as SeasonStats;
-            return <SeasonCard key={seasonNum} season={seasonNum} stats={stats} allCharacters={allCharacters} />;
+            return <SeasonCard key={seasonNum} season={seasonNum} stats={stats} />;
           })}
         </div>
       )}
@@ -56,8 +47,7 @@ export const SeasonComparison: React.FC = () => {
 const SeasonCard: React.FC<{
   season: number;
   stats: SeasonStats;
-  allCharacters: string[];
-}> = ({ season, stats, allCharacters }) => {
+}> = ({ season, stats }) => {
   const topCharacters = React.useMemo(() => {
     return Object.entries(stats.characters || {})
       .sort((a, b) => b[1] - a[1])

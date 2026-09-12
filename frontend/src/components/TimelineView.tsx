@@ -218,7 +218,7 @@ export const TimelineView: FC<TimelineViewProps> = ({ results, onNavigateToEpiso
 
               {/* Season episodes */}
               <div className="space-y-4 sm:space-y-6 pl-2">
-                {seasonNodes.map((node, nodeIndex) => {
+                {seasonNodes.map((node) => {
                   const isExpanded = expandedNodes[node.id] ?? false;
                   const isFocused = focusedNodeId === node.id;
                   const contextPieces = node.primary.context

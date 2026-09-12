@@ -2,11 +2,6 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchQuotes, Quote } from "../../services/reminiscence";
 
-const MAIN_CHARACTERS = [
-  "Buffy", "Willow", "Xander", "Giles", "Angel", "Spike", "Cordelia",
-  "Oz", "Anya", "Faith", "Dawn", "Tara", "Riley", "Joyce",
-];
-
 interface QuoteExplorerProps {
   onNavigateToEpisode?: (episodeId: string) => void;
 }
@@ -120,7 +115,7 @@ export const QuoteExplorer: React.FC<QuoteExplorerProps> = ({ onNavigateToEpisod
           ) : (
             <div className="space-y-3">
               {quotes.map((quote) => (
-                <QuoteCard key={quote.id} quote={quote} />
+                <QuoteCard key={quote.id} quote={quote} onNavigateToEpisode={onNavigateToEpisode} />
               ))}
             </div>
           )}
@@ -130,7 +125,10 @@ export const QuoteExplorer: React.FC<QuoteExplorerProps> = ({ onNavigateToEpisod
   );
 };
 
-const QuoteCard: React.FC<{ quote: Quote }> = ({ quote }) => {
+const QuoteCard: React.FC<{
+  quote: Quote;
+  onNavigateToEpisode?: (episodeId: string) => void;
+}> = ({ quote, onNavigateToEpisode }) => {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between gap-4">

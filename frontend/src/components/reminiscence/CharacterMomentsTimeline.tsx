@@ -2,11 +2,6 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchCharacterMoments, CharacterMoment } from "../../services/reminiscence";
 
-const MAIN_CHARACTERS = [
-  "Buffy", "Willow", "Xander", "Giles", "Angel", "Spike", "Cordelia",
-  "Oz", "Anya", "Faith", "Dawn", "Tara", "Riley", "Joyce",
-];
-
 interface CharacterMomentsTimelineProps {
   onNavigateToEpisode?: (episodeId: string) => void;
 }

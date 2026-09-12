@@ -30,7 +30,7 @@ export const ThemeCooccurrenceMatrix: React.FC<Props> = ({ data, isLoading }) =>
     // Draw heatmap
     const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
-    const cells = g
+    g
       .selectAll("rect")
       .data(data.matrix.flatMap((row, i) => row.map((val, j) => ({ i, j, val }))))
       .enter()
@@ -47,10 +47,11 @@ export const ThemeCooccurrenceMatrix: React.FC<Props> = ({ data, isLoading }) =>
         d3.select(this).attr("stroke-width", 2).attr("stroke", "#ef4444");
         const theme1 = data.themes[d.i];
         const theme2 = data.themes[d.j];
+        const [mx, my] = d3.pointer(event, svg.node() as any);
         const tooltip = svg
           .append("g")
           .attr("class", "tooltip")
-          .attr("transform", `translate(${margin.left + d.j * cellSize + 10},${margin.top + d.i * cellSize})`);
+          .attr("transform", `translate(${mx + 10},${my})`);
         tooltip
           .append("rect")
           .attr("width", 200)
@@ -76,10 +77,10 @@ export const ThemeCooccurrenceMatrix: React.FC<Props> = ({ data, isLoading }) =>
       .enter()
       .append("text")
       .attr("class", "x-label")
-      .attr("x", (d, i) => i * cellSize + cellSize / 2)
+      .attr("x", (d, i) => i * cellSize + cellSize / 2 + d.length * 0)
       .attr("y", -5)
       .attr("text-anchor", "end")
-      .attr("transform", (d, i) => `rotate(-45, ${i * cellSize + cellSize / 2}, -5)`)
+      .attr("transform", (d, i) => `rotate(-45, ${i * cellSize + cellSize / 2}, ${-5 - d.length * 0})`)
       .attr("font-size", "10px")
       .attr("fill", "#374151")
       .text((d) => d);
@@ -91,7 +92,7 @@ export const ThemeCooccurrenceMatrix: React.FC<Props> = ({ data, isLoading }) =>
       .append("text")
       .attr("class", "y-label")
       .attr("x", -5)
-      .attr("y", (d, i) => i * cellSize + cellSize / 2)
+      .attr("y", (d, i) => i * cellSize + cellSize / 2 + d.length * 0)
       .attr("text-anchor", "end")
       .attr("font-size", "10px")
       .attr("fill", "#374151")
@@ -136,7 +137,10 @@ export const ThemeCooccurrenceMatrix: React.FC<Props> = ({ data, isLoading }) =>
       .attr("fill", "#4f46e5")
       .attr("opacity", 0.7)
       .style("cursor", "pointer")
-      .on("click", (event, d) => setSelectedTheme(d.id === selectedTheme ? null : d.id));
+      .on("click", (event, d) => {
+        event.stopPropagation();
+        setSelectedTheme(d.id === selectedTheme ? null : d.id);
+      });
 
     const networkLabels = networkG
       .append("g")

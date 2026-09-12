@@ -77,10 +77,11 @@ export const TemporalArcExplorer: React.FC<Props> = ({ data, isLoading }) => {
         .style("cursor", "pointer")
         .on("mouseover", function (event, d) {
           d3.select(this).attr("r", 6);
+          const [mx, my] = d3.pointer(event, svg.node() as any);
           const tooltip = svg
             .append("g")
             .attr("class", "tooltip")
-            .attr("transform", `translate(${xScale(d.x) + 10},${yScale(d.y)})`);
+            .attr("transform", `translate(${mx + 10},${my})`);
           tooltip
             .append("rect")
             .attr("width", 250)
@@ -109,9 +110,10 @@ export const TemporalArcExplorer: React.FC<Props> = ({ data, isLoading }) => {
     });
 
     // X-axis (episodes)
-    const xAxis = d3.axisBottom(xScale).ticks(20).tickFormat((d, i) => {
-      if (i >= data.timeline.length) return "";
-      const ep = data.timeline[i];
+    const xAxis = d3.axisBottom(xScale).ticks(20).tickFormat((d) => {
+      const idx = Math.round(Number(d));
+      if (idx < 0 || idx >= data.timeline.length) return "";
+      const ep = data.timeline[idx];
       return `S${ep.season}E${ep.episode}`;
     });
     svg
