@@ -38,7 +38,24 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTENT = ROOT / "app" / "content" / "btvs_all_seasons.json"
-MODEL = "all-MiniLM-L6-v2"
+
+# Retrieval models are not interchangeable at the API level: some are trained
+# with an asymmetric query/passage convention and score far worse if the query
+# instruction is omitted. Keep that convention next to the model name so a
+# comparison never accidentally handicaps one of them.
+MODELS: dict[str, dict] = {
+    "minilm": {
+        "id": "all-MiniLM-L6-v2",
+        "query_prefix": "",
+        "note": "ships today; 384-dim, 256-token window",
+    },
+    "bge-small": {
+        "id": "BAAI/bge-small-en-v1.5",
+        "query_prefix": "Represent this sentence for searching relevant passages: ",
+        "note": "384-dim (same index size as minilm), 512-token window",
+    },
+}
+DEFAULT_MODELS = ["minilm", "bge-small"]
 
 # Known-answer queries. Ground truth is the episode any Buffy viewer would name.
 KNOWN_ANSWERS = [
@@ -131,8 +148,8 @@ def rank(query_vec: np.ndarray, vecs: np.ndarray, owners: list[str], k: int = 10
     return [eid for eid, _ in sorted(best.items(), key=lambda kv: -kv[1])[:k]]
 
 
-def evaluate(model, vecs, owners, ground_truth) -> dict:
-    queries = [q for _, q, _ in ground_truth]
+def evaluate(model, vecs, owners, ground_truth, query_prefix: str = "") -> dict:
+    queries = [query_prefix + q for _, q, _ in ground_truth]
     qvecs = normalize(np.asarray(model.encode(queries, batch_size=64, show_progress_bar=False)))
 
     buckets: dict[str, list[int]] = {}
@@ -170,27 +187,40 @@ def fmt(name: str, res: dict) -> str:
 def main() -> int:
     from sentence_transformers import SentenceTransformer
 
+    wanted = sys.argv[1:] or DEFAULT_MODELS
+    unknown = [w for w in wanted if w not in MODELS]
+    if unknown:
+        print(f"unknown model key(s): {', '.join(unknown)}")
+        print(f"available: {', '.join(MODELS)}")
+        return 2
+
     episodes = load_corpus()
     ground_truth = build_ground_truth(episodes)
     n_title = sum(1 for k, _, _ in ground_truth if k == "title")
     n_known = sum(1 for k, _, _ in ground_truth if k == "known")
     print(f"corpus: {len(episodes)} episodes")
-    print(f"ground truth: {n_title} title queries + {n_known} known-answer queries\n")
+    print(f"ground truth: {n_title} title queries + {n_known} known-answer queries")
 
-    model = SentenceTransformer(MODEL)
-    print(f"model: {MODEL} (max_seq_length={model.max_seq_length})\n")
+    for key in wanted:
+        spec = MODELS[key]
+        model = SentenceTransformer(spec["id"])
+        prefix = spec["query_prefix"]
+        print(f"\n{'=' * 72}")
+        print(f"{key}  ({spec['id']})")
+        print(f"  {spec['note']}; max_seq_length={model.max_seq_length}; "
+              f"query_prefix={'yes' if prefix else 'none'}")
+        print("=" * 72)
 
-    ep_vecs, ep_owners = build_episode_index(model, episodes)
-    ch_vecs, ch_owners = build_chunk_index(model, episodes)
-    print(f"index sizes: episode-level {len(ep_owners)} vectors, "
-          f"chunk-level {len(ch_owners)} vectors "
-          f"({ch_vecs.nbytes / 1024:.0f} KB as float32)\n")
+        ep_vecs, ep_owners = build_episode_index(model, episodes)
+        ch_vecs, ch_owners = build_chunk_index(model, episodes)
+        print(f"index: {len(ep_owners)} episode vectors / {len(ch_owners)} chunk vectors "
+              f"({ch_vecs.nbytes / 1024:.0f} KB float32)\n")
 
-    print(fmt("A. episode-level, whole summary in one vector  [what ships today]",
-              evaluate(model, ep_vecs, ep_owners, ground_truth)))
-    print()
-    print(fmt("B. chunk-level, one vector per paragraph + title prefix",
-              evaluate(model, ch_vecs, ch_owners, ground_truth)))
+        print(fmt("A. episode-level, whole summary in one vector  [today's indexing]",
+                  evaluate(model, ep_vecs, ep_owners, ground_truth, prefix)))
+        print()
+        print(fmt("B. chunk-level, one vector per paragraph + title prefix",
+                  evaluate(model, ch_vecs, ch_owners, ground_truth, prefix)))
     return 0
 
 
