@@ -21,6 +21,7 @@ A semantic search and chat application for TV show transcripts, built with Pytho
   - [Adding New Episodes](#adding-new-episodes)
   - [Testing](#testing)
   - [Data Pipeline Utilities](#data-pipeline-utilities)
+- [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -334,6 +335,59 @@ The Docker setup creates necessary directories but data should be:
 - Check logs: `docker logs <container-id>`
 - Verify port is correct (Render sets PORT env var)
 - Ensure `/health` endpoint is accessible
+
+## Roadmap
+
+Status as of 2026-10-01. The longer-term plan is in `ROADMAP.md`; this section tracks the
+open problems found during the 2026-09 review.
+
+### Search quality (highest priority)
+
+- [ ] **Most of each episode is never indexed.** `app/services/scraping/crawl.py` embeds each
+  episode's whole summary as one vector, but `all-MiniLM-L6-v2` reads only the first 256 tokens
+  (median summary ≈ 1,537 tokens), so ~85% of the text is silently dropped. That's why the
+  app's own example query, "episode where Buffy dies", can't find `s05e22` *The Gift*.
+- [ ] **Switch to chunk-level indexing:** one vector per summary paragraph, prefixed with the
+  episode title, scored max-over-chunks (~1,837 vectors, 2.7 MB).
+- [ ] **Switch the embedding model.** Chunking plus `bge-small-en-v1.5` raises R@5 on the
+  known-answer queries from 50% to 80% (MRR 0.399 → 0.624). Neither change helps much alone.
+  Details: `docs/SEARCH_ACCURACY.md`.
+- [ ] **Replace ChromaDB with brute-force cosine search.** The corpus is too small to need a
+  vector database. Use `scripts/capture_search_baseline.py` to show the refactor alone
+  changes no rankings.
+- [ ] **Choose the hosted query embedder.** Deployment can't host a model, so queries must be
+  embedded by a hosted API using the same model as the corpus. Run each candidate through
+  `scripts/eval_retrieval.py` before choosing.
+- [ ] **Grow the known-answer set** in `scripts/eval_retrieval.py` beyond 20 queries;
+  differences under ~10 points are currently noise.
+
+### Repository hygiene
+
+- [ ] **Remove `app/dump.rdb`** from git: a stray 2023 Redis dump in a public repo.
+- [ ] **Fix `.github/workflows/ci.yml`:** it runs Python 3.9 (the project uses 3.12), pins
+  actions by tag (`@v3`/`@v4`) not commit SHA, and runs a test suite that's almost empty.
+- [ ] **Pin frontend dependencies exactly.** `frontend/package.json` uses `^` ranges; the
+  backend already pins exactly.
+- [ ] **Remove the duplicate health routes.** `/health` and `/health/model` are defined in
+  both `app/api/main.py` and `app/api/api.py`.
+- [ ] **Finish the data-layout migration** to `raw/` / `derived/` / `db/`; `.gitignore` still
+  carries the legacy paths "during transition".
+- [ ] **Clean up local leftovers:** the 819 MB `venv/` inside the project (rebuilt by
+  `./init.sh`), 11 backup snapshots in `app/data/`, `app.log` / `app/app.log`, and
+  `.DS_Store` files. None are tracked; they slow down workspace-wide searches and backups.
+- [ ] **Add real tests.** `tests/` has almost nothing; `./test.sh` needs a running server.
+
+### Documentation
+
+- [ ] **Delete or rewrite `PROJECT_STATUS.md`.** It still says only Season 1 is ingested;
+  all 7 seasons are.
+- [ ] **Merge the two roadmaps.** `ROADMAP.md` and `docs/ROADMAP.md` overlap; only the
+  `docs/` one has been kept up to date.
+- [ ] **Update `docs/DATA_PIPELINE.md`.** It describes the old single-season flow.
+- [ ] **Refresh `docs/PROJECT_DOSSIER.md`.** Its repo-state section (2026-09-08) is
+  out of date; the grid feature it calls uncommitted was committed in `1592660`.
+- [ ] **Fix the clone URL** under Installation (`yourusername` → `pieteradejong`).
+- [ ] **Add a project `CLAUDE.md`** with exact commands and gotchas for AI assistants.
 
 ## Contributing
 
