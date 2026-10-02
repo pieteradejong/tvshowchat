@@ -8,7 +8,7 @@ export const SeasonComparison: React.FC = () => {
     queryFn: fetchSeasonComparison,
   });
 
-  const seasons = data?.seasons || {};
+  const seasons = React.useMemo(() => data?.seasons ?? {}, [data]);
 
   const seasonNumbers = React.useMemo(() => {
     return Object.keys(seasons)

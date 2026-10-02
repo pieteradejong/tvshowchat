@@ -54,7 +54,7 @@ export const GridView: React.FC<GridViewProps> = ({ onNavigateToEpisode }) => {
   if (error) {
     return (
       <div className="text-sm text-red-600">
-        Failed to load data. {(error as any)?.message}
+        Failed to load data. {error?.message}
       </div>
     );
   }

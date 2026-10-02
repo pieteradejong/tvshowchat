@@ -2,6 +2,10 @@ import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import type { ThemeCooccurrence } from "../../services/experiments";
 
+// d3-force mutates its inputs, so it gets copies, never the react-query cache.
+type ThemeNode = d3.SimulationNodeDatum & { id: string; count: number };
+type ThemeLink = d3.SimulationLinkDatum<ThemeNode> & { value: number };
+
 type Props = {
   data?: ThemeCooccurrence;
   isLoading: boolean;
@@ -47,7 +51,7 @@ export const ThemeCooccurrenceMatrix: React.FC<Props> = ({ data, isLoading }) =>
         d3.select(this).attr("stroke-width", 2).attr("stroke", "#ef4444");
         const theme1 = data.themes[d.i];
         const theme2 = data.themes[d.j];
-        const [mx, my] = d3.pointer(event, svg.node() as any);
+        const [mx, my] = d3.pointer(event, svg.node());
         const tooltip = svg
           .append("g")
           .attr("class", "tooltip")
@@ -105,22 +109,26 @@ export const ThemeCooccurrenceMatrix: React.FC<Props> = ({ data, isLoading }) =>
       .append("g")
       .attr("transform", `translate(${width - networkWidth - 50},${margin.top})`);
 
+    // The simulation positions these same objects, so render from them too.
+    const themeNodes: ThemeNode[] = data.themes.map((t) => ({ id: t, count: data.episode_counts[t] }));
+    const themeLinks: ThemeLink[] = data.links.map((l) => ({ ...l }));
+
     const simulation = d3
-      .forceSimulation(
-        data.themes.map((t) => ({
-          id: t,
-          name: t,
-          count: data.episode_counts[t],
-        })) as any
+      .forceSimulation<ThemeNode>(themeNodes)
+      .force(
+        "link",
+        d3
+          .forceLink<ThemeNode, ThemeLink>(themeLinks)
+          .id((d) => d.id)
+          .distance(50)
       )
-      .force("link", d3.forceLink(data.links).id((d: any) => d.id).distance(50))
       .force("charge", d3.forceManyBody().strength(-100))
       .force("center", d3.forceCenter(networkWidth / 2, networkHeight / 2));
 
     const networkLinks = networkG
       .append("g")
       .selectAll("line")
-      .data(data.links)
+      .data(themeLinks)
       .enter()
       .append("line")
       .attr("stroke", "#4f46e5")
@@ -130,7 +138,7 @@ export const ThemeCooccurrenceMatrix: React.FC<Props> = ({ data, isLoading }) =>
     const networkNodes = networkG
       .append("g")
       .selectAll("circle")
-      .data(data.themes.map((t) => ({ id: t, count: data.episode_counts[t] })))
+      .data(themeNodes)
       .enter()
       .append("circle")
       .attr("r", (d) => Math.sqrt(d.count) * 2)
@@ -145,7 +153,7 @@ export const ThemeCooccurrenceMatrix: React.FC<Props> = ({ data, isLoading }) =>
     const networkLabels = networkG
       .append("g")
       .selectAll("text")
-      .data(data.themes.map((t) => ({ id: t, count: data.episode_counts[t] })))
+      .data(themeNodes)
       .enter()
       .append("text")
       .text((d) => d.id)
@@ -156,12 +164,12 @@ export const ThemeCooccurrenceMatrix: React.FC<Props> = ({ data, isLoading }) =>
 
     simulation.on("tick", () => {
       networkLinks
-        .attr("x1", (d: any) => d.source.x)
-        .attr("y1", (d: any) => d.source.y)
-        .attr("x2", (d: any) => d.target.x)
-        .attr("y2", (d: any) => d.target.y);
-      networkNodes.attr("cx", (d: any) => d.x).attr("cy", (d: any) => d.y);
-      networkLabels.attr("x", (d: any) => d.x).attr("y", (d: any) => d.y);
+        .attr("x1", (d) => (d.source as ThemeNode).x ?? 0)
+        .attr("y1", (d) => (d.source as ThemeNode).y ?? 0)
+        .attr("x2", (d) => (d.target as ThemeNode).x ?? 0)
+        .attr("y2", (d) => (d.target as ThemeNode).y ?? 0);
+      networkNodes.attr("cx", (d) => d.x ?? 0).attr("cy", (d) => d.y ?? 0);
+      networkLabels.attr("x", (d) => d.x ?? 0).attr("y", (d) => d.y ?? 0);
     });
   }, [data, selectedTheme]);
 

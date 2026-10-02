@@ -14,7 +14,7 @@ export const CharacterMomentsTimeline: React.FC<CharacterMomentsTimelineProps> =
     queryFn: () => fetchCharacterMoments(characterFilter || undefined),
   });
 
-  const moments = data?.moments || [];
+  const moments = React.useMemo(() => data?.moments ?? [], [data]);
   const total = data?.total || 0;
 
   // Group moments by season

@@ -77,10 +77,10 @@ Every Python dependency is locked with sha256 hashes — see
 - Uvicorn (ASGI Server)
 
 ### Frontend
-- React 18
-- TypeScript
-- TailwindCSS
-- Vite
+- Node.js 24 LTS (`.nvmrc`)
+- React 18, React Router 7, TanStack Query 5, d3 7
+- TypeScript 5.9, TailwindCSS 3.4
+- Vite 8, ESLint 10 (flat config, `frontend/eslint.config.js`)
 
 ## Prerequisites
 
@@ -284,6 +284,9 @@ install instead of running.
 ./venv/bin/pytest                                                  # the ranking baseline catches drift
 ```
 
+The frontend pins every dependency exactly in `frontend/package.json` (no `^` or `~`) and installs
+with `npm ci`, which fails if `package-lock.json` doesn't match. Use Node 24 (`nvm use`).
+
 ## Docker Deployment
 
 The project includes Docker configuration for consistent, reproducible deployments on Render or any Docker-compatible platform.
@@ -409,8 +412,9 @@ open problems found during the 2026-09 review.
 - [ ] **Remove `app/dump.rdb`** from git: a stray 2023 Redis dump in a public repo.
 - [ ] **Fix `.github/workflows/ci.yml`:** it runs Python 3.9 (the project uses 3.12), pins
   actions by tag (`@v3`/`@v4`) not commit SHA, and runs a test suite that's almost empty.
-- [ ] **Pin frontend dependencies exactly.** `frontend/package.json` uses `^` ranges; the
-  backend already pins exactly.
+- [x] **Pin frontend dependencies exactly.** Done 2026-10-01, together with the upgrades that
+  cleared all 66 frontend advisories (`npm audit`: 0): Vite 5→8, React Router 6→7,
+  ESLint 8 (end-of-life)→10, typescript-eslint 6→8, axios 1.20.
 - [ ] **Remove the duplicate health routes.** `/health` and `/health/model` are defined in
   both `app/api/main.py` and `app/api/api.py`.
 - [ ] **Finish the data-layout migration** to `raw/` / `derived/` / `db/`; `.gitignore` still
@@ -434,6 +438,9 @@ open problems found during the 2026-09 review.
 - [x] Four dead modules (Redis-era `embed*.py`, `data_pipeline.py`) removed, taking `aiohttp`
   and its advisories with them.
 - [x] `data_loader.py` passed the data directory as the *model name* to `EmbeddingService`.
+- [x] Frontend d3 force graphs mutated react-query's cached data in place, and the theme network
+  rendered circles from a different array than the simulation moved (so nodes never moved);
+  both now simulate typed copies.
 
 ### Documentation
 

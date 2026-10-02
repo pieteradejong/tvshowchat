@@ -1,5 +1,6 @@
 import { FC, useMemo } from 'react';
-import { PromptExamples, PromptCategory, DEFAULT_PROMPT_CATEGORIES } from './PromptExamples';
+import { PromptExamples, PromptCategory } from './PromptExamples';
+import { DEFAULT_PROMPT_CATEGORIES } from './promptCategories';
 
 interface ExploreProps {
   onSelectPrompt?: (prompt: string) => void;

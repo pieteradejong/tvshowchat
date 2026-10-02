@@ -77,7 +77,7 @@ export const TemporalArcExplorer: React.FC<Props> = ({ data, isLoading }) => {
         .style("cursor", "pointer")
         .on("mouseover", function (event, d) {
           d3.select(this).attr("r", 6);
-          const [mx, my] = d3.pointer(event, svg.node() as any);
+          const [mx, my] = d3.pointer(event, svg.node());
           const tooltip = svg
             .append("g")
             .attr("class", "tooltip")

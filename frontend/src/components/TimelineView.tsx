@@ -1,4 +1,4 @@
-import { FC, useMemo, useState, useEffect, useRef } from 'react';
+import { FC, useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import { SearchResult } from '../types/search';
 
 interface TimelineViewProps {
@@ -131,12 +131,12 @@ export const TimelineView: FC<TimelineViewProps> = ({ results, onNavigateToEpiso
 
   const { nodes, seasonGroups } = nodesBySeason;
 
-  const toggleNode = (nodeId: string) => {
+  const toggleNode = useCallback((nodeId: string) => {
     setExpandedNodes((prev) => ({
       ...prev,
       [nodeId]: !prev[nodeId],
     }));
-  };
+  }, []);
 
   // Keyboard navigation
   useEffect(() => {

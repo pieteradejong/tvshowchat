@@ -125,7 +125,7 @@ export const SeriesVis: React.FC = () => {
   if (epError || arcError) {
     return (
       <div className="text-sm text-red-600">
-        Failed to load data. {(epError as any)?.message || (arcError as any)?.message}
+        Failed to load data. {epError?.message || arcError?.message}
       </div>
     );
   }

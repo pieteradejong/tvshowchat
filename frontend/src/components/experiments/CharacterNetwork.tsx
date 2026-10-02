@@ -1,6 +1,11 @@
 import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
-import type { CharacterRelationships } from "../../services/experiments";
+import type { CharacterLink, CharacterNode, CharacterRelationships } from "../../services/experiments";
+
+// d3-force mutates its inputs (adds x/y, replaces link endpoints with node
+// objects), so it gets copies, never the react-query cache.
+type SimNode = CharacterNode & d3.SimulationNodeDatum;
+type SimLink = Omit<CharacterLink, "source" | "target"> & d3.SimulationLinkDatum<SimNode>;
 
 type Props = {
   data?: CharacterRelationships;
@@ -20,20 +25,26 @@ export const CharacterNetwork: React.FC<Props> = ({ data, isLoading }) => {
     const height = 700;
     svg.attr("width", width).attr("height", height);
 
+    const nodes: SimNode[] = data.nodes.map((n) => ({ ...n }));
+    const links: SimLink[] = data.links.map((l) => ({ ...l }));
+
     const simulation = d3
-      .forceSimulation(data.nodes as any)
+      .forceSimulation<SimNode>(nodes)
       .force(
         "link",
-        d3.forceLink(data.links).id((d: any) => d.id).distance((d: any) => 200 - d.value * 5)
+        d3
+          .forceLink<SimNode, SimLink>(links)
+          .id((d) => d.id)
+          .distance((d) => 200 - d.value * 5)
       )
       .force("charge", d3.forceManyBody().strength(-300))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide().radius((d: any) => d.size + 5));
+      .force("collision", d3.forceCollide<SimNode>().radius((d) => d.size + 5));
 
     const link = svg
       .append("g")
       .selectAll("line")
-      .data(data.links)
+      .data(links)
       .enter()
       .append("line")
       .attr("stroke", "#999")
@@ -42,8 +53,8 @@ export const CharacterNetwork: React.FC<Props> = ({ data, isLoading }) => {
 
     const node = svg
       .append("g")
-      .selectAll("circle")
-      .data(data.nodes)
+      .selectAll<SVGCircleElement, SimNode>("circle")
+      .data(nodes)
       .enter()
       .append("circle")
       .attr("r", (d) => d.size)
@@ -53,7 +64,7 @@ export const CharacterNetwork: React.FC<Props> = ({ data, isLoading }) => {
       })
       .call(
         d3
-          .drag<any, any>()
+          .drag<SVGCircleElement, SimNode>()
           .on("start", (event, d) => {
             if (!event.active) simulation.alphaTarget(0.3).restart();
             d.fx = d.x;
@@ -73,7 +84,7 @@ export const CharacterNetwork: React.FC<Props> = ({ data, isLoading }) => {
     const label = svg
       .append("g")
       .selectAll("text")
-      .data(data.nodes)
+      .data(nodes)
       .enter()
       .append("text")
       .text((d) => d.name)
@@ -87,13 +98,13 @@ export const CharacterNetwork: React.FC<Props> = ({ data, isLoading }) => {
 
     simulation.on("tick", () => {
       link
-        .attr("x1", (d: any) => d.source.x)
-        .attr("y1", (d: any) => d.source.y)
-        .attr("x2", (d: any) => d.target.x)
-        .attr("y2", (d: any) => d.target.y);
+        .attr("x1", (d) => (d.source as SimNode).x ?? 0)
+        .attr("y1", (d) => (d.source as SimNode).y ?? 0)
+        .attr("x2", (d) => (d.target as SimNode).x ?? 0)
+        .attr("y2", (d) => (d.target as SimNode).y ?? 0);
 
-      node.attr("cx", (d: any) => d.x).attr("cy", (d: any) => d.y);
-      label.attr("x", (d: any) => d.x).attr("y", (d: any) => d.y);
+      node.attr("cx", (d) => d.x ?? 0).attr("cy", (d) => d.y ?? 0);
+      label.attr("x", (d) => d.x ?? 0).attr("y", (d) => d.y ?? 0);
     });
   }, [data]);
 

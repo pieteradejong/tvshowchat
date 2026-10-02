@@ -20,7 +20,7 @@ export const QuoteExplorer: React.FC<QuoteExplorerProps> = ({ onNavigateToEpisod
     ),
   });
 
-  const quotes = data?.quotes || [];
+  const quotes = React.useMemo(() => data?.quotes ?? [], [data]);
   const total = data?.total || 0;
 
   // Get unique characters from quotes
