@@ -4,7 +4,6 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PYTHON_SCRIPT="$ROOT_DIR/scripts/scrape_episodes.py"
 CONTENT_FILE="$ROOT_DIR/app/content/btvs_all_seasons.json"
-SEASON_RANGE=(1 2 3 4 5 6 7)
 
 PYTHON_BIN="$ROOT_DIR/venv/bin/python"
 if [[ ! -x "$PYTHON_BIN" ]]; then
@@ -132,7 +131,7 @@ PY
         read -r -a missing_array <<< "$missing"
 
         if [[ ${#missing_array[@]} -eq 0 ]]; then
-            rel_path="${CONTENT_FILE#$ROOT_DIR/}"
+            rel_path="${CONTENT_FILE#"$ROOT_DIR"/}"
             echo "All seasons already present in ${rel_path}. Nothing to crawl."
             exit 0
         fi
@@ -146,7 +145,7 @@ if [[ "$FORCE" == true ]]; then
     CMD_ARGS+=(--force)
 fi
 
-rel_script="${PYTHON_SCRIPT#$ROOT_DIR/}"
+rel_script="${PYTHON_SCRIPT#"$ROOT_DIR"/}"
 echo "Running: $rel_script ${CMD_ARGS[*]}"
 "$PYTHON_BIN" "$PYTHON_SCRIPT" "${CMD_ARGS[@]}"
 

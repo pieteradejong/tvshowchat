@@ -61,3 +61,38 @@ used (and its weights are gitignored).
 directly.
 **Verified:** `./venv/bin/pytest tests/unit/test_embedder.py tests/integration/test_search_quality.py`
 → passed.
+
+## 5. Install torch from PyTorch's CPU-only index
+**Date:** 2026-10-01
+**Context:** The PyPI `torch` wheel for Linux depends on ~20 CUDA/nvidia/triton packages
+(several GB). This service is CPU-only and deploys to a 512 MB Render instance; the GPU stack is
+pure supply-chain surface and image weight. The workspace rule is "one registry" unless the
+README says why.
+**Decision:** Runtime dependencies move from `requirements.in` to `pyproject.toml` so uv can bind
+`torch` — and only `torch` — to `https://download.pytorch.org/whl/cpu` (`explicit = true` index +
+`[tool.uv.sources]`). Every other package still resolves from PyPI. The lock carries the PyTorch
+index as `--extra-index-url` for pip; that is safe only because every install uses
+`--require-hashes`, which discards any artifact whose hash isn't locked. The README and
+`scripts/check.sh` (`only_known_indexes`, `no_cuda_packages`) state and enforce this.
+Rejected: PyPI torch (the CUDA stack); a global extra index at resolve time (lets the PyTorch
+index serve any package name — dependency confusion).
+**Verified:** `./scripts/lock.sh` → `requirements.txt (64 packages)` (was 82);
+`grep -cE '^(nvidia|triton|cuda)' requirements.txt` → `0`; Docker build on linux/arm64 installed
+`torch==2.14.1+cpu` from the lock with `--require-hashes`.
+
+## 6. CI runs the same script developers run
+**Date:** 2026-10-01
+**Context:** The old `ci.yml` installed unpinned `ruff`/`pytest` on Python 3.9 with tag-pinned
+actions, and had been failing since 2025 (35 ruff errors). Nothing checked the frontend, the
+workflows themselves, or the image.
+**Decision:** `scripts/check.sh` holds every check, in sections; `ci.yml` runs one section per
+job (python+lockfiles, frontend, workflows, docker --build). Plus CodeQL (`security-extended`,
+Python + TypeScript) and Dependabot for Actions, Docker, npm and pip. Rejected: separate check
+logic in YAML (drifts from what developers run locally).
+**Verified:** PARTIAL. Locally, `./scripts/check.sh` (all six sections, including
+`docker --build`) → 40 of 41 checks PASS; the one FAIL (ruff E741 in a new test) was fixed and
+`./scripts/check.sh python lockfiles workflows` then exited 0 with no FAIL or SKIP. The
+container smoke test passed with `--network none` (model loaded offline, search returned s01e06,
+uid 10001). `tests/unit/test_check_script.py` → 18 passed (each guard FAILs on its injected
+fault). NOT YET: the workflows on GitHub — recheck after the first push of
+`ci/secure-pipeline`.

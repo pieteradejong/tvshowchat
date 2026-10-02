@@ -305,3 +305,6 @@ app/models/**/*.ckpt
 !app/models/**/*.json
 !app/models/**/*.txt
 !app/models/**/*.md
+
+# Tools fetched by scripts/check.sh install-actionlint
+.tools/

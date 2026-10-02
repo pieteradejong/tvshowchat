@@ -21,7 +21,7 @@ A semantic search and chat application for TV show transcripts, built with Pytho
   - [Adding New Episodes](#adding-new-episodes)
   - [Testing](#testing)
   - [Data Pipeline Utilities](#data-pipeline-utilities)
-- [Dependencies and lockfiles](#dependencies-and-lockfiles)
+- [Security and CI/CD](#security-and-cicd)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
@@ -73,7 +73,7 @@ To refresh the dataset later, follow the [Multi-Season Refresh Workflow](#multi-
 - NumPy 2.5 for the search index (brute-force cosine; 144 vectors need no vector database)
 
 Every Python dependency is locked with sha256 hashes — see
-[Dependencies and lockfiles](#dependencies-and-lockfiles).
+[Security and CI/CD](#security-and-cicd).
 - Uvicorn (ASGI Server)
 
 ### Frontend
@@ -214,10 +214,14 @@ Two layers:
 | `tests/unit/test_embedder.py` | The model is pinned to a full commit sha, and no app code loads it any other way |
 | `tests/integration/test_api.py` | Health, search, input bounds (422s), CORS, and that a 500 never leaks exception text |
 | `tests/integration/test_search_quality.py` | Rankings match `tests/fixtures/search_baseline.json`; the query model still matches the corpus vectors |
+| `tests/unit/test_check_script.py` | `scripts/check.sh` itself: injects 17 faults (unpinned action, `^` range, digest-less `FROM`, root `USER`, CUDA package, foreign index, stale lock, …) into a scratch copy and asserts the matching check FAILs |
 
 The ranking baseline is the regression net for refactors and dependency upgrades: if a change
 moves any of the 23 recorded top-5 rankings, the suite fails. Re-record it only for a deliberate
 search change (`./venv/bin/python scripts/capture_search_baseline.py capture`).
+
+To run every check CI runs (lint, tests, audits, lockfiles, workflows, Docker), use
+[`./scripts/check.sh`](#one-script-for-every-check-scriptschecksh).
 
 **2. `./test.sh` — end-to-end against a running server.**
 
@@ -264,7 +268,29 @@ The canonical dataset lives at `app/content/btvs_all_seasons.json`. To regenerat
 3. `python3.12 scripts/scrape_episodes.py --reindex` — rebuild the search index from the document store and check its counts.
 4. `./test.sh` — validates that content, document store, embeddings, vector store, and API all report 144 episodes across Seasons 1–7.
 
-## Dependencies and lockfiles
+## Security and CI/CD
+
+Work started 2026-10-01 on branch `ci/secure-pipeline`. Decisions and their verification are in
+[`DECISIONS.md`](DECISIONS.md). This table is the current state; items move to ✅ only with a
+verification command run.
+
+| Area | Status | What it means |
+|---|---|---|
+| Python dependencies | ✅ | Hash-locked (`--require-hashes`), all upgraded; `pip-audit --strict`: 0 known vulnerabilities |
+| Frontend dependencies | ✅ | Exact pins, `npm ci` from the lockfile; `npm audit`: 0 vulnerabilities |
+| Vulnerable / unused components | ✅ | ChromaDB (no fix available), aiohttp and four dead modules removed |
+| Embedding model | ✅ | Pinned to a Hugging Face commit; baked into the image, so production never downloads it |
+| API hardening | ✅ | No exception text in responses, bounded search input, CORS without credentials, INFO logging |
+| Tests | ✅ | 65 pytest tests: ranking baseline, leak checks, and fault-injection tests proving each CI guard fails when broken |
+| CUDA-free install | ✅ | `torch` from PyTorch's CPU index (bound to `torch` only): 82 → 64 locked packages, no GPU stack |
+| Container image | ✅ | Digest-pinned bases, non-root (uid 10001), read-only code; smoke-tested with networking disabled |
+| CI pipeline | ✅ locally / ⏳ on GitHub | SHA-pinned actions, read-only token, lint/test/audit/build, CodeQL, Dependabot — not yet run on GitHub |
+| Security workflow | ⏳ blocked | `security.yml` calls the shared dotfiles workflow, which isn't on dotfiles `main` yet |
+| Deploy gate (Render) | ✅ configured | Auto-deploy stays off (refactor); when re-enabled, `checksPass` deploys `main` only after CI passes |
+| Branch protection on `main` | ⏳ needs your OK | Require PRs and passing checks before merge — a GitHub settings change |
+| Local check script | ✅ | `scripts/check.sh`: 41 checks in 6 sections, the same ones CI runs |
+
+### Dependencies and lockfiles
 
 Python dependencies are declared in two input files and locked into two hash-pinned files:
 
@@ -286,6 +312,77 @@ install instead of running.
 
 The frontend pins every dependency exactly in `frontend/package.json` (no `^` or `~`) and installs
 with `npm ci`, which fails if `package-lock.json` doesn't match. Use Node 24 (`nvm use`).
+
+### One script for every check: `scripts/check.sh`
+
+CI runs exactly this script, one section per job, so a green local run means a green CI run.
+
+```bash
+./scripts/check.sh                       # everything (builds the image if Docker is running)
+./scripts/check.sh python lockfiles      # just those sections
+./scripts/check.sh docker --build        # build the image and smoke-test it
+./scripts/check.sh install-actionlint    # fetch pinned actionlint, verify its sha256
+```
+
+| Section | Checks |
+|---|---|
+| `lockfiles` | Inputs pin with `==`; every locked package has sha256 hashes; only PyPI + the PyTorch CPU index; no CUDA packages; `requirements*.txt` match their inputs (re-lock and diff); `package.json` has no `^`/`~`; `package-lock.json` is v3 with integrity hashes and npmjs-only sources |
+| `python` | Python 3.12 venv; `pip check`; ChromaDB absent; ruff (incl. bandit security rules); pytest unit + integration; `pip-audit --strict` on both locks |
+| `frontend` | Node matches `.nvmrc`; `npm ci --ignore-scripts`; ESLint with zero warnings; `tsc`; Vite build; no source maps shipped; `npm audit` fails on any severity |
+| `workflows` | actionlint; zizmor (Actions security audit); every third-party action pinned to a commit SHA; top-level `permissions` on every workflow; `persist-credentials: false` on every checkout; no `pull_request_target`/`workflow_run`; no untrusted event fields in expressions; the shared security workflow is called; shellcheck |
+| `docker` | hadolint; every `FROM` digest-pinned; non-root `USER`; `.dockerignore` excludes local state. With `--build`: builds the image, checks its contents (no dev files or local data, code not writable, offline env), then starts it **with networking disabled** and runs health, pipeline and search checks inside it |
+| `secrets` | gitleaks over full history (if installed; CI runs it via `security.yml`); no tracked `.env` files |
+
+A failing check doesn't stop the run: the summary lists every PASS/FAIL/SKIP and the exit code is
+non-zero if anything failed. Local prerequisites: `./init.sh`, Node 24 (`nvm use`), and for the
+optional parts `hadolint`, `shellcheck`, `gitleaks` (Homebrew) and Colima for Docker.
+
+### CI pipeline
+
+| Workflow | Runs on | Does |
+|---|---|---|
+| `ci.yml` | every push and PR | Four parallel jobs — `python`+`lockfiles`, `frontend`, `workflows`, `docker --build` — each one `scripts/check.sh` section |
+| `codeql.yml` | PRs, pushes to `main`, weekly | CodeQL SAST (`security-extended`) for Python and TypeScript |
+| `security.yml` | every push and PR | The shared workflow from `pieteradejong/dotfiles`: gitleaks over full history + the security gate |
+| `dependabot.yml` | weekly | Grouped update PRs for Actions, Docker base images, npm and pip |
+
+How the workflows themselves are hardened:
+
+- **Actions pinned by full commit SHA** (with the version in a comment); a tag can be moved to
+  malicious code, a SHA can't. Dependabot updates the SHAs.
+- **Read-only token by default** (`permissions: contents: read`). The only write anywhere is
+  `security-events: write` on the CodeQL job, which it needs to upload results.
+- **`persist-credentials: false`** on every checkout, so no later step can push with the token.
+- **No `pull_request_target` or `workflow_run`**, and no PR titles, bodies or branch names in
+  expressions — the usual ways a fork's PR gets code execution with secrets.
+- **Tools are verified too:** zizmor and pip-audit come from the hash lock; actionlint is
+  downloaded at a pinned version and checked against its sha256.
+- **The Python job runs on Linux**, so `pip-audit` covers the Linux-only `torch+cpu` pin that
+  a macOS run skips.
+
+### Deployment gate
+
+`render.yaml` deploys the `main` branch from the `Dockerfile`. Auto-deploy is **off** for the
+duration of the engine refactor (`autoDeployTrigger: "off"`). When it is re-enabled it must be
+`checksPass`: Render then deploys a commit on `main` only after every GitHub check on it has
+passed. Together with branch protection on `main` (required PRs + required checks), nothing
+reaches production without passing the full pipeline.
+
+### Container image
+
+`Dockerfile` builds three stages: the frontend (`node:24.21.0-slim`), Python dependencies plus the
+embedding model, and a slim runtime (`python:3.12.15-slim`).
+
+- **Base images pinned by digest**, not tag. A tag can be re-pointed; a digest can't.
+- **Installs only from the lockfiles:** `pip install --require-hashes`, and `npm ci --ignore-scripts`
+  (no package install scripts run during the build).
+- **The model is downloaded once, at build time,** at the pinned revision. The runtime sets
+  `HF_HUB_OFFLINE=1`, so the container never fetches code or weights from the internet.
+- **Runs as an unprivileged user** (uid 10001). Code is root-owned and read-only to the app;
+  only `app/data/` and `app/logs/` are writable.
+- **Nothing local leaks in:** `.dockerignore` excludes `app/data/`, `app/static/`, `app/models/`,
+  logs, the Redis dump and dev-only files. The app imports the tracked dataset on first start.
+- **`exec` makes uvicorn PID 1**, so it receives SIGTERM directly for clean shutdowns.
 
 ## Docker Deployment
 
@@ -410,8 +507,8 @@ open problems found during the 2026-09 review.
 ### Repository hygiene
 
 - [ ] **Remove `app/dump.rdb`** from git: a stray 2023 Redis dump in a public repo.
-- [ ] **Fix `.github/workflows/ci.yml`:** it runs Python 3.9 (the project uses 3.12), pins
-  actions by tag (`@v3`/`@v4`) not commit SHA, and runs a test suite that's almost empty.
+- [x] **Fix `.github/workflows/ci.yml`.** Done 2026-10-01: rewritten — see
+  [Security and CI/CD](#security-and-cicd).
 - [x] **Pin frontend dependencies exactly.** Done 2026-10-01, together with the upgrades that
   cleared all 66 frontend advisories (`npm audit`: 0): Vite 5→8, React Router 6→7,
   ESLint 8 (end-of-life)→10, typescript-eslint 6→8, axios 1.20.
@@ -422,7 +519,7 @@ open problems found during the 2026-09 review.
 - [ ] **Clean up local leftovers:** the 819 MB `venv/` inside the project (rebuilt by
   `./init.sh`), 11 backup snapshots in `app/data/`, `app.log` / `app/app.log`, and
   `.DS_Store` files. None are tracked; they slow down workspace-wide searches and backups.
-- [x] **Add real tests.** Done 2026-10-01: 47 pytest tests (see [Testing](#testing)), runnable
+- [x] **Add real tests.** Done 2026-10-01: 65 pytest tests (see [Testing](#testing)), runnable
   without a server.
 
 ### Security fixes made along the way (2026-10-01)

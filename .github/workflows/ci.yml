@@ -1,28 +1,83 @@
-name: Q&A Interaction with TV Shows
+# CI: every job runs a section of scripts/check.sh, the same script developers
+# run locally, so "passes locally" and "passes in CI" mean the same thing.
+#
+# Hardening: actions pinned by commit SHA (Dependabot keeps them current),
+# read-only token, no persisted checkout credentials, no untrusted input
+# interpolated into shell, per-job timeouts.
+name: ci
 
-on: [push]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.9"]  # Standardize on Python 3.9 for stability
-
+  python:
+    name: python (lint, test, audit, lockfiles)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12.15"
+      - name: Install locked dependencies (hash-verified)
         run: |
-          python -m pip install --upgrade pip
-          pip install ruff pytest
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - name: Lint with ruff
+          python -m venv venv
+          ./venv/bin/pip install --require-hashes -r requirements.txt -r requirements-dev.txt
+      - name: Cache the pinned embedding model
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/huggingface
+          key: hf-${{ hashFiles('app/services/embedder.py') }}
+      - run: ./scripts/check.sh python lockfiles
+
+  frontend:
+    name: frontend (lint, types, build, audit)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - run: ./scripts/check.sh frontend
+
+  workflows:
+    name: workflows (actionlint, zizmor, pins)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12.15"
+      - name: Install zizmor (hash-verified) and actionlint (checksum-verified)
         run: |
-          ruff check --target-version=py39 .
-      - name: Test with pytest
-        run: |
-          pytest
+          python -m venv venv
+          ./venv/bin/pip install --require-hashes -r requirements.txt -r requirements-dev.txt
+          ./scripts/check.sh install-actionlint
+      - run: ./scripts/check.sh workflows
+
+  docker:
+    name: docker (hadolint, build, run as non-root, smoke test)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: ./scripts/check.sh docker --build
