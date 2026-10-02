@@ -1,0 +1,9 @@
+# Development and CI tools, pinned exactly. Locked into requirements-dev.txt
+# by ./scripts/lock.sh, constrained to the runtime lock so the two never
+# disagree on a shared package.
+-c requirements.txt
+
+pytest==9.1.1
+httpx2==2.13.1
+ruff==0.16.10
+pip-audit==2.10.1

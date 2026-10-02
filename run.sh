@@ -139,7 +139,7 @@ verify_python_env() {
     
     # Check each package individually (avoiding associative arrays for better compatibility)
     # Note: package names vs import names may differ (e.g., sentence-transformers vs sentence_transformers)
-    packages=("fastapi" "uvicorn" "chromadb" "sentence_transformers")
+    packages=("fastapi" "uvicorn" "sentence_transformers")
     
     # Use the virtual environment's Python if available (it's python3.12)
     # Otherwise use python3.12 directly
@@ -182,15 +182,6 @@ verify_data_dir() {
         echo "Please run initialization script first:"
         echo "   ./init.sh"
         exit 1
-    fi
-    
-    # Check if ChromaDB directory exists
-    if [ ! -d "app/data/chroma" ]; then
-        echo "⚠️  ChromaDB directory not found"
-        echo "Please run data initialization:"
-        echo "   python scripts/init_data.py"
-    else
-        echo "✅ ChromaDB directory found"
     fi
     
     # Check if episode data exists

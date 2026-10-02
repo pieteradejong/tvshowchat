@@ -26,7 +26,7 @@ app.add_middleware(
         "http://localhost:5175",  # React dev server
         "https://tvshowchat1.onrender.com",  # Production deployment
     ],
-    allow_credentials=True,
+    allow_credentials=False,  # no cookies or auth; never send credentials cross-origin
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -63,7 +63,6 @@ else:
 
 # Track service status
 service_status: Dict[str, Any] = {
-    "chromadb": {"status": "unknown", "error": None},
     "model": {"status": "unknown", "error": None},
     "data": {"status": "unknown", "error": None},
     "store": {"status": "unknown", "error": None},
@@ -92,24 +91,17 @@ async def startup_event():
 
     except Exception as e:
         service_status["store"]["status"] = "unhealthy"
-        service_status["store"]["error"] = str(e)
+        service_status["store"]["error"] = type(e).__name__
         logger.error(f"Document store initialization failed: {e}")
 
-    # Initialize Vector Store (ChromaDB) - lazy initialization
-    # Don't call get_stats() here as it does expensive file I/O
-    # Stats will be computed on first request if needed
+    # Initialize Vector Store - the index itself is built lazily on first search
     try:
-        vector_store = get_vector_store()
-        # Just verify the store can be accessed, don't compute stats
-        _ = vector_store.collection  # Access collection to trigger init
+        get_vector_store()
         service_status["vector_store"]["status"] = "healthy"
-        service_status["chromadb"]["status"] = "healthy"
-        logger.info("Vector store (ChromaDB) initialized successfully")
+        logger.info("Vector store initialized successfully")
     except Exception as e:
         service_status["vector_store"]["status"] = "unhealthy"
-        service_status["chromadb"]["status"] = "unhealthy"
-        service_status["vector_store"]["error"] = str(e)
-        service_status["chromadb"]["error"] = str(e)
+        service_status["vector_store"]["error"] = type(e).__name__
         logger.error(f"Vector store initialization failed: {e}")
 
     # Verify model through vector store (model is already loaded there)
@@ -126,7 +118,7 @@ async def startup_event():
             logger.warning("Model verification skipped: vector store not healthy")
     except Exception as e:
         service_status["model"]["status"] = "unhealthy"
-        service_status["model"]["error"] = str(e)
+        service_status["model"]["error"] = type(e).__name__
         logger.error(f"Model verification failed: {e}")
     
     # Mark data as healthy if store and vector store are healthy
@@ -165,20 +157,18 @@ async def health_check():
 
 @app.get("/health/redis")
 async def redis_health_check():
-    """Redis health check endpoint (deprecated - use /health/chromadb)."""
+    """Redis health check endpoint (deprecated - use /health/vector-store)."""
     raise HTTPException(
         status_code=410,
-        detail="Redis endpoint deprecated. Use /health/chromadb instead."
+        detail="Redis endpoint deprecated. Use /health/vector-store instead."
     )
 
 @app.get("/health/chromadb")
 async def chromadb_health_check():
-    """ChromaDB health check endpoint."""
-    if service_status["chromadb"]["status"] == "healthy":
-        return {"status": "healthy", "message": "ChromaDB is healthy"}
+    """ChromaDB health check endpoint (removed - ChromaDB is no longer used)."""
     raise HTTPException(
-        status_code=503,
-        detail=f"ChromaDB is unhealthy: {service_status['chromadb']['error']}"
+        status_code=410,
+        detail="ChromaDB was replaced by an in-memory index. Use /health/vector-store instead."
     )
 
 @app.get("/health/vector-store")
@@ -188,7 +178,7 @@ async def vector_store_health_check():
         return {"status": "healthy", "message": "Vector store is healthy"}
     raise HTTPException(
         status_code=503,
-        detail=f"Vector store is unhealthy: {service_status['vector_store']['error']}"
+        detail="Vector store is unhealthy"
     )
 
 @app.get("/health/model")
@@ -198,7 +188,7 @@ async def model_health_check():
         return {"status": "healthy", "message": "Model is healthy"}
     raise HTTPException(
         status_code=503,
-        detail=f"Model is unhealthy: {service_status['model']['error']}"
+        detail="Model is unhealthy"
     )
 
 @app.get("/health/store")
@@ -208,7 +198,7 @@ async def store_health_check():
         return {"status": "healthy", "message": "Document store is healthy"}
     raise HTTPException(
         status_code=503,
-        detail=f"Document store is unhealthy: {service_status['store']['error']}"
+        detail="Document store is unhealthy"
     )
 
 @app.get("/health/pipeline")
@@ -217,7 +207,6 @@ async def pipeline_health_check():
     try:
         from app.services.vector_store import get_vector_store
         from app.services.storage.document_store import get_store
-        from pathlib import Path
         import json
         
         pipeline_status = {
@@ -295,18 +284,18 @@ async def pipeline_health_check():
         except Exception as e:
             pipeline_status["stages"]["document_store"] = {
                 "status": "error",
-                "error": str(e)
+                "error": type(e).__name__
             }
             pipeline_status["status"] = "degraded"
         
-        # Stage 3: ChromaDB
+        # Stage 3: Vector index
         try:
             vector_store = get_vector_store()
             stats = vector_store.get_stats()
-            pipeline_status["stages"]["chromadb"] = {
+            pipeline_status["stages"]["vector_index"] = {
                 "status": "healthy",
                 "total_episodes": stats.get("total_episodes", 0),
-                "chromadb_episodes": stats.get("chromadb_episodes", 0),
+                "indexed_episodes": stats.get("indexed_episodes", 0),
                 "season_counts": {
                     int(k): v for k, v in stats.get("season_counts", {}).items()
                 },
@@ -314,9 +303,9 @@ async def pipeline_health_check():
                 "collection_name": stats.get("collection_name", "unknown")
             }
         except Exception as e:
-            pipeline_status["stages"]["chromadb"] = {
+            pipeline_status["stages"]["vector_index"] = {
                 "status": "error",
-                "error": str(e)
+                "error": type(e).__name__
             }
             pipeline_status["status"] = "degraded"
         
@@ -326,7 +315,7 @@ async def pipeline_health_check():
             totals = [
                 stages.get("content", {}).get("total_episodes"),
                 stages.get("document_store", {}).get("total_episodes"),
-                stages.get("chromadb", {}).get("total_episodes")
+                stages.get("vector_index", {}).get("total_episodes")
             ]
             if totals and all(t == totals[0] for t in totals if t is not None):
                 pipeline_status["status"] = "healthy"
@@ -337,7 +326,7 @@ async def pipeline_health_check():
                 pipeline_status["totals"] = {
                     "content": totals[0],
                     "document_store": totals[1],
-                    "chromadb": totals[2]
+                    "vector_index": totals[2]
                 }
         
         return pipeline_status
@@ -346,8 +335,8 @@ async def pipeline_health_check():
         logger.error(f"Pipeline health check failed: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Pipeline health check failed: {str(e)}"
-        )
+            detail="Pipeline health check failed"
+        ) from e
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)

@@ -82,17 +82,13 @@ install_python_deps() {
     find . -type d -name "__pycache__" -exec rm -rf {} +
     rm -rf .pytest_cache .ruff_cache
 
-    echo "Upgrading pip..."
-    python -m pip install --upgrade pip
-
-    echo "Installing project dependencies..."
-    python -m pip install -r requirements.txt
+    echo "Installing project dependencies (hash-verified)..."
+    python -m pip install --require-hashes -r requirements.txt -r requirements-dev.txt
 
     echo "Verifying critical package installation..."
     declare -A package_imports=(
         ["fastapi"]="fastapi"
         ["uvicorn"]="uvicorn"
-        ["chromadb"]="chromadb"
         ["sentence-transformers"]="sentence_transformers"
     )
 
@@ -120,7 +116,6 @@ setup_data_dirs() {
     
     # Create necessary directories
     mkdir -p app/data/episodes
-    mkdir -p app/data/chroma
     mkdir -p app/logs
     
     echo -e "${GREEN}✅ Data directories created${NC}"

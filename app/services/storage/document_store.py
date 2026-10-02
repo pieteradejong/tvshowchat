@@ -6,7 +6,7 @@ from datetime import datetime
 import shutil
 from dataclasses import dataclass, asdict
 import numpy as np
-from sentence_transformers import SentenceTransformer
+from app.services.embedder import load_embedder
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ class BuffyDocumentStore:
     def embedder(self):
         """Lazy-load the embedder only when needed."""
         if self._embedder is None:
-            self._embedder = SentenceTransformer("all-MiniLM-L6-v2")
+            self._embedder = load_embedder()
         return self._embedder
 
     def _ensure_dirs(self):
@@ -247,7 +247,7 @@ class BuffyDocumentStore:
             
             for season_key, season_data in data.items():
                 season_num = int(season_key.split('_')[1])
-                for episode_num, episode in season_data.items():
+                for episode in season_data.values():
                     # Convert to EpisodeDocument
                     doc = EpisodeDocument(
                         season_number=season_num,

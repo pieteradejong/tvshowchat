@@ -7,13 +7,10 @@ enabling complex queries about character relationships, storylines, quotes, and 
 
 import numpy as np
 from typing import List, Dict, Any, Optional, Tuple
-from sentence_transformers import SentenceTransformer
 import json
-from pathlib import Path
-import logging
 from dataclasses import dataclass
-import chromadb
-from app.services.storage.document_store import BuffyDocumentStore, EpisodeDocument
+from app.services.embedder import EMBEDDING_MODEL, load_embedder
+from app.services.storage.document_store import BuffyDocumentStore
 from app.config.config import logger
 
 @dataclass
@@ -45,26 +42,17 @@ class AdvancedVectorStore:
     
     def __init__(self, document_store: BuffyDocumentStore):
         self.document_store = document_store
-        self.embedder = SentenceTransformer("all-MiniLM-L6-v2")
+        self.embedder = load_embedder()
         
-        # Initialize ChromaDB with new API (PersistentClient)
-        chroma_path = Path("app/data/chroma")
-        chroma_path.mkdir(parents=True, exist_ok=True)
-        
-        # Use PersistentClient for local persistence
-        self.chroma_client = chromadb.PersistentClient(path=str(chroma_path.absolute()))
-        
-        # Get or create collection
-        self.collection = self.chroma_client.get_or_create_collection(
-            name="buffy_episodes",
-            metadata={"hnsw:space": "cosine"}
-        )
+        # In-memory index: one unit-normalised vector per episode, searched by exact
+        # brute-force cosine. Built from the document store on first search.
+        self._index_matrix: Optional[np.ndarray] = None
+        self._index_meta: List[Dict[str, Any]] = []
         
         # Character and relationship mappings - lazy loaded to save memory/CPU at startup
         self._character_embeddings = None
         self._relationship_graph = None
         self._theme_embeddings = None
-        self._chromadb_populated = False  # Track if we've checked/populated ChromaDB
         
         # Buffy universe knowledge base
         self.main_characters = {
@@ -98,7 +86,7 @@ class AdvancedVectorStore:
         # Defer expensive operations:
         # - Character/theme embeddings: built on first use
         # - Relationship graph: built on first use (very expensive, reads all files)
-        # - ChromaDB population: checked on first search
+        # - Vector index: built on first search
     
     @property
     def character_embeddings(self) -> Dict[str, np.ndarray]:
@@ -215,16 +203,14 @@ class AdvancedVectorStore:
             theme_text = f"Theme {theme}: {', '.join(keywords)}"
             self._theme_embeddings[theme] = self.embedder.encode(theme_text)
     
-    def _populate_chromadb(self):
-        """Populate ChromaDB collection from document store."""
-        logger.info("Populating ChromaDB from document store...")
+    def _build_index(self):
+        """Build the in-memory vector index from the document store."""
+        logger.info("Building vector index from document store...")
         
-        documents = []
-        embeddings = []
+        vectors = []
         metadatas = []
-        ids = []
         
-        for season_file in self.document_store.episodes_path.glob("season_*.json"):
+        for season_file in sorted(self.document_store.episodes_path.glob("season_*.json")):
             if season_file.name == "season_stats.json":
                 continue
             try:
@@ -248,51 +234,62 @@ class AdvancedVectorStore:
                 if not summary_parts:
                     continue
                 
-                summary_text = " ".join(summary_parts)
-                
                 # Get or generate embedding
                 if 'summary_embedding' in embeddings_data.get(episode_num, {}):
                     episode_embedding = embeddings_data[episode_num]['summary_embedding']
                 else:
                     # Generate embedding if not found
-                    episode_embedding = self.embedder.encode(summary_text).tolist()
+                    episode_embedding = self.embedder.encode(" ".join(summary_parts))
                 
-                # Create ID
-                episode_id = f"s{season_num:02d}e{episode_num}"
-                
-                # Prepare metadata
-                metadata = {
-                    'season': season_num,  # ChromaDB accepts integers
+                vectors.append(np.asarray(episode_embedding, dtype=np.float64))
+                metadatas.append({
+                    'id': f"s{season_num:02d}e{episode_num}",
+                    'season': season_num,
                     'episode': episode_num,
                     'title': episode.get('title', ''),
                     'airdate': episode.get('airdate', ''),
-                }
-                
-                documents.append(summary_text)
-                embeddings.append(episode_embedding)
-                metadatas.append(metadata)
-                ids.append(episode_id)
+                })
         
-        # Add to ChromaDB in batches
-        batch_size = 50
-        for i in range(0, len(documents), batch_size):
-            batch_docs = documents[i:i+batch_size]
-            batch_embeddings = embeddings[i:i+batch_size]
-            batch_metadatas = metadatas[i:i+batch_size]
-            batch_ids = ids[i:i+batch_size]
-            
-            self.collection.add(
-                documents=batch_docs,
-                embeddings=batch_embeddings,
-                metadatas=batch_metadatas,
-                ids=batch_ids
-            )
+        if vectors:
+            matrix = np.vstack(vectors)
+            norms = np.linalg.norm(matrix, axis=1, keepdims=True)
+            norms[norms == 0] = 1.0
+            self._index_matrix = matrix / norms
+        else:
+            self._index_matrix = np.zeros((0, 0))
+        self._index_meta = metadatas
         
-        logger.info(f"Populated ChromaDB with {len(documents)} episodes")
+        logger.info(f"Indexed {len(metadatas)} episodes")
+    
+    def _ensure_index(self):
+        if self._index_matrix is None:
+            self._build_index()
+    
+    def _nearest(self, query_embedding: np.ndarray, n: int,
+                 season: Optional[int]) -> List[Tuple[Dict[str, Any], float]]:
+        """Exact top-n episodes by cosine similarity, optionally within one season.
+        
+        Deterministic: ties keep index order (season file, then episode order).
+        """
+        self._ensure_index()
+        if not self._index_meta or n <= 0:
+            return []
+        
+        query = np.asarray(query_embedding, dtype=np.float64)
+        norm = np.linalg.norm(query)
+        if norm == 0:
+            return []
+        similarities = self._index_matrix @ (query / norm)
+        
+        candidates = np.arange(len(self._index_meta))
+        if season is not None:
+            candidates = candidates[[m['season'] == season for m in self._index_meta]]
+        order = candidates[np.argsort(-similarities[candidates], kind="stable")]
+        return [(self._index_meta[i], float(similarities[i])) for i in order[:n]]
     
     def search_episodes(self, query: str, limit: int = 5, season: Optional[int] = None) -> List[Dict[str, Any]]:
         """
-        Search episodes with enhanced semantic understanding using ChromaDB.
+        Search episodes with enhanced semantic understanding.
         
         Args:
             query: Natural language search query
@@ -304,75 +301,25 @@ class AdvancedVectorStore:
         """
         logger.info(f"Searching episodes with query: '{query}'")
         
-        # Lazy-check and populate ChromaDB if needed (deferred from startup)
-        if not self._chromadb_populated:
-            if self.collection.count() == 0:
-                logger.info("ChromaDB collection is empty, populating from document store...")
-                self._populate_chromadb()
-            self._chromadb_populated = True
-        
         # Encode the query
-        query_embedding = self.embedder.encode(query).tolist()
+        query_embedding = self.embedder.encode(query)
         
         # Detect query type and extract entities
         query_type = self._analyze_query_type(query)
         characters = self._extract_characters_from_query(query)
         themes = self._extract_themes_from_query(query)
         
-        # Build filter for season if specified
-        where_filter = None
-        if season is not None:
-            where_filter = {"season": season}
-        
-        # Query ChromaDB - get more results than needed for boosting
+        # Get more candidates than needed, then re-rank them with the query boosts
         query_limit = limit * 3 if season is None else limit * 2
         
-        try:
-            chroma_results = self.collection.query(
-                query_embeddings=[query_embedding],
-                n_results=query_limit,
-                where=where_filter,
-                include=["metadatas", "distances"]
-            )
-        except Exception as e:
-            logger.error(f"ChromaDB query failed: {e}, falling back to file-based search")
-            return self._search_episodes_file_based(query, limit, season)
-
-        ids = chroma_results.get("ids") or []
-        if not ids or not ids[0]:
-            logger.warning("No results from ChromaDB")
-            return []
-
-        metadatas = chroma_results.get("metadatas") or [[]]
-        distances = chroma_results.get("distances") or [[]]
-
-        metadata_list = metadatas[0] if metadatas else []
-        distance_list = distances[0] if distances else []
-
         results = []
-
-        for idx, episode_id in enumerate(ids[0]):
-            metadata = metadata_list[idx] if idx < len(metadata_list) else {}
-            metadata = metadata or {}
-            distance = distance_list[idx] if idx < len(distance_list) else 1.0
-
-            similarity = 1.0 - float(distance)
-
-            season_raw = metadata.get("season")
-            try:
-                season_num = int(season_raw)
-            except (TypeError, ValueError):
-                logger.warning("Skipping result %s with invalid season metadata: %s", episode_id, season_raw)
-                continue
-
-            episode_num = metadata.get("episode")
-            if not episode_num:
-                logger.warning("Skipping result %s with missing episode metadata", episode_id)
-                continue
-
+        
+        for metadata, similarity in self._nearest(query_embedding, query_limit, season):
+            season_num = metadata['season']
+            episode_num = metadata['episode']
             episode = self.document_store.get_episode(season_num, episode_num)
             if not episode:
-                logger.warning("Episode not found in document store for %s", episode_id)
+                logger.warning("Episode not found in document store for %s", metadata['id'])
                 continue
 
             boosted_score = self._boost_score_for_query(
@@ -399,70 +346,6 @@ class AdvancedVectorStore:
 
             results.append(result)
 
-        results.sort(key=lambda x: x['score'], reverse=True)
-        return results[:limit]
-    
-    def _search_episodes_file_based(self, query: str, limit: int = 5, season: Optional[int] = None) -> List[Dict[str, Any]]:
-        """Fallback file-based search if ChromaDB fails."""
-        logger.info("Using file-based search fallback")
-        
-        query_embedding = self.embedder.encode(query)
-        query_type = self._analyze_query_type(query)
-        characters = self._extract_characters_from_query(query)
-        themes = self._extract_themes_from_query(query)
-        
-        results = []
-        
-        for season_file in self.document_store.episodes_path.glob("season_*.json"):
-            if season_file.name == "season_stats.json":
-                continue
-            try:
-                season_num = int(season_file.stem.split('_')[1])
-            except (ValueError, IndexError):
-                continue
-            
-            if season and season_num != season:
-                continue
-            
-            with open(season_file, 'r') as f:
-                season_data = json.load(f)
-            
-            embeddings_file = self.document_store._get_embeddings_file(season_num)
-            embeddings_data = {}
-            if embeddings_file.exists():
-                with open(embeddings_file, 'r') as f:
-                    embeddings_data = json.load(f)
-            
-            for episode_num, episode in season_data.items():
-                if 'summary_embedding' in embeddings_data.get(episode_num, {}):
-                    episode_embedding = np.array(embeddings_data[episode_num]['summary_embedding'])
-                    similarity = np.dot(query_embedding, episode_embedding) / (
-                        np.linalg.norm(query_embedding) * np.linalg.norm(episode_embedding)
-                    )
-                    
-                    boosted_score = self._boost_score_for_query(
-                        similarity, episode, characters, themes, query_type
-                    )
-                    
-                    content_type, relevant_text, supporting_snippets = self._extract_relevant_content(
-                        episode, query, characters, themes
-                    )
-                    
-                    result = {
-                        'season': season_num,
-                        'episode': episode_num,
-                        'title': episode.get('title', ''),
-                        'airdate': episode.get('airdate', ''),
-                        'content_type': content_type,
-                        'text': relevant_text,
-                        'snippets': supporting_snippets,
-                        'score': float(boosted_score),
-                        'characters': self._extract_characters_from_episode(episode),
-                        'themes': self._extract_themes_from_episode(episode),
-                        'context': self._generate_context(episode, query, characters)
-                    }
-                    results.append(result)
-        
         results.sort(key=lambda x: x['score'], reverse=True)
         return results[:limit]
     
@@ -667,30 +550,7 @@ class AdvancedVectorStore:
 
         embeddings_total = sum(embedding_counts.values())
 
-        chroma_count = 0
-        if self.collection:
-            try:
-                chroma_count = self.collection.count()
-            except Exception as exc:
-                logger.warning("Failed to count existing Chroma collection: %s", exc)
-                chroma_count = 0
-
-        # If the collection appears empty after an external rebuild, reacquire it.
-        if chroma_count == 0:
-            try:
-                self.collection = self.chroma_client.get_collection(name="buffy_episodes")
-                chroma_count = self.collection.count()
-            except Exception as exc:
-                logger.warning("Unable to refresh Chroma collection count: %s", exc)
-                chroma_count = 0
-
-        if chroma_count == 0 and total_episodes > 0:
-            logger.warning(
-                "ChromaDB count returned 0 despite document store containing data; "
-                "treating count as %s for status reporting.",
-                total_episodes,
-            )
-            chroma_count = total_episodes
+        self._ensure_index()
         
         return {
             'total_episodes': total_episodes,
@@ -699,33 +559,20 @@ class AdvancedVectorStore:
             'embedding_counts': embedding_counts,
             'embedding_total': embeddings_total,
             'collection_name': 'buffy_episodes',
-            'embedding_model': 'all-MiniLM-L6-v2',
-            'chromadb_episodes': chroma_count,
+            'embedding_model': EMBEDDING_MODEL,
+            'indexed_episodes': len(self._index_meta),
             'characters_tracked': len(self.main_characters),
             'relationships_mapped': len(self.relationship_graph),
             'themes_available': len(self.themes)
         }
     
     def rebuild_from_document_store(self) -> Dict[str, Any]:
-        """Rebuild Chroma collection from the document store."""
-        logger.info("Rebuilding ChromaDB collection from document store...")
-        try:
-            try:
-                self.chroma_client.delete_collection("buffy_episodes")
-                logger.info("Existing ChromaDB collection deleted")
-            except Exception as exc:
-                logger.warning("Unable to delete existing collection: %s", exc)
-            self.collection = self.chroma_client.get_or_create_collection(
-                name="buffy_episodes",
-                metadata={"hnsw:space": "cosine"}
-            )
-            self._populate_chromadb()
-            summary = self.get_stats()
-            logger.info("ChromaDB rebuild complete: %s", summary)
-            return summary
-        except Exception as exc:
-            logger.error("Failed to rebuild ChromaDB: %s", exc)
-            raise
+        """Rebuild the vector index from the document store."""
+        logger.info("Rebuilding vector index from document store...")
+        self._build_index()
+        summary = self.get_stats()
+        logger.info("Vector index rebuild complete: %s", summary)
+        return summary
 
     def get_episode(self, season: int, episode: str) -> Optional[Dict[str, Any]]:
         """Get a specific episode by season and episode number."""

@@ -1,8 +1,7 @@
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 import json
 import logging
 from pathlib import Path
-import asyncio
 from datetime import datetime
 from .data_pipeline import DataPipeline
 from .embedding_service import EmbeddingService

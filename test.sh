@@ -183,12 +183,6 @@ else
     exit 1
 fi
 
-if [ -d "app/data/chroma" ]; then
-    echo -e "${GREEN}? ChromaDB data directory exists${NC}"
-else
-    echo -e "${RED}? ChromaDB data directory not found${NC}"
-    exit 1
-fi
 
 echo -e "
 ${YELLOW}6. Testing Crawler Status${NC}"
@@ -214,8 +208,8 @@ else
 fi
 
 echo -e "
-${YELLOW}8. Reindexing ChromaDB${NC}"
-if $PYTHON_BIN scripts/scrape_episodes.py --reindex-chroma; then
+${YELLOW}8. Rebuilding Vector Index${NC}"
+if $PYTHON_BIN scripts/scrape_episodes.py --reindex; then
     echo -e "${GREEN}? Reindex succeeded${NC}"
 else
     echo -e "${RED}? Reindex failed${NC}"
@@ -309,7 +303,7 @@ except Exception as exc:
 
 vector_section = api_data.get('vector_store', {})
 vector_total = vector_section.get('total_episodes')
-chroma_total = vector_section.get('chromadb_episodes', vector_total)
+indexed_total = vector_section.get('indexed_episodes')
 api_content = api_data.get('content', {})
 api_total = api_content.get('total_episodes')
 api_counts = api_content.get('season_counts', {})
@@ -357,19 +351,19 @@ for season in sorted(EXPECTED_EPISODES):
 print(
     "Totals - Content: {content} | Document store: {doc} | "
     "Embeddings: {embed} (api={embed_api}) | Vector store: {vector} "
-    "(api={vector_api}) | ChromaDB: {chroma} | API content: {api}".format(
+    "(api={vector_api}) | Indexed: {indexed} | API content: {api}".format(
         content=content_total,
         doc=doc_total,
         embed=embedding_total,
         embed_api=embedding_api_total,
         vector=vector_total,
         vector_api=vector_api_total,
-        chroma=chroma_total,
+        indexed=indexed_total,
         api=api_total,
     )
 )
 
-if None in (vector_total, chroma_total, api_total) or not api_counts:
+if None in (vector_total, indexed_total, api_total) or not api_counts:
     fail('Invalid API response for /api/test')
 
 if api_expected_total not in (None, EXPECTED_TOTAL):
@@ -387,7 +381,7 @@ if not (
     == doc_total
     == embedding_total
     == vector_total
-    == chroma_total
+    == indexed_total
     == api_total
     == vector_api_total
     == embedding_api_total
@@ -408,7 +402,7 @@ echo "? Search across all seasons verified"
 echo "? Vector store state checked"
 echo "? Document store verified"
 echo "? Latest content imported"
-echo "? ChromaDB reindexed"
+echo "? Vector index rebuilt"
 echo "? Data pipeline integrity verified"
 echo "----------------------------------------"
 

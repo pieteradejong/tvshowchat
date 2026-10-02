@@ -30,7 +30,6 @@ Metrics: Recall@1, Recall@5, Recall@10 and MRR over the ground-truth set.
 from __future__ import annotations
 
 import json
-import re
 import sys
 from pathlib import Path
 
@@ -142,7 +141,7 @@ def rank(query_vec: np.ndarray, vecs: np.ndarray, owners: list[str], k: int = 10
     """Score every vector, collapse to best-scoring chunk per episode, return top-k ids."""
     scores = vecs @ query_vec
     best: dict[str, float] = {}
-    for owner, s in zip(owners, scores):
+    for owner, s in zip(owners, scores, strict=True):
         if s > best.get(owner, -2.0):
             best[owner] = float(s)
     return [eid for eid, _ in sorted(best.items(), key=lambda kv: -kv[1])[:k]]
@@ -153,7 +152,7 @@ def evaluate(model, vecs, owners, ground_truth, query_prefix: str = "") -> dict:
     qvecs = normalize(np.asarray(model.encode(queries, batch_size=64, show_progress_bar=False)))
 
     buckets: dict[str, list[int]] = {}
-    for (kind, _, expected), qv in zip(ground_truth, qvecs):
+    for (kind, _, expected), qv in zip(ground_truth, qvecs, strict=True):
         top = rank(qv, vecs, owners, k=10)
         pos = top.index(expected) + 1 if expected in top else 0
         buckets.setdefault(kind, []).append(pos)

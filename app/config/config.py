@@ -10,7 +10,7 @@ def load_logging_config():
             config = json.load(f)
         logging.config.dictConfig(config)
     except Exception as e:
-        raise Exception(f"Failed to load logging configuration: {e}")
+        raise Exception(f"Failed to load logging configuration: {e}") from e
 
 
 def get_logger(name: str = "my_app"):

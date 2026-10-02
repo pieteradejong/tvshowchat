@@ -3,7 +3,7 @@ import json
 import logging
 from pathlib import Path
 import numpy as np
-from sentence_transformers import SentenceTransformer
+from app.services.embedder import load_embedder
 import torch
 from tqdm import tqdm
 
@@ -12,14 +12,13 @@ logger = logging.getLogger(__name__)
 class EmbeddingService:
     def __init__(
         self,
-        model_name: str = "all-MiniLM-L6-v2",
         base_dir: Path = Path("app/data"),
         device: str = "cuda" if torch.cuda.is_available() else "cpu"
     ):
         self.base_dir = base_dir
         self.episodes_dir = base_dir / "episodes"
         self.embeddings_dir = base_dir / "embeddings"
-        self.model = SentenceTransformer(model_name, device=device)
+        self.model = load_embedder(device=device)
         self.embeddings_dir.mkdir(parents=True, exist_ok=True)
         
     def _prepare_text(self, episode_data: Dict) -> List[str]:

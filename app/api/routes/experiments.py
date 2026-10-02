@@ -1,13 +1,11 @@
 from pathlib import Path
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import JSONResponse
 from app.config.config import logger
 from app.services.storage.document_store import get_store
 from app.services.embedding_service import EmbeddingService
 import json
 import numpy as np
-from collections import defaultdict, Counter
-from typing import Dict, List, Tuple
+from collections import defaultdict
 
 router = APIRouter()
 
@@ -85,7 +83,7 @@ async def get_character_relationships():
         return {"nodes": nodes, "links": links}
     except Exception as e:
         logger.error(f"Failed to compute character relationships: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
 @router.get("/experiments/theme-cooccurrence")
@@ -155,7 +153,7 @@ async def get_theme_cooccurrence():
         }
     except Exception as e:
         logger.error(f"Failed to compute theme co-occurrence: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
 @router.get("/experiments/episode-similarity")
@@ -221,7 +219,7 @@ async def get_episode_similarity():
         }
     except Exception as e:
         logger.error(f"Failed to compute episode similarity: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
 @router.get("/experiments/character-journey")
@@ -297,7 +295,7 @@ async def get_character_journey():
         return {"nodes": nodes, "links": links}
     except Exception as e:
         logger.error(f"Failed to compute character journey: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
 @router.get("/experiments/temporal-arcs")
@@ -337,5 +335,5 @@ async def get_temporal_arcs():
         return {"timeline": timeline}
     except Exception as e:
         logger.error(f"Failed to get temporal arcs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error") from e
 

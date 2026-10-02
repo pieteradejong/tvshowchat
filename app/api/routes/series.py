@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 from app.config.config import logger
 import json
-from typing import Optional, List
+from typing import Optional
 from app.services.series_vis_data import build_v1_datasets, build_quotes_dataset, build_character_moments_dataset, build_season_stats
 from app.services.grid_data import build_grid_episodes_dataset
 
@@ -37,7 +37,7 @@ async def get_series_episodes():
         raise
     except Exception as e:
         logger.error(f"Failed to load episodes.json: {e}")
-        raise HTTPException(status_code=500, detail="Failed to load episodes")
+        raise HTTPException(status_code=500, detail="Failed to load episodes") from e
 
 
 @router.get("/series/character-arcs")
@@ -61,7 +61,7 @@ async def get_character_arcs():
         raise
     except Exception as e:
         logger.error(f"Failed to load character_arcs.json: {e}")
-        raise HTTPException(status_code=500, detail="Failed to load character arcs")
+        raise HTTPException(status_code=500, detail="Failed to load character arcs") from e
 
 
 @router.get("/reminiscence/quotes")
@@ -102,7 +102,7 @@ async def get_quotes(
         raise
     except Exception as e:
         logger.error(f"Failed to load quotes: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to load quotes: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to load quotes") from e
 
 
 @router.get("/reminiscence/character-moments")
@@ -133,7 +133,7 @@ async def get_character_moments(
         raise
     except Exception as e:
         logger.error(f"Failed to load character moments: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to load character moments: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to load character moments") from e
 
 
 @router.get("/reminiscence/season-comparison")
@@ -155,7 +155,7 @@ async def get_season_comparison():
         raise
     except Exception as e:
         logger.error(f"Failed to load season stats: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to load season stats: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to load season stats") from e
 
 
 @router.get("/grid/quotes-density")
@@ -185,7 +185,7 @@ async def get_quotes_density():
         raise
     except Exception as e:
         logger.error(f"Failed to load quotes density: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to load quotes density: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to load quotes density") from e
 
 
 @router.get("/grid/episodes")
@@ -228,5 +228,5 @@ async def get_grid_episodes():
         raise
     except Exception as e:
         logger.error(f"Failed to load grid episodes: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to load grid episodes: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to load grid episodes") from e
 

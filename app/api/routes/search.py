@@ -42,9 +42,10 @@ def get_content_summary() -> Dict[str, Dict[int, int]]:
 
 # --- API Schema ---
 class SearchQuery(BaseModel):
-    query: str
-    limit: Optional[int] = 5
-    season: Optional[int] = None
+    # Bounded so one request can't make the embedder or ranker do unbounded work
+    query: str = Field(max_length=500)
+    limit: int = Field(default=5, ge=1, le=50)
+    season: Optional[int] = Field(default=None, ge=1, le=7)
 
 class SearchResult(BaseModel):
     season: int
@@ -83,8 +84,8 @@ async def search_episodes(query: SearchQuery) -> List[SearchResult]:
         logger.error(f"Search failed: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Search failed: {str(e)}"
-        )
+            detail="Search failed"
+        ) from e
 
 
 def _enhance_memory_query(query: str) -> str:
@@ -131,8 +132,8 @@ async def test_search(query: str = "Willow uses magic", limit: int = 3) -> dict:
         logger.error(f"Test search failed: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Test search failed: {str(e)}"
-        )
+            detail="Test search failed"
+        ) from e
 
 @router.get("/test")
 async def test_system():
@@ -184,7 +185,7 @@ async def test_system():
         validate_counts("Embedding season counts", embedding_counts)
 
         vector_total = stats["total_episodes"]
-        chroma_total = stats.get("chromadb_episodes", 0)
+        indexed_total = stats.get("indexed_episodes", 0)
         embedding_total = stats.get("embedding_total", sum(embedding_counts.values()))
 
         if vector_total != expected_total:
@@ -205,12 +206,12 @@ async def test_system():
                 ),
             )
 
-        if chroma_total != expected_total:
+        if indexed_total != expected_total:
             raise HTTPException(
                 status_code=500,
                 detail=(
-                    f"ChromaDB total mismatch: expected {expected_total}, "
-                    f"found {chroma_total}"
+                    f"Vector index total mismatch: expected {expected_total}, "
+                    f"found {indexed_total}"
                 ),
             )
 
@@ -237,7 +238,7 @@ async def test_system():
                 "embedding_counts": embedding_counts,
                 "collection_name": stats["collection_name"],
                 "model": stats["embedding_model"],
-                "chromadb_episodes": chroma_total,
+                "indexed_episodes": indexed_total,
             },
             "sample_episode": {
                 "season": sample_episode.get("season_number") if sample_episode else None,
@@ -260,5 +261,5 @@ async def test_system():
         logger.error(f"System test failed: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"System test failed: {str(e)}"
-        )
+            detail="System test failed"
+        ) from e
