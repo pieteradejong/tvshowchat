@@ -96,3 +96,32 @@ container smoke test passed with `--network none` (model loaded offline, search 
 uid 10001). `tests/unit/test_check_script.py` → 18 passed (each guard FAILs on its injected
 fault). NOT YET: the workflows on GitHub — recheck after the first push of
 `ci/secure-pipeline`.
+
+## 7. Accept GHSA-vfj7-8cjw-p6xm (braces) until 2026-11-01
+**Date:** 2026-10-02
+**Context:** A high-severity `braces` advisory (stack-exhaustion DoS via deeply nested patterns)
+was published after the frontend upgrade and failed CI's `npm audit`. Every `braces` version is
+affected (3.0.3 is the latest release). It arrives only through Tailwind 3's build tooling
+(`chokidar`, `micromatch`). Policy for High in a public project: upgrade within 7 days, or record
+why it is not exploitable.
+**Decision:** Not exploitable here: build-time only, never shipped or run in production, and the
+only glob patterns it sees are this repo's own Tailwind `content` globs. Accepted by advisory ID
+in `frontend/audit-exceptions.json` with an expiry; `check.sh` fails on any other advisory and on
+this one after 2026-11-01. The real fix is the Tailwind 4 migration, deferred until the UI can be
+checked visually (it changes class names and border/ring defaults). Rejected: lowering the audit
+level or `--omit=dev` (both would hide future advisories wholesale).
+**Verified:** `./scripts/check.sh frontend` → `PASS npm audit (any advisory fails unless
+excepted, with expiry)`, printing `accepted until 2026-11-01: braces GHSA-vfj7-8cjw-p6xm`.
+
+## 8. Index lines only in the runtime lock; audit torch+cpu as its upstream release
+**Date:** 2026-10-02
+**Context:** The first CI run failed to install `torch==2.14.1+cpu`: pip resets its index list
+at every `--index-url` line, and `requirements-dev.txt` (read second) carried one, dropping the
+PyTorch index set by `requirements.txt`. Invisible on macOS, where torch comes from PyPI. Then
+`pip-audit --strict` on Linux refused `torch+cpu` (not on PyPI).
+**Decision:** `lock.sh` emits index lines into `requirements.txt` only; `check.sh` enforces it
+(`dev lock has no index lines`, with a fault-injection test). `pip-audit` audits `+cpu` pins as
+the upstream release they are built from (`--no-deps`, lock fully pinned), keeping `--strict`.
+**Verified:** in `python:3.12.15-slim` (linux/arm64): `pip install --require-hashes -r
+requirements-dev.txt -r requirements.txt` → torch `2.14.1+cpu` installed; the rewritten audit →
+`No known vulnerabilities found`, exit 0. Linux/amd64: NOT YET — next CI run.

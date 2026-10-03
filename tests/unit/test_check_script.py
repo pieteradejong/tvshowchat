@@ -130,6 +130,9 @@ def _strip_one_hash_block(r):
     (lambda r: edit(r / "requirements.txt", "--index-url https://pypi.org/simple",
                     "--index-url https://pypi.org/simple\n--extra-index-url https://evil.example/simple"),
      "only PyPI and the PyTorch CPU index are used"),
+    (lambda r: (r / "requirements-dev.txt").write_text(
+        "--index-url https://pypi.org/simple\n" + (r / "requirements-dev.txt").read_text()),
+     "dev lock has no index lines (would reset pip's index list)"),
     (lambda r: edit(r / "requirements.txt", "--extra-index-url https://download.pytorch.org/whl/cpu\n",
                     "--extra-index-url https://download.pytorch.org/whl/cpu\nnvidia-cublas==13.1.1.3 \\\n    --hash=sha256:" + "0" * 64 + "\n"),
      "no CUDA/GPU packages in the runtime lock"),

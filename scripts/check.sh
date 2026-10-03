@@ -68,8 +68,16 @@ python_version_is_312() { "$PY/python" -c 'import sys; assert sys.version_info[:
 python_no_chromadb() { ! "$PY/python" -c 'import chromadb' 2>/dev/null; }
 pip_audit() {
     # --strict: a package that can't be audited fails the check rather than
-    # being silently skipped.
-    "$PY/pip-audit" --strict --require-hashes --disable-pip --progress-spinner off -r "$1"
+    # being silently skipped. PyTorch's local "+cpu" builds aren't on PyPI, so
+    # they're audited as the upstream release they're built from (advisories
+    # are filed against that). Hashes don't apply to the renamed pins, so this
+    # runs --no-deps; the lock is already fully pinned.
+    local tmp rc
+    tmp=$(mktemp)
+    sed -E 's/^(torch==[0-9.]+)\+cpu/\1/' "$1" > "$tmp"
+    "$PY/pip-audit" --strict --no-deps --disable-pip --progress-spinner off -r "$tmp"; rc=$?
+    rm -f "$tmp"
+    return "$rc"
 }
 
 section_python() {
@@ -117,6 +125,12 @@ only_known_indexes() {
     [ -z "$unexpected" ] || { echo "unexpected index: $unexpected"; return 1; }
 }
 
+dev_lock_has_no_index_lines() {
+    # pip resets its index list at each --index-url; one here would drop the
+    # PyTorch index set by requirements.txt when both are installed together.
+    ! grep -nE '^--(extra-)?index-url' requirements-dev.txt
+}
+
 no_cuda_packages() {
     ! grep -nE '^(nvidia-|triton==|cuda-)' requirements.txt
 }
@@ -162,6 +176,7 @@ section_lockfiles() {
     check "pyproject.toml and requirements-dev.in pin exactly (==)" pyproject_pins_exact
     check "every locked Python package carries sha256 hashes" every_locked_package_has_hashes
     check "only PyPI and the PyTorch CPU index are used" only_known_indexes
+    check "dev lock has no index lines (would reset pip's index list)" dev_lock_has_no_index_lines
     check "no CUDA/GPU packages in the runtime lock" no_cuda_packages
     if [ -x "$PY/uv" ] || need uv; then
         check "requirements*.txt match their inputs (re-lock diff)" python_locks_are_fresh
@@ -186,6 +201,29 @@ node_matches_nvmrc() {
     [ "$want" = "$have" ] || { echo "node $(node --version), .nvmrc wants $(cat .nvmrc) (run: nvm use)"; return 1; }
 }
 in_frontend() { (cd frontend && "$@"); }
+npm_audit_with_exceptions() {
+    # Every advisory fails unless frontend/audit-exceptions.json lists its ID
+    # with an unexpired date (each one also recorded in DECISIONS.md).
+    # shellcheck disable=SC2016  # ${...} below is JavaScript, not shell
+    (cd frontend && npm audit --json 2>/dev/null; true) | node -e '
+        const audit = JSON.parse(require("fs").readFileSync(0, "utf8"));
+        const { exceptions } = require("./frontend/audit-exceptions.json");
+        const today = new Date().toISOString().slice(0, 10);
+        const allowed = new Map(exceptions.map((e) => [e.advisory, e]));
+        let bad = 0;
+        for (const [name, v] of Object.entries(audit.vulnerabilities || {})) {
+            for (const via of v.via) {
+                if (typeof via !== "object") continue;
+                const id = via.url.split("/").pop();
+                const ex = allowed.get(id);
+                if (!ex) { console.log(`${via.severity} ${name} ${id}: not in audit-exceptions.json`); bad = 1; }
+                else if (ex.expires < today) { console.log(`${name} ${id}: exception expired ${ex.expires}`); bad = 1; }
+                else console.log(`accepted until ${ex.expires}: ${name} ${id}`);
+            }
+        }
+        process.exit(bad);'
+}
+
 no_source_maps_shipped() { ! find frontend/dist -name '*.map' | grep -q .; }
 
 section_frontend() {
@@ -197,7 +235,7 @@ section_frontend() {
     check "tsc type-check" in_frontend npm run -s type-check
     check "vite production build" in_frontend npm run -s build
     check "no source maps in the production bundle" no_source_maps_shipped
-    check "npm audit (any severity fails)" in_frontend npm audit --audit-level=low
+    check "npm audit (any advisory fails unless excepted, with expiry)" npm_audit_with_exceptions
 }
 
 # ---------------------------------------------------------------------------

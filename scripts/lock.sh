@@ -13,20 +13,26 @@ if [ "${1:-}" = "--upgrade" ]; then
     upgrade=(--upgrade)
 fi
 
+# Extra args after the two paths are passed to uv.
 compile() {
-    uv pip compile "$1" \
-        --output-file "$2" \
+    local input=$1 output=$2
+    shift 2
+    uv pip compile "$input" \
+        --output-file "$output" \
         --generate-hashes \
         --universal \
         --python-version 3.12 \
         --index-url https://pypi.org/simple \
         --no-header \
-        --emit-index-url \
         --quiet \
-        ${upgrade[@]+"${upgrade[@]}"}
+        ${upgrade[@]+"${upgrade[@]}"} \
+        "$@"
 }
 
-compile pyproject.toml requirements.txt
+# Only the runtime lock carries index lines. pip resets its index list at every
+# --index-url it reads, so an index line in requirements-dev.txt (read second)
+# would silently drop the PyTorch index set by requirements.txt.
+compile pyproject.toml requirements.txt --emit-index-url
 # pip needs to know where torch's +cpu wheels live. Safe as an extra index
 # only because every install is --require-hashes: a candidate from either
 # index whose hash isn't in this file is discarded.

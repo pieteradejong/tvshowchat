@@ -214,7 +214,7 @@ Two layers:
 | `tests/unit/test_embedder.py` | The model is pinned to a full commit sha, and no app code loads it any other way |
 | `tests/integration/test_api.py` | Health, search, input bounds (422s), CORS, and that a 500 never leaks exception text |
 | `tests/integration/test_search_quality.py` | Rankings match `tests/fixtures/search_baseline.json`; the query model still matches the corpus vectors |
-| `tests/unit/test_check_script.py` | `scripts/check.sh` itself: injects 17 faults (unpinned action, `^` range, digest-less `FROM`, root `USER`, CUDA package, foreign index, stale lock, …) into a scratch copy and asserts the matching check FAILs |
+| `tests/unit/test_check_script.py` | `scripts/check.sh` itself: injects 18 faults (unpinned action, `^` range, digest-less `FROM`, root `USER`, CUDA package, foreign index, stale lock, …) into a scratch copy and asserts the matching check FAILs |
 
 The ranking baseline is the regression net for refactors and dependency upgrades: if a change
 moves any of the 23 recorded top-5 rankings, the suite fails. Re-record it only for a deliberate
@@ -277,18 +277,18 @@ verification command run.
 | Area | Status | What it means |
 |---|---|---|
 | Python dependencies | ✅ | Hash-locked (`--require-hashes`), all upgraded; `pip-audit --strict`: 0 known vulnerabilities |
-| Frontend dependencies | ✅ | Exact pins, `npm ci` from the lockfile; `npm audit`: 0 vulnerabilities |
+| Frontend dependencies | ✅ | Exact pins, `npm ci` from the lockfile; `npm audit`: one accepted build-time advisory (below), nothing else |
 | Vulnerable / unused components | ✅ | ChromaDB (no fix available), aiohttp and four dead modules removed |
 | Embedding model | ✅ | Pinned to a Hugging Face commit; baked into the image, so production never downloads it |
 | API hardening | ✅ | No exception text in responses, bounded search input, CORS without credentials, INFO logging |
-| Tests | ✅ | 65 pytest tests: ranking baseline, leak checks, and fault-injection tests proving each CI guard fails when broken |
+| Tests | ✅ | 66 pytest tests: ranking baseline, leak checks, and fault-injection tests proving each CI guard fails when broken |
 | CUDA-free install | ✅ | `torch` from PyTorch's CPU index (bound to `torch` only): 82 → 64 locked packages, no GPU stack |
 | Container image | ✅ | Digest-pinned bases, non-root (uid 10001), read-only code; smoke-tested with networking disabled |
 | CI pipeline | ✅ locally / ⏳ on GitHub | SHA-pinned actions, read-only token, lint/test/audit/build, CodeQL, Dependabot — not yet run on GitHub |
 | Security workflow | ⏳ blocked | `security.yml` calls the shared dotfiles workflow, which isn't on dotfiles `main` yet |
 | Deploy gate (Render) | ✅ configured | Auto-deploy stays off (refactor); when re-enabled, `checksPass` deploys `main` only after CI passes |
 | Branch protection on `main` | ⏳ needs your OK | Require PRs and passing checks before merge — a GitHub settings change |
-| Local check script | ✅ | `scripts/check.sh`: 41 checks in 6 sections, the same ones CI runs |
+| Local check script | ✅ | `scripts/check.sh`: 42 checks in 6 sections, the same ones CI runs |
 
 ### Dependencies and lockfiles
 
@@ -310,6 +310,13 @@ install instead of running.
 ./venv/bin/pytest                                                  # the ranking baseline catches drift
 ```
 
+**Accepted advisories.** `frontend/audit-exceptions.json` lists npm advisories judged not
+exploitable here, each with a reason and an expiry date; `check.sh` fails on anything not listed
+and on listed entries once expired. Currently: `braces` GHSA-vfj7-8cjw-p6xm (build-time only, no
+fixed release, expires 2026-11-01 — see `DECISIONS.md` #7). The Python lock never mixes index
+lines across files: pip resets its index list at each `--index-url`, so only `requirements.txt`
+carries them (`DECISIONS.md` #8).
+
 The frontend pins every dependency exactly in `frontend/package.json` (no `^` or `~`) and installs
 with `npm ci`, which fails if `package-lock.json` doesn't match. Use Node 24 (`nvm use`).
 
@@ -326,9 +333,9 @@ CI runs exactly this script, one section per job, so a green local run means a g
 
 | Section | Checks |
 |---|---|
-| `lockfiles` | Inputs pin with `==`; every locked package has sha256 hashes; only PyPI + the PyTorch CPU index; no CUDA packages; `requirements*.txt` match their inputs (re-lock and diff); `package.json` has no `^`/`~`; `package-lock.json` is v3 with integrity hashes and npmjs-only sources |
+| `lockfiles` | Inputs pin with `==`; every locked package has sha256 hashes; only PyPI + the PyTorch CPU index; the dev lock has no index lines; no CUDA packages; `requirements*.txt` match their inputs (re-lock and diff); `package.json` has no `^`/`~`; `package-lock.json` is v3 with integrity hashes and npmjs-only sources |
 | `python` | Python 3.12 venv; `pip check`; ChromaDB absent; ruff (incl. bandit security rules); pytest unit + integration; `pip-audit --strict` on both locks |
-| `frontend` | Node matches `.nvmrc`; `npm ci --ignore-scripts`; ESLint with zero warnings; `tsc`; Vite build; no source maps shipped; `npm audit` fails on any severity |
+| `frontend` | Node matches `.nvmrc`; `npm ci --ignore-scripts`; ESLint with zero warnings; `tsc`; Vite build; no source maps shipped; `npm audit` fails on any advisory not in `audit-exceptions.json` (or expired) |
 | `workflows` | actionlint; zizmor (Actions security audit); every third-party action pinned to a commit SHA; top-level `permissions` on every workflow; `persist-credentials: false` on every checkout; no `pull_request_target`/`workflow_run`; no untrusted event fields in expressions; the shared security workflow is called; shellcheck |
 | `docker` | hadolint; every `FROM` digest-pinned; non-root `USER`; `.dockerignore` excludes local state. With `--build`: builds the image, checks its contents (no dev files or local data, code not writable, offline env), then starts it **with networking disabled** and runs health, pipeline and search checks inside it |
 | `secrets` | gitleaks over full history (if installed; CI runs it via `security.yml`); no tracked `.env` files |
@@ -519,7 +526,7 @@ open problems found during the 2026-09 review.
 - [ ] **Clean up local leftovers:** the 819 MB `venv/` inside the project (rebuilt by
   `./init.sh`), 11 backup snapshots in `app/data/`, `app.log` / `app/app.log`, and
   `.DS_Store` files. None are tracked; they slow down workspace-wide searches and backups.
-- [x] **Add real tests.** Done 2026-10-01: 65 pytest tests (see [Testing](#testing)), runnable
+- [x] **Add real tests.** Done 2026-10-01: 66 pytest tests (see [Testing](#testing)), runnable
   without a server.
 
 ### Security fixes made along the way (2026-10-01)
@@ -538,6 +545,13 @@ open problems found during the 2026-09 review.
 - [x] Frontend d3 force graphs mutated react-query's cached data in place, and the theme network
   rendered circles from a different array than the simulation moved (so nodes never moved);
   both now simulate typed copies.
+
+### Frontend
+
+- [ ] **Migrate Tailwind 3 → 4** before 2026-11-01. Removes the `braces` advisory accepted in
+  `frontend/audit-exceptions.json`. Use `npx @tailwindcss/upgrade@<exact version>`, then check
+  every view in a browser: v4 renames classes (`shadow-sm`→`shadow-xs`, `rounded`→`rounded-sm`)
+  and changes `border`/`ring` defaults.
 
 ### Documentation
 
