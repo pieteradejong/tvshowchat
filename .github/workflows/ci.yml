@@ -1,7 +1,7 @@
 # CI: every job runs a section of scripts/check.sh, the same script developers
 # run locally, so "passes locally" and "passes in CI" mean the same thing.
 #
-# Hardening: actions pinned by commit SHA (Dependabot keeps them current),
+# Hardening: actions pinned by commit SHA (bump them deliberately, by hand),
 # read-only token, no persisted checkout credentials, no untrusted input
 # interpolated into shell, per-job timeouts.
 name: ci

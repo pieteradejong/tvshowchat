@@ -87,7 +87,7 @@ actions, and had been failing since 2025 (35 ruff errors). Nothing checked the f
 workflows themselves, or the image.
 **Decision:** `scripts/check.sh` holds every check, in sections; `ci.yml` runs one section per
 job (python+lockfiles, frontend, workflows, docker --build). Plus CodeQL (`security-extended`,
-Python + TypeScript) and Dependabot for Actions, Docker, npm and pip. Rejected: separate check
+Python + TypeScript). Rejected: separate check
 logic in YAML (drifts from what developers run locally).
 **Verified:** PARTIAL. Locally, `./scripts/check.sh` (all six sections, including
 `docker --build`) → 40 of 41 checks PASS; the one FAIL (ruff E741 in a new test) was fixed and
@@ -125,3 +125,12 @@ the upstream release they are built from (`--no-deps`, lock fully pinned), keepi
 **Verified:** in `python:3.12.15-slim` (linux/arm64): `pip install --require-hashes -r
 requirements-dev.txt -r requirements.txt` → torch `2.14.1+cpu` installed; the rewritten audit →
 `No known vulnerabilities found`, exit 0. Linux/amd64: NOT YET — next CI run.
+
+## 9. No Dependabot update PRs (superseding the dependabot.yml in #6)
+**Date:** 2026-10-02
+**Context:** Entry #6 added `.github/dependabot.yml` for version-update PRs. The workspace GitHub
+baseline (`dotfiles` security-and-privacy policy §10) keeps Dependabot *update PRs* off: they are
+commits made on GitHub that never pass the local security gate.
+**Decision:** `.github/dependabot.yml` removed; Dependabot *alerts* stay on. Version bumps are made
+deliberately — edit the pin, `./scripts/lock.sh`, `./scripts/check.sh` — and go through the gate.
+**Verified:** `git ls-files .github/dependabot.yml` → empty.

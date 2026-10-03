@@ -284,7 +284,7 @@ verification command run.
 | Tests | ✅ | 66 pytest tests: ranking baseline, leak checks, and fault-injection tests proving each CI guard fails when broken |
 | CUDA-free install | ✅ | `torch` from PyTorch's CPU index (bound to `torch` only): 82 → 64 locked packages, no GPU stack |
 | Container image | ✅ | Digest-pinned bases, non-root (uid 10001), read-only code; smoke-tested with networking disabled |
-| CI pipeline | ✅ locally / ⏳ on GitHub | SHA-pinned actions, read-only token, lint/test/audit/build, CodeQL, Dependabot — not yet run on GitHub |
+| CI pipeline | ✅ | SHA-pinned actions, read-only token, lint/test/audit/build, CodeQL — green on GitHub (PR #1) |
 | Security workflow | ⏳ blocked | `security.yml` calls the shared dotfiles workflow, which isn't on dotfiles `main` yet |
 | Deploy gate (Render) | ✅ configured | Auto-deploy stays off (refactor); when re-enabled, `checksPass` deploys `main` only after CI passes |
 | Branch protection on `main` | ⏳ needs your OK | Require PRs and passing checks before merge — a GitHub settings change |
@@ -351,12 +351,12 @@ optional parts `hadolint`, `gitleaks` (Homebrew) and Colima for Docker.
 | `ci.yml` | every push and PR | Four parallel jobs — `python`+`lockfiles`, `frontend`, `workflows`, `docker --build` — each one `scripts/check.sh` section |
 | `codeql.yml` | PRs, pushes to `main`, weekly | CodeQL SAST (`security-extended`) for Python and TypeScript |
 | `security.yml` | every push and PR | The shared workflow from `pieteradejong/dotfiles`: gitleaks over full history + the security gate |
-| `dependabot.yml` | weekly | Grouped update PRs for Actions, Docker base images, npm and pip |
+| Dependabot alerts | continuous | Vulnerability alerts only. Update PRs stay **off** by workspace policy: they'd be bot commits that never pass the local gate. Bumps are deliberate: edit the pin, re-lock, run `check.sh` |
 
 How the workflows themselves are hardened:
 
 - **Actions pinned by full commit SHA** (with the version in a comment); a tag can be moved to
-  malicious code, a SHA can't. Dependabot updates the SHAs.
+  malicious code, a SHA can't. Bump them deliberately: `gh api repos/<owner>/<action>/commits/<tag> --jq .sha`.
 - **Read-only token by default** (`permissions: contents: read`). The only write anywhere is
   `security-events: write` on the CodeQL job, which it needs to upload results.
 - **`persist-credentials: false`** on every checkout, so no later step can push with the token.

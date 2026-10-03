@@ -2,8 +2,7 @@
 #
 # TV Show Chat API + built frontend, for Render or any container host.
 #
-# Supply chain: base images pinned by digest (update with Dependabot's docker
-# ecosystem), Python deps installed only from the hash-locked requirements.txt,
+# Supply chain: base images pinned by digest (bumped deliberately, by hand), Python deps installed only from the hash-locked requirements.txt,
 # npm deps only from package-lock.json with install scripts disabled, and the
 # embedding model baked in at its pinned revision so the running container
 # never fetches code or weights from the internet.
