@@ -285,9 +285,9 @@ verification command run.
 | CUDA-free install | ✅ | `torch` from PyTorch's CPU index (bound to `torch` only): 82 → 64 locked packages, no GPU stack |
 | Container image | ✅ | Digest-pinned bases, non-root (uid 10001), read-only code; smoke-tested with networking disabled |
 | CI pipeline | ✅ | SHA-pinned actions, read-only token, lint/test/audit/build, CodeQL — green on GitHub (PR #1) |
-| Security workflow | ⏳ blocked | `security.yml` calls the shared dotfiles workflow, which isn't on dotfiles `main` yet |
+| Security workflow | ✅ running | gitleaks passes. The gate blocks PR #1 on two 2025 commits with a non-noreply author address (already published on `feat/series-ux-polish`) — open decision |
 | Deploy gate (Render) | ✅ configured | Auto-deploy stays off (refactor); when re-enabled, `checksPass` deploys `main` only after CI passes |
-| Branch protection on `main` | ⏳ needs your OK | Require PRs and passing checks before merge — a GitHub settings change |
+| Branch protection on `main` | ✅ | PRs required; all 8 checks must pass on an up-to-date branch; applies to admins; no force-push or deletion |
 | Local check script | ✅ | `scripts/check.sh`: 42 checks in 6 sections, the same ones CI runs |
 
 ### Dependencies and lockfiles

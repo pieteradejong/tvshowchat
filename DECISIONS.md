@@ -134,3 +134,16 @@ commits made on GitHub that never pass the local security gate.
 **Decision:** `.github/dependabot.yml` removed; Dependabot *alerts* stay on. Version bumps are made
 deliberately — edit the pin, `./scripts/lock.sh`, `./scripts/check.sh` — and go through the gate.
 **Verified:** `git ls-files .github/dependabot.yml` → empty.
+
+## 10. Protect `main`: PRs and all checks required, admins included
+**Date:** 2026-10-02
+**Context:** Render's `checksPass` gate (and every check in CI) can be bypassed by pushing straight
+to `main`. Approved by Pieter in session 2026-10-02.
+**Decision:** Classic branch protection on `main`: pull requests required (0 approvals — sole
+maintainer), required status checks (strict / up to date): the four `ci` jobs, both CodeQL
+analyses, `security / gitleaks`, `security / gate`; `enforce_admins` on; force-pushes and deletion
+off; conversation resolution required. Rejected: excluding `security / gate` to unblock PR #1
+(that would let the author-email finding through, which is the gate's purpose).
+**Verified:** `gh api repos/pieteradejong/tvshowchat/branches/main --jq '{protected, checks:
+(.protection.required_status_checks.contexts|length)}'` → `{"checks":8,"protected":true}`;
+`gh pr view 1 --json mergeStateStatus` → `BLOCKED` (only `security / gate` failing).
