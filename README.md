@@ -336,13 +336,13 @@ CI runs exactly this script, one section per job, so a green local run means a g
 | `lockfiles` | Inputs pin with `==`; every locked package has sha256 hashes; only PyPI + the PyTorch CPU index; the dev lock has no index lines; no CUDA packages; `requirements*.txt` match their inputs (re-lock and diff); `package.json` has no `^`/`~`; `package-lock.json` is v3 with integrity hashes and npmjs-only sources |
 | `python` | Python 3.12 venv; `pip check`; ChromaDB absent; ruff (incl. bandit security rules); pytest unit + integration; `pip-audit --strict` on both locks |
 | `frontend` | Node matches `.nvmrc`; `npm ci --ignore-scripts`; ESLint with zero warnings; `tsc`; Vite build; no source maps shipped; `npm audit` fails on any advisory not in `audit-exceptions.json` (or expired) |
-| `workflows` | actionlint; zizmor (Actions security audit); every third-party action pinned to a commit SHA; top-level `permissions` on every workflow; `persist-credentials: false` on every checkout; no `pull_request_target`/`workflow_run`; no untrusted event fields in expressions; the shared security workflow is called; shellcheck |
+| `workflows` | actionlint; zizmor (Actions security audit); every third-party action pinned to a commit SHA; top-level `permissions` on every workflow; `persist-credentials: false` on every checkout; no `pull_request_target`/`workflow_run`; no untrusted event fields in expressions; the shared security workflow is called; shellcheck (pinned via the dev lock) |
 | `docker` | hadolint; every `FROM` digest-pinned; non-root `USER`; `.dockerignore` excludes local state. With `--build`: builds the image, checks its contents (no dev files or local data, code not writable, offline env), then starts it **with networking disabled** and runs health, pipeline and search checks inside it |
 | `secrets` | gitleaks over full history (if installed; CI runs it via `security.yml`); no tracked `.env` files |
 
 A failing check doesn't stop the run: the summary lists every PASS/FAIL/SKIP and the exit code is
 non-zero if anything failed. Local prerequisites: `./init.sh`, Node 24 (`nvm use`), and for the
-optional parts `hadolint`, `shellcheck`, `gitleaks` (Homebrew) and Colima for Docker.
+optional parts `hadolint`, `gitleaks` (Homebrew) and Colima for Docker.
 
 ### CI pipeline
 
@@ -362,7 +362,9 @@ How the workflows themselves are hardened:
 - **`persist-credentials: false`** on every checkout, so no later step can push with the token.
 - **No `pull_request_target` or `workflow_run`**, and no PR titles, bodies or branch names in
   expressions — the usual ways a fork's PR gets code execution with secrets.
-- **Tools are verified too:** zizmor and pip-audit come from the hash lock; actionlint is
+- **Tools are pinned and verified too:** zizmor, pip-audit, uv and shellcheck come from the hash
+  lock, so CI and local runs use identical versions (an unpinned runner shellcheck once reported
+  different rule codes); actionlint is
   downloaded at a pinned version and checked against its sha256.
 - **The Python job runs on Linux**, so `pip-audit` covers the Linux-only `torch+cpu` pin that
   a macOS run skips.

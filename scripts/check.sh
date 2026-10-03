@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Check functions are invoked indirectly, through `check <name> <function>`.
-# shellcheck disable=SC2329
+# (SC2329 in shellcheck >= 0.11, SC2317 before.)
+# shellcheck disable=SC2329,SC2317
 #
 # Every check CI runs, runnable locally. CI calls one section per job; run
 # with no arguments to run them all.
@@ -320,8 +321,10 @@ section_workflows() {
     check "no pull_request_target / workflow_run triggers" no_dangerous_triggers
     check "no untrusted event fields interpolated" no_untrusted_input_in_run
     check "shared security workflow (gitleaks + gate) is called" security_workflow_present
-    if need shellcheck; then check "shellcheck scripts" shellcheck scripts/*.sh
-    else skip "shellcheck" "not installed"; fi
+    # The hash-locked shellcheck from requirements-dev.txt, so local and CI
+    # runs use the same version (rule codes differ between releases).
+    if [ -x "$PY/shellcheck" ]; then check "shellcheck scripts (pinned)" "$PY/shellcheck" scripts/*.sh
+    else skip "shellcheck" "not in venv: pip install --require-hashes -r requirements-dev.txt"; fi
 }
 
 # ---------------------------------------------------------------------------
