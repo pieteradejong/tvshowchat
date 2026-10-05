@@ -22,7 +22,6 @@ CONTENT_DIR = ROOT_DIR / "app/content"
 CONTENT_FILE = CONTENT_DIR / "btvs_all_seasons.json"
 EPISODES_DIR = ROOT_DIR / "app/data/episodes"
 EMBEDDINGS_DIR = ROOT_DIR / "app/data/embeddings"
-CHROMA_DIR = ROOT_DIR / "app/data/chroma"
 
 
 SEASON_RANGE = range(1, 8)
@@ -73,7 +72,7 @@ def import_latest_content() -> int:
         return 1
 
 
-def reindex_chromadb() -> int:
+def reindex() -> int:
     try:
         from app.services.vector_store import get_vector_store
     except ImportError as exc:
@@ -83,7 +82,7 @@ def reindex_chromadb() -> int:
     try:
         vector_store = get_vector_store()
         summary = vector_store.rebuild_from_document_store()
-        print("Reindexed ChromaDB. Summary:")
+        print("Rebuilt vector index. Summary:")
         for key, value in summary.items():
             print(f"  {key}: {value}")
         return 0
@@ -127,23 +126,16 @@ def status() -> int:
     else:
         print("Document store directory missing.")
 
-    # ChromaDB
-    print("\nChromaDB:")
-    sqlite_file = CHROMA_DIR / "chroma.sqlite3"
-    if sqlite_file.exists():
-        size_kb = sqlite_file.stat().st_size / 1024
-        print(f"chroma.sqlite3 size: {size_kb:.1f} KB")
-        try:
-            import chromadb
-
-            client = chromadb.PersistentClient(path=str(CHROMA_DIR.absolute()))
-            collection = client.get_collection("buffy_episodes")
-            count = collection.count()
-            print(f"Collection count: {count}")
-        except Exception as exc:  # pragma: no cover - informational only
-            print(f"Failed to inspect ChromaDB collection: {exc}")
+    # Embeddings (the vector index is built in memory from these at startup)
+    print("\nEmbeddings:")
+    if EMBEDDINGS_DIR.exists():
+        embedding_files = sorted(EMBEDDINGS_DIR.glob("season_*_embeddings.json"))
+        print(f"Embedding files: {len(embedding_files)}")
+        for embedding_file in embedding_files:
+            with embedding_file.open("r", encoding="utf-8") as f:
+                print(f"{embedding_file.name}: {len(json.load(f))} episodes")
     else:
-        print("ChromaDB file not found.")
+        print("Embeddings directory missing.")
 
     print("\nStatus check complete.")
     return 0
@@ -221,7 +213,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--status", action="store_true", help="Show pipeline status")
     parser.add_argument("--import-latest", action="store_true", help="Import latest content JSON into the document store")
-    parser.add_argument("--reindex-chroma", action="store_true", help="Rebuild ChromaDB collection from document store")
+    parser.add_argument(
+        "--reindex", "--reindex-chroma",
+        dest="reindex",
+        action="store_true",
+        help="Rebuild the vector index from the document store and print its stats",
+    )
     parser.add_argument("--force", action="store_true", help="Force crawl even if data exists")
     return parser.parse_args()
 
@@ -245,8 +242,8 @@ def main() -> int:
     if getattr(args, 'import_latest', False):
         exit_code |= import_latest_content()
 
-    if getattr(args, 'reindex_chroma', False):
-        exit_code |= reindex_chromadb()
+    if getattr(args, 'reindex', False):
+        exit_code |= reindex()
 
     try:
         if args.season:
@@ -254,8 +251,8 @@ def main() -> int:
             exit_code |= crawl(target, args.force)
         elif args.all:
             exit_code |= crawl(list(SEASON_RANGE), args.force)
-        elif not (args.status or getattr(args, 'import_latest', False) or getattr(args, 'reindex_chroma', False)):
-            logger.info("No action requested. Use --status, --all, --season, --import-latest, or --reindex-chroma.")
+        elif not (args.status or getattr(args, 'import_latest', False) or getattr(args, 'reindex', False)):
+            logger.info("No action requested. Use --status, --all, --season, --import-latest, or --reindex.")
     except ValueError as exc:
         logger.error(str(exc))
         return 1

@@ -1,6 +1,5 @@
 from typing import Dict, List, Any, Optional
 from datetime import datetime
-import re
 from pydantic import BaseModel, Field, validator
 
 
@@ -52,7 +51,7 @@ class EpisodeSummary(BaseModel):
             datetime.strptime(v, '%B %d, %Y')
             return v
         except ValueError:
-            raise ValueError('Invalid date format. Expected format: "Month DD, YYYY"')
+            raise ValueError('Invalid date format. Expected format: "Month DD, YYYY"') from None
 
     @validator('episode_summary')
     def validate_summary(cls, v: List[str]) -> List[str]:
@@ -109,7 +108,7 @@ class BuffyData(BaseModel):
 
     def validate_episode_numbers(self) -> bool:
         """Validate that episode numbers are sequential within each season."""
-        for season_key, season in self.seasons.items():
+        for season in self.seasons.values():
             episode_numbers = [int(ep.episode_number) for ep in season.episodes.values()]
             if episode_numbers != list(range(1, len(episode_numbers) + 1)):
                 return False
@@ -131,11 +130,11 @@ def validate_episode_data(data: Dict[str, Any]) -> BuffyData:
 
         return buffy_data
     except Exception as e:
-        raise ValueError(f"Data validation failed: {str(e)}")
+        raise ValueError(f"Data validation failed: {str(e)}") from e
 
 def validate_single_episode(data: Dict[str, Any]) -> EpisodeSummary:
     """Validate a single episode's data."""
     try:
         return EpisodeSummary(**data)
     except Exception as e:
-        raise ValueError(f"Episode validation failed: {str(e)}") 
+        raise ValueError(f"Episode validation failed: {str(e)}") from e

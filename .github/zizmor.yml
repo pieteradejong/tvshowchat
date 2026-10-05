@@ -1,0 +1,10 @@
+# zizmor (GitHub Actions security linter) configuration.
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        # This account's own reusable workflows are called @main on purpose, so a
+        # security-rule change reaches every repo at once (dotfiles policy §9).
+        "pieteradejong/*": ref-pin
+        # Everything else must be pinned to a full commit SHA.
+        "*": hash-pin

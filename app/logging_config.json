@@ -9,28 +9,15 @@
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
-            "level": "DEBUG",
+            "level": "INFO",
             "formatter": "default",
             "stream": "ext://sys.stdout"
-        },
-        "file": {
-            "class": "logging.FileHandler",
-            "level": "DEBUG",
-            "formatter": "default",
-            "filename": "app.log",
-            "mode": "a"
-        }
-    },
-    "loggers": {
-        "tvshowapp": {
-            "level": "DEBUG",
-            "handlers": ["console", "file"],
-            "propagate": false
         }
     },
     "root": {
-        "level": "DEBUG",
-        "handlers": ["console"]
+        "level": "INFO",
+        "handlers": [
+            "console"
+        ]
     }
 }
-

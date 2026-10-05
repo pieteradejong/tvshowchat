@@ -19,7 +19,13 @@ services:
       - key: PORT
         value: 8000
     healthCheckPath: /health
-    autoDeploy: true
+    # Disabled during the multi-show / lightweight-engine refactor: the starter plan
+    # has no headroom. Re-enable once the Vercel cutover is verified — with
+    # `checksPass`, never `commit`, so a push to main deploys only after every CI
+    # check (lint, tests, audits, image smoke test, CodeQL, security) is green.
+    # (`autoDeployTrigger` replaces Render's deprecated `autoDeploy` field; `off`
+    # is the same setting as the old `autoDeploy: false`.)
+    autoDeployTrigger: "off"
     # Build command is handled by Dockerfile
     # Start command is handled by Dockerfile CMD
 

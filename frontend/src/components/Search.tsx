@@ -8,9 +8,10 @@ interface SearchProps {
   pendingPrompt?: string;
   onPromptConsumed?: () => void;
   onSwitchToExplore?: () => void;
+  onNavigateToEpisode?: (episodeId: string) => void;
 }
 
-const Search: FC<SearchProps> = ({ pendingPrompt, onPromptConsumed, onSwitchToExplore }) => {
+const Search: FC<SearchProps> = ({ pendingPrompt, onPromptConsumed, onSwitchToExplore, onNavigateToEpisode }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -64,22 +65,52 @@ const Search: FC<SearchProps> = ({ pendingPrompt, onPromptConsumed, onSwitchToEx
     }
   };
 
+  const exampleQueries = [
+    "episode where Buffy dies",
+    "musical episode",
+    "Spike first appears",
+    "episode with Willow and Tara",
+    "that episode where Xander becomes a hyena",
+  ];
+
   return (
     <div className="max-w-4xl mx-auto p-3 sm:p-4">
-      {/* Subtle hint about Explore tab */}
+      {/* Memory Helper Section */}
       {searchResults.length === 0 && !isLoading && !searchQuery && (
-        <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50/50 p-3 sm:p-4 text-xs sm:text-sm text-gray-600">
-          <p>
-            <span className="font-medium text-gray-700">Tip:</span> Not sure what to search? Check out the{' '}
-            <button
-              type="button"
-              onClick={onSwitchToExplore}
-              className="text-blue-600 hover:text-blue-800 underline font-medium"
-            >
-              Explore tab
-            </button>{' '}
-            for sample queries and inspiration.
-          </p>
+        <div className="mb-4 space-y-3">
+          <div className="rounded-lg border border-indigo-200 bg-indigo-50/50 p-3 sm:p-4">
+            <p className="text-xs sm:text-sm text-indigo-900 mb-2">
+              <span className="font-medium">Memory Helper:</span> Can't remember the exact episode? Try these example queries:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {exampleQueries.map((example, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery(example);
+                    void executeSearch(example);
+                  }}
+                  className="text-xs px-3 py-1 bg-white border border-indigo-300 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors"
+                >
+                  {example}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-lg border border-gray-200 bg-gray-50/50 p-3 sm:p-4 text-xs sm:text-sm text-gray-600">
+            <p>
+              <span className="font-medium text-gray-700">Tip:</span> Not sure what to search? Check out the{' '}
+              <button
+                type="button"
+                onClick={onSwitchToExplore}
+                className="text-blue-600 hover:text-blue-800 underline font-medium"
+              >
+                Explore tab
+              </button>{' '}
+              for sample queries and inspiration.
+            </p>
+          </div>
         </div>
       )}
 
@@ -143,13 +174,19 @@ const Search: FC<SearchProps> = ({ pendingPrompt, onPromptConsumed, onSwitchToEx
 
       {viewMode === 'list' ? (
         <div className="space-y-3 sm:space-y-4">
-          {searchResults.map((result) => (
+          {searchResults.map((result) => {
+            const episodeId = `s${String(result.season).padStart(2, '0')}e${String(result.episode).padStart(2, '0')}`;
+            return (
             <div
               key={`${result.season}-${result.episode}-${result.title}`}
               className="p-3 sm:p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
             >
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                <h3 
+                  className="text-base sm:text-lg font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+                  onClick={() => onNavigateToEpisode?.(episodeId)}
+                  title="Click to view episode details"
+                >
                   S{String(result.season).padStart(2, '0')}E{result.episode}. {result.title}
                 </h3>
                 <span className="text-xs sm:text-sm text-gray-500">
@@ -205,10 +242,11 @@ const Search: FC<SearchProps> = ({ pendingPrompt, onPromptConsumed, onSwitchToEx
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
-        <TimelineView results={searchResults} />
+        <TimelineView results={searchResults} onNavigateToEpisode={onNavigateToEpisode} />
       )}
 
       {searchResults.length === 0 && !isLoading && !error && searchQuery && (

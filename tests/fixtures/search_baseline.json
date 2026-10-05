@@ -1,0 +1,3336 @@
+{
+  "episode where Buffy dies": [
+    {
+      "id": "s06e20",
+      "season": 6,
+      "episode": "20",
+      "title": "Villains",
+      "score": 0.8643,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Tara",
+        "Willow",
+        "Andrew",
+        "Jonathan",
+        "Xander",
+        "Warren",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s03e22",
+      "season": 3,
+      "episode": "22",
+      "title": "Graduation Day, Part Two",
+      "score": 0.864,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Mayor Wilkins",
+        "Oz",
+        "Giles",
+        "Willow",
+        "Jonathan",
+        "Xander",
+        "Faith",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s03e01",
+      "season": 3,
+      "episode": "01",
+      "title": "Anne (episode)",
+      "score": 0.8633,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Oz",
+        "Giles",
+        "Joyce",
+        "Willow",
+        "Andrew",
+        "Xander",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s04e12",
+      "season": 4,
+      "episode": "12",
+      "title": "A New Man",
+      "score": 0.8499,
+      "content_type": "summary",
+      "characters": [
+        "Riley",
+        "Spike",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Buffy"
+      ],
+      "themes": [
+        "friendship",
+        "family",
+        "magic",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s05e07",
+      "season": 5,
+      "episode": "07",
+      "title": "Fool for Love",
+      "score": 0.8472,
+      "content_type": "summary",
+      "characters": [
+        "Riley",
+        "Drusilla",
+        "Darla",
+        "Spike",
+        "Giles",
+        "Joyce",
+        "Buffy",
+        "Angel",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "family",
+        "vampire",
+        "demon",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    }
+  ],
+  "musical episode": [
+    {
+      "id": "s06e07",
+      "season": 6,
+      "episode": "07",
+      "title": "Once More, with Feeling",
+      "score": 0.2492,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s01e09",
+      "season": 1,
+      "episode": "09",
+      "title": "The Puppet Show",
+      "score": 0.2301,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Buffy"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s04e02",
+      "season": 4,
+      "episode": "02",
+      "title": "Living Conditions",
+      "score": 0.2087,
+      "content_type": "summary",
+      "characters": [
+        "Oz",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Buffy"
+      ],
+      "themes": [
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s04e10",
+      "season": 4,
+      "episode": "10",
+      "title": "Hush",
+      "score": 0.1727,
+      "content_type": "summary",
+      "characters": [
+        "Riley",
+        "Spike",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s06e12",
+      "season": 6,
+      "episode": "12",
+      "title": "Doublemeat Palace",
+      "score": 0.1644,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "magic",
+        "vampire",
+        "demon",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    }
+  ],
+  "Spike first appears": [
+    {
+      "id": "s07e17",
+      "season": 7,
+      "episode": "17",
+      "title": "Lies My Parents Told Me",
+      "score": 0.665,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Giles",
+        "Willow",
+        "The First Evil",
+        "Buffy",
+        "Angel",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s07e08",
+      "season": 7,
+      "episode": "08",
+      "title": "Sleeper",
+      "score": 0.6291,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Giles",
+        "Joyce",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "vampire",
+        "demon",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s07e13",
+      "season": 7,
+      "episode": "13",
+      "title": "The Killer in Me",
+      "score": 0.6125,
+      "content_type": "summary",
+      "characters": [
+        "Riley",
+        "Spike",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Andrew",
+        "The First Evil",
+        "Xander",
+        "Warren",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "magic",
+        "demon",
+        "school",
+        "death",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s07e14",
+      "season": 7,
+      "episode": "14",
+      "title": "First Date",
+      "score": 0.6106,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Giles",
+        "Willow",
+        "Andrew",
+        "Jonathan",
+        "The First Evil",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "family",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s05e14",
+      "season": 5,
+      "episode": "14",
+      "title": "Crush",
+      "score": 0.5696,
+      "content_type": "summary",
+      "characters": [
+        "Drusilla",
+        "Glory",
+        "Spike",
+        "Giles",
+        "Joyce",
+        "Willow",
+        "Xander",
+        "Buffy",
+        "Angel",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "death"
+      ]
+    }
+  ],
+  "episode with Willow and Tara": [
+    {
+      "id": "s04e19",
+      "season": 4,
+      "episode": "19",
+      "title": "New Moon Rising",
+      "score": 0.9665,
+      "content_type": "summary",
+      "characters": [
+        "Riley",
+        "Spike",
+        "Oz",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Anya",
+        "Buffy"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s06e19",
+      "season": 6,
+      "episode": "19",
+      "title": "Seeing Red",
+      "score": 0.9652,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Tara",
+        "Willow",
+        "Andrew",
+        "Jonathan",
+        "Xander",
+        "Warren",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s05e06",
+      "season": 5,
+      "episode": "06",
+      "title": "Family",
+      "score": 0.9633,
+      "content_type": "summary",
+      "characters": [
+        "Riley",
+        "Spike",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death"
+      ]
+    },
+    {
+      "id": "s04e13",
+      "season": 4,
+      "episode": "13",
+      "title": "The I in Team",
+      "score": 0.9251,
+      "content_type": "summary",
+      "characters": [
+        "Riley",
+        "Spike",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s06e10",
+      "season": 6,
+      "episode": "10",
+      "title": "Wrecked",
+      "score": 0.9148,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Oz",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "magic",
+        "vampire",
+        "demon",
+        "death"
+      ]
+    }
+  ],
+  "that episode where Xander becomes a hyena": [
+    {
+      "id": "s01e06",
+      "season": 1,
+      "episode": "06",
+      "title": "The Pack",
+      "score": 0.6794,
+      "content_type": "summary",
+      "characters": [
+        "Giles",
+        "Willow",
+        "Xander",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "vampire",
+        "school",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s07e01",
+      "season": 7,
+      "episode": "01",
+      "title": "Lessons",
+      "score": 0.6116,
+      "content_type": "summary",
+      "characters": [
+        "Drusilla",
+        "Glory",
+        "Spike",
+        "The Master",
+        "Mayor Wilkins",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Warren",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s05e03",
+      "season": 5,
+      "episode": "03",
+      "title": "The Replacement",
+      "score": 0.5983,
+      "content_type": "summary",
+      "characters": [
+        "Riley",
+        "Spike",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy"
+      ],
+      "themes": [
+        "romance",
+        "family",
+        "magic",
+        "demon",
+        "death"
+      ]
+    },
+    {
+      "id": "s07e02",
+      "season": 7,
+      "episode": "02",
+      "title": "Beneath You",
+      "score": 0.5972,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Angel",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "power"
+      ]
+    },
+    {
+      "id": "s01e12",
+      "season": 1,
+      "episode": "12",
+      "title": "Prophecy Girl",
+      "score": 0.5945,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "The Master",
+        "Giles",
+        "Joyce",
+        "Willow",
+        "Xander",
+        "Buffy",
+        "Jenny",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    }
+  ],
+  "Welcome to the Hellmouth": [
+    {
+      "id": "s03e13",
+      "season": 3,
+      "episode": "13",
+      "title": "The Zeppo",
+      "score": 0.2755,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Oz",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Faith",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s05e13",
+      "season": 5,
+      "episode": "13",
+      "title": "Blood Ties",
+      "score": 0.2696,
+      "content_type": "summary",
+      "characters": [
+        "Riley",
+        "Glory",
+        "Spike",
+        "Giles",
+        "Joyce",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s07e10",
+      "season": 7,
+      "episode": "10",
+      "title": "Bring on the Night",
+      "score": 0.2389,
+      "content_type": "summary",
+      "characters": [
+        "Drusilla",
+        "Spike",
+        "Giles",
+        "Joyce",
+        "Willow",
+        "Andrew",
+        "Jonathan",
+        "The First Evil",
+        "Xander",
+        "Faith",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s05e12",
+      "season": 5,
+      "episode": "12",
+      "title": "Checkpoint",
+      "score": 0.2374,
+      "content_type": "summary",
+      "characters": [
+        "Glory",
+        "Spike",
+        "Giles",
+        "Joyce",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s03e07",
+      "season": 3,
+      "episode": "07",
+      "title": "Revelations",
+      "score": 0.2273,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Oz",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Faith",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    }
+  ],
+  "Becoming": [
+    {
+      "id": "s01e09",
+      "season": 1,
+      "episode": "09",
+      "title": "The Puppet Show",
+      "score": 0.2159,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Buffy"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s03e19",
+      "season": 3,
+      "episode": "19",
+      "title": "Choices",
+      "score": 0.2053,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Mayor Wilkins",
+        "Oz",
+        "Giles",
+        "Joyce",
+        "Willow",
+        "Xander",
+        "Faith",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s05e22",
+      "season": 5,
+      "episode": "22",
+      "title": "The Gift",
+      "score": 0.2012,
+      "content_type": "summary",
+      "characters": [
+        "Glory",
+        "Spike",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Angel",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s05e19",
+      "season": 5,
+      "episode": "19",
+      "title": "Tough Love",
+      "score": 0.1874,
+      "content_type": "summary",
+      "characters": [
+        "Glory",
+        "Spike",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s02e09",
+      "season": 2,
+      "episode": "09",
+      "title": "What's My Line? Part One",
+      "score": 0.182,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Drusilla",
+        "Spike",
+        "Oz",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "family",
+        "vampire",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    }
+  ],
+  "Graduation Day": [
+    {
+      "id": "s03e21",
+      "season": 3,
+      "episode": "21",
+      "title": "Graduation Day, Part One",
+      "score": 0.3655,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Oz",
+        "Giles",
+        "Joyce",
+        "Willow",
+        "Xander",
+        "Faith",
+        "Anya",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s03e19",
+      "season": 3,
+      "episode": "19",
+      "title": "Choices",
+      "score": 0.2306,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Mayor Wilkins",
+        "Oz",
+        "Giles",
+        "Joyce",
+        "Willow",
+        "Xander",
+        "Faith",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s02e19",
+      "season": 2,
+      "episode": "19",
+      "title": "I Only Have Eyes for You",
+      "score": 0.2002,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Drusilla",
+        "Spike",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Buffy",
+        "Jenny",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death"
+      ]
+    },
+    {
+      "id": "s02e04",
+      "season": 2,
+      "episode": "04",
+      "title": "Inca Mummy Girl",
+      "score": 0.1751,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Oz",
+        "Giles",
+        "Willow",
+        "Jonathan",
+        "Xander",
+        "Buffy"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "vampire",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s03e20",
+      "season": 3,
+      "episode": "20",
+      "title": "The Prom",
+      "score": 0.1602,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Oz",
+        "Giles",
+        "Joyce",
+        "Willow",
+        "Jonathan",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "sacrifice"
+      ]
+    }
+  ],
+  "The Initiative": [
+    {
+      "id": "s03e05",
+      "season": 3,
+      "episode": "05",
+      "title": "Homecoming",
+      "score": 0.1991,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Mayor Wilkins",
+        "Oz",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Faith",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s01e08",
+      "season": 1,
+      "episode": "08",
+      "title": "I Robot, You Jane",
+      "score": 0.1924,
+      "content_type": "summary",
+      "characters": [
+        "Glory",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Buffy"
+      ],
+      "themes": [
+        "romance",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s05e21",
+      "season": 5,
+      "episode": "21",
+      "title": "The Weight of the World",
+      "score": 0.182,
+      "content_type": "summary",
+      "characters": [
+        "Glory",
+        "Spike",
+        "Giles",
+        "Joyce",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "family",
+        "magic",
+        "vampire",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s07e20",
+      "season": 7,
+      "episode": "20",
+      "title": "Touched",
+      "score": 0.1809,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Giles",
+        "Willow",
+        "Andrew",
+        "The First Evil",
+        "Xander",
+        "Faith",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "magic",
+        "vampire",
+        "demon",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s01e06",
+      "season": 1,
+      "episode": "06",
+      "title": "The Pack",
+      "score": 0.17,
+      "content_type": "summary",
+      "characters": [
+        "Giles",
+        "Willow",
+        "Xander",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "vampire",
+        "school",
+        "sacrifice"
+      ]
+    }
+  ],
+  "The Gift": [
+    {
+      "id": "s01e08",
+      "season": 1,
+      "episode": "08",
+      "title": "I Robot, You Jane",
+      "score": 0.2564,
+      "content_type": "summary",
+      "characters": [
+        "Glory",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Buffy"
+      ],
+      "themes": [
+        "romance",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s05e08",
+      "season": 5,
+      "episode": "08",
+      "title": "Shadow",
+      "score": 0.212,
+      "content_type": "summary",
+      "characters": [
+        "Riley",
+        "Glory",
+        "Spike",
+        "Giles",
+        "Joyce",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Faith",
+        "Anya",
+        "Buffy",
+        "Angel",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s04e13",
+      "season": 4,
+      "episode": "13",
+      "title": "The I in Team",
+      "score": 0.2065,
+      "content_type": "summary",
+      "characters": [
+        "Riley",
+        "Spike",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s05e21",
+      "season": 5,
+      "episode": "21",
+      "title": "The Weight of the World",
+      "score": 0.2038,
+      "content_type": "summary",
+      "characters": [
+        "Glory",
+        "Spike",
+        "Giles",
+        "Joyce",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "family",
+        "magic",
+        "vampire",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s02e16",
+      "season": 2,
+      "episode": "16",
+      "title": "Bewitched, Bothered and Bewildered",
+      "score": 0.201,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Drusilla",
+        "Spike",
+        "Oz",
+        "Giles",
+        "Joyce",
+        "Willow",
+        "Xander",
+        "Buffy",
+        "Jenny",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "school",
+        "death",
+        "sacrifice"
+      ]
+    }
+  ],
+  "Once More With Feeling": [
+    {
+      "id": "s04e15",
+      "season": 4,
+      "episode": "15",
+      "title": "This Year's Girl",
+      "score": 0.1904,
+      "content_type": "summary",
+      "characters": [
+        "Riley",
+        "Spike",
+        "Mayor Wilkins",
+        "Giles",
+        "Joyce",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Faith",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "family",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s07e18",
+      "season": 7,
+      "episode": "18",
+      "title": "Dirty Girls",
+      "score": 0.1789,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Giles",
+        "Willow",
+        "Andrew",
+        "The First Evil",
+        "Xander",
+        "Faith",
+        "Buffy",
+        "Angel",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s06e08",
+      "season": 6,
+      "episode": "08",
+      "title": "Tabula Rasa",
+      "score": 0.168,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s04e09",
+      "season": 4,
+      "episode": "09",
+      "title": "Something Blue",
+      "score": 0.1673,
+      "content_type": "summary",
+      "characters": [
+        "Riley",
+        "Spike",
+        "Oz",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy"
+      ],
+      "themes": [
+        "romance",
+        "magic",
+        "vampire",
+        "demon",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s07e20",
+      "season": 7,
+      "episode": "20",
+      "title": "Touched",
+      "score": 0.1647,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Giles",
+        "Willow",
+        "Andrew",
+        "The First Evil",
+        "Xander",
+        "Faith",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "magic",
+        "vampire",
+        "demon",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    }
+  ],
+  "Chosen": [
+    {
+      "id": "s07e20",
+      "season": 7,
+      "episode": "20",
+      "title": "Touched",
+      "score": 0.1991,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Giles",
+        "Willow",
+        "Andrew",
+        "The First Evil",
+        "Xander",
+        "Faith",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "magic",
+        "vampire",
+        "demon",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s03e16",
+      "season": 3,
+      "episode": "16",
+      "title": "Doppelgängland",
+      "score": 0.1941,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Oz",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Faith",
+        "Anya",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s05e20",
+      "season": 5,
+      "episode": "20",
+      "title": "Spiral",
+      "score": 0.1859,
+      "content_type": "summary",
+      "characters": [
+        "Glory",
+        "Spike",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "family",
+        "magic",
+        "vampire",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s05e21",
+      "season": 5,
+      "episode": "21",
+      "title": "The Weight of the World",
+      "score": 0.18,
+      "content_type": "summary",
+      "characters": [
+        "Glory",
+        "Spike",
+        "Giles",
+        "Joyce",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "family",
+        "magic",
+        "vampire",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s02e03",
+      "season": 2,
+      "episode": "03",
+      "title": "School Hard",
+      "score": 0.1781,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Drusilla",
+        "Spike",
+        "The Master",
+        "Giles",
+        "Joyce",
+        "Willow",
+        "Xander",
+        "Buffy",
+        "Jenny",
+        "Angel"
+      ],
+      "themes": [
+        "friendship",
+        "family",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    }
+  ],
+  "Buffy and Angel relationship": [
+    {
+      "id": "s03e12",
+      "season": 3,
+      "episode": "12",
+      "title": "Helpless",
+      "score": 1.1959,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Giles",
+        "Joyce",
+        "Willow",
+        "Xander",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "vampire",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s02e05",
+      "season": 2,
+      "episode": "05",
+      "title": "Reptile Boy",
+      "score": 1.1087,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Giles",
+        "Willow",
+        "Jonathan",
+        "Xander",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s02e17",
+      "season": 2,
+      "episode": "17",
+      "title": "Passion",
+      "score": 1.0962,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Drusilla",
+        "Spike",
+        "Giles",
+        "Joyce",
+        "Willow",
+        "Jonathan",
+        "Xander",
+        "Buffy",
+        "Jenny",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "school",
+        "death"
+      ]
+    },
+    {
+      "id": "s03e17",
+      "season": 3,
+      "episode": "17",
+      "title": "Enemies",
+      "score": 1.0918,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Giles",
+        "Joyce",
+        "Willow",
+        "Xander",
+        "Faith",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s07e22",
+      "season": 7,
+      "episode": "22",
+      "title": "Chosen",
+      "score": 1.0886,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Giles",
+        "Willow",
+        "Andrew",
+        "The First Evil",
+        "Xander",
+        "Faith",
+        "Anya",
+        "Buffy",
+        "Angel",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    }
+  ],
+  "Willow uses magic": [
+    {
+      "id": "s07e01",
+      "season": 7,
+      "episode": "01",
+      "title": "Lessons",
+      "score": 0.711,
+      "content_type": "summary",
+      "characters": [
+        "Drusilla",
+        "Glory",
+        "Spike",
+        "The Master",
+        "Mayor Wilkins",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Warren",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s03e16",
+      "season": 3,
+      "episode": "16",
+      "title": "Doppelgängland",
+      "score": 0.7037,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Oz",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Faith",
+        "Anya",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s06e22",
+      "season": 6,
+      "episode": "22",
+      "title": "Grave",
+      "score": 0.6871,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Andrew",
+        "Jonathan",
+        "Xander",
+        "Warren",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s04e13",
+      "season": 4,
+      "episode": "13",
+      "title": "The I in Team",
+      "score": 0.6597,
+      "content_type": "summary",
+      "characters": [
+        "Riley",
+        "Spike",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s05e19",
+      "season": 5,
+      "episode": "19",
+      "title": "Tough Love",
+      "score": 0.6549,
+      "content_type": "summary",
+      "characters": [
+        "Glory",
+        "Spike",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    }
+  ],
+  "vampire slaying in the graveyard": [
+    {
+      "id": "s05e07",
+      "season": 5,
+      "episode": "07",
+      "title": "Fool for Love",
+      "score": 0.6442,
+      "content_type": "summary",
+      "characters": [
+        "Riley",
+        "Drusilla",
+        "Darla",
+        "Spike",
+        "Giles",
+        "Joyce",
+        "Buffy",
+        "Angel",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "family",
+        "vampire",
+        "demon",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s02e08",
+      "season": 2,
+      "episode": "08",
+      "title": "The Dark Age",
+      "score": 0.6198,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Buffy",
+        "Jenny",
+        "Angel"
+      ],
+      "themes": [
+        "friendship",
+        "vampire",
+        "demon",
+        "school",
+        "death"
+      ]
+    },
+    {
+      "id": "s05e22",
+      "season": 5,
+      "episode": "22",
+      "title": "The Gift",
+      "score": 0.618,
+      "content_type": "summary",
+      "characters": [
+        "Glory",
+        "Spike",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Angel",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s03e11",
+      "season": 3,
+      "episode": "11",
+      "title": "Gingerbread",
+      "score": 0.6021,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Oz",
+        "Giles",
+        "Joyce",
+        "Willow",
+        "Xander",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s07e07",
+      "season": 7,
+      "episode": "07",
+      "title": "Conversations with Dead People",
+      "score": 0.5941,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Joyce",
+        "Tara",
+        "Willow",
+        "Andrew",
+        "Jonathan",
+        "Warren",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "friendship",
+        "family",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    }
+  ],
+  "Giles": [
+    {
+      "id": "s07e09",
+      "season": 7,
+      "episode": "09",
+      "title": "Never Leave Me",
+      "score": 0.6288,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Giles",
+        "Willow",
+        "Andrew",
+        "Jonathan",
+        "The First Evil",
+        "Xander",
+        "Warren",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s07e14",
+      "season": 7,
+      "episode": "14",
+      "title": "First Date",
+      "score": 0.58,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Giles",
+        "Willow",
+        "Andrew",
+        "Jonathan",
+        "The First Evil",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "family",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s02e08",
+      "season": 2,
+      "episode": "08",
+      "title": "The Dark Age",
+      "score": 0.5739,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Buffy",
+        "Jenny",
+        "Angel"
+      ],
+      "themes": [
+        "friendship",
+        "vampire",
+        "demon",
+        "school",
+        "death"
+      ]
+    },
+    {
+      "id": "s05e02",
+      "season": 5,
+      "episode": "02",
+      "title": "Real Me",
+      "score": 0.5524,
+      "content_type": "summary",
+      "characters": [
+        "Riley",
+        "Spike",
+        "Giles",
+        "Joyce",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "family",
+        "magic",
+        "vampire",
+        "school",
+        "death"
+      ]
+    },
+    {
+      "id": "s03e22",
+      "season": 3,
+      "episode": "22",
+      "title": "Graduation Day, Part Two",
+      "score": 0.5519,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Mayor Wilkins",
+        "Oz",
+        "Giles",
+        "Willow",
+        "Jonathan",
+        "Xander",
+        "Faith",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "sacrifice"
+      ]
+    }
+  ],
+  "high school graduation": [
+    {
+      "id": "s03e21",
+      "season": 3,
+      "episode": "21",
+      "title": "Graduation Day, Part One",
+      "score": 0.3985,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Oz",
+        "Giles",
+        "Joyce",
+        "Willow",
+        "Xander",
+        "Faith",
+        "Anya",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s03e19",
+      "season": 3,
+      "episode": "19",
+      "title": "Choices",
+      "score": 0.3041,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Mayor Wilkins",
+        "Oz",
+        "Giles",
+        "Joyce",
+        "Willow",
+        "Xander",
+        "Faith",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s02e04",
+      "season": 2,
+      "episode": "04",
+      "title": "Inca Mummy Girl",
+      "score": 0.2856,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Oz",
+        "Giles",
+        "Willow",
+        "Jonathan",
+        "Xander",
+        "Buffy"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "vampire",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s02e19",
+      "season": 2,
+      "episode": "19",
+      "title": "I Only Have Eyes for You",
+      "score": 0.2683,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Drusilla",
+        "Spike",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Buffy",
+        "Jenny",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death"
+      ]
+    },
+    {
+      "id": "s06e05",
+      "season": 6,
+      "episode": "05",
+      "title": "Life Serial",
+      "score": 0.2414,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Andrew",
+        "Jonathan",
+        "Xander",
+        "Warren",
+        "Anya",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "friendship",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    }
+  ],
+  "sacrifice to save the world": [
+    {
+      "id": "s05e22",
+      "season": 5,
+      "episode": "22",
+      "title": "The Gift",
+      "score": 0.4609,
+      "content_type": "summary",
+      "characters": [
+        "Glory",
+        "Spike",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Angel",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s05e20",
+      "season": 5,
+      "episode": "20",
+      "title": "Spiral",
+      "score": 0.3986,
+      "content_type": "summary",
+      "characters": [
+        "Glory",
+        "Spike",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "family",
+        "magic",
+        "vampire",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s05e13",
+      "season": 5,
+      "episode": "13",
+      "title": "Blood Ties",
+      "score": 0.3491,
+      "content_type": "summary",
+      "characters": [
+        "Riley",
+        "Glory",
+        "Spike",
+        "Giles",
+        "Joyce",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s05e21",
+      "season": 5,
+      "episode": "21",
+      "title": "The Weight of the World",
+      "score": 0.3376,
+      "content_type": "summary",
+      "characters": [
+        "Glory",
+        "Spike",
+        "Giles",
+        "Joyce",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "family",
+        "magic",
+        "vampire",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s04e15",
+      "season": 4,
+      "episode": "15",
+      "title": "This Year's Girl",
+      "score": 0.3113,
+      "content_type": "summary",
+      "characters": [
+        "Riley",
+        "Spike",
+        "Mayor Wilkins",
+        "Giles",
+        "Joyce",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Faith",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "family",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    }
+  ],
+  "who is the Mayor": [
+    {
+      "id": "s03e19",
+      "season": 3,
+      "episode": "19",
+      "title": "Choices",
+      "score": 0.2235,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Mayor Wilkins",
+        "Oz",
+        "Giles",
+        "Joyce",
+        "Willow",
+        "Xander",
+        "Faith",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s03e21",
+      "season": 3,
+      "episode": "21",
+      "title": "Graduation Day, Part One",
+      "score": 0.2012,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Oz",
+        "Giles",
+        "Joyce",
+        "Willow",
+        "Xander",
+        "Faith",
+        "Anya",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s03e05",
+      "season": 3,
+      "episode": "05",
+      "title": "Homecoming",
+      "score": 0.178,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Mayor Wilkins",
+        "Oz",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Faith",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s07e20",
+      "season": 7,
+      "episode": "20",
+      "title": "Touched",
+      "score": 0.1771,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Giles",
+        "Willow",
+        "Andrew",
+        "The First Evil",
+        "Xander",
+        "Faith",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "magic",
+        "vampire",
+        "demon",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s02e03",
+      "season": 2,
+      "episode": "03",
+      "title": "School Hard",
+      "score": 0.1656,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Drusilla",
+        "Spike",
+        "The Master",
+        "Giles",
+        "Joyce",
+        "Willow",
+        "Xander",
+        "Buffy",
+        "Jenny",
+        "Angel"
+      ],
+      "themes": [
+        "friendship",
+        "family",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    }
+  ],
+  "the": [
+    {
+      "id": "s01e06",
+      "season": 1,
+      "episode": "06",
+      "title": "The Pack",
+      "score": 0.2222,
+      "content_type": "summary",
+      "characters": [
+        "Giles",
+        "Willow",
+        "Xander",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "vampire",
+        "school",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s03e07",
+      "season": 3,
+      "episode": "07",
+      "title": "Revelations",
+      "score": 0.1702,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Oz",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Faith",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s03e05",
+      "season": 3,
+      "episode": "05",
+      "title": "Homecoming",
+      "score": 0.151,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Mayor Wilkins",
+        "Oz",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Faith",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s05e22",
+      "season": 5,
+      "episode": "22",
+      "title": "The Gift",
+      "score": 0.1509,
+      "content_type": "summary",
+      "characters": [
+        "Glory",
+        "Spike",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Angel",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s01e08",
+      "season": 1,
+      "episode": "08",
+      "title": "I Robot, You Jane",
+      "score": 0.15,
+      "content_type": "summary",
+      "characters": [
+        "Glory",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Buffy"
+      ],
+      "themes": [
+        "romance",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    }
+  ],
+  "zzzzqqq nonexistent": [
+    {
+      "id": "s01e08",
+      "season": 1,
+      "episode": "08",
+      "title": "I Robot, You Jane",
+      "score": 0.1385,
+      "content_type": "summary",
+      "characters": [
+        "Glory",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Buffy"
+      ],
+      "themes": [
+        "romance",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s02e08",
+      "season": 2,
+      "episode": "08",
+      "title": "The Dark Age",
+      "score": 0.0809,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Buffy",
+        "Jenny",
+        "Angel"
+      ],
+      "themes": [
+        "friendship",
+        "vampire",
+        "demon",
+        "school",
+        "death"
+      ]
+    },
+    {
+      "id": "s04e10",
+      "season": 4,
+      "episode": "10",
+      "title": "Hush",
+      "score": 0.0749,
+      "content_type": "summary",
+      "characters": [
+        "Riley",
+        "Spike",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s04e06",
+      "season": 4,
+      "episode": "06",
+      "title": "Wild at Heart",
+      "score": 0.0532,
+      "content_type": "summary",
+      "characters": [
+        "Riley",
+        "Spike",
+        "Oz",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Buffy"
+      ],
+      "themes": [
+        "romance",
+        "magic",
+        "vampire",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s03e05",
+      "season": 3,
+      "episode": "05",
+      "title": "Homecoming",
+      "score": 0.0489,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Mayor Wilkins",
+        "Oz",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Faith",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    }
+  ],
+  "vampire [s1]": [
+    {
+      "id": "s01e01",
+      "season": 1,
+      "episode": "01",
+      "title": "Welcome to the Hellmouth",
+      "score": 0.4897,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "Darla",
+        "The Master",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "friendship",
+        "family",
+        "vampire",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s01e04",
+      "season": 1,
+      "episode": "04",
+      "title": "Teacher's Pet",
+      "score": 0.4789,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "The Master",
+        "Giles",
+        "Willow",
+        "Xander",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "family",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s01e07",
+      "season": 1,
+      "episode": "07",
+      "title": "Angel (episode)",
+      "score": 0.4683,
+      "content_type": "summary",
+      "characters": [
+        "Darla",
+        "The Master",
+        "Giles",
+        "Joyce",
+        "Willow",
+        "Xander",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s01e12",
+      "season": 1,
+      "episode": "12",
+      "title": "Prophecy Girl",
+      "score": 0.4456,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "The Master",
+        "Giles",
+        "Joyce",
+        "Willow",
+        "Xander",
+        "Buffy",
+        "Jenny",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s01e05",
+      "season": 1,
+      "episode": "05",
+      "title": "Never Kill a Boy on the First Date",
+      "score": 0.4377,
+      "content_type": "summary",
+      "characters": [
+        "Cordelia",
+        "The Master",
+        "Giles",
+        "Willow",
+        "Andrew",
+        "Xander",
+        "Buffy",
+        "Angel"
+      ],
+      "themes": [
+        "romance",
+        "vampire",
+        "school",
+        "death"
+      ]
+    }
+  ],
+  "magic [s6]": [
+    {
+      "id": "s06e22",
+      "season": 6,
+      "episode": "22",
+      "title": "Grave",
+      "score": 0.4008,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Andrew",
+        "Jonathan",
+        "Xander",
+        "Warren",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s06e06",
+      "season": 6,
+      "episode": "06",
+      "title": "All the Way",
+      "score": 0.2869,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s06e13",
+      "season": 6,
+      "episode": "13",
+      "title": "Dead Things",
+      "score": 0.2788,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Tara",
+        "Willow",
+        "Andrew",
+        "Jonathan",
+        "Xander",
+        "Warren",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "death",
+        "power",
+        "sacrifice"
+      ]
+    },
+    {
+      "id": "s06e02",
+      "season": 6,
+      "episode": "02",
+      "title": "Bargaining, Part Two",
+      "score": 0.2607,
+      "content_type": "summary",
+      "characters": [
+        "Glory",
+        "Spike",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "friendship",
+        "family",
+        "magic",
+        "demon",
+        "death",
+        "power"
+      ]
+    },
+    {
+      "id": "s06e07",
+      "season": 6,
+      "episode": "07",
+      "title": "Once More, with Feeling",
+      "score": 0.2343,
+      "content_type": "summary",
+      "characters": [
+        "Spike",
+        "Giles",
+        "Tara",
+        "Willow",
+        "Xander",
+        "Anya",
+        "Buffy",
+        "Dawn"
+      ],
+      "themes": [
+        "romance",
+        "friendship",
+        "family",
+        "magic",
+        "vampire",
+        "demon",
+        "school",
+        "death",
+        "power"
+      ]
+    }
+  ]
+}

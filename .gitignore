@@ -132,6 +132,23 @@ frontend.pid
 app/*.log
 app/logs/*.log
 
+# Data layout (raw vs derived vs db)
+#
+# We keep empty directories in git via .gitkeep, but ignore generated data.
+
+# Vector DB persistence (ChromaDB)
+app/data/db/chroma/**
+!app/data/db/chroma/.gitkeep
+
+# Raw crawled/ingested data (per-season JSON, content dumps, etc.)
+app/data/raw/**
+!app/data/raw/**/.gitkeep
+
+# Derived datasets (series-wide rollups, grids, embeddings, etc.)
+app/data/derived/**
+!app/data/derived/**/.gitkeep
+
+# Legacy paths (kept for backwards-compat during transition)
 # ChromaDB data files
 app/data/chroma/**
 !app/data/chroma/.gitkeep
@@ -288,3 +305,6 @@ app/models/**/*.ckpt
 !app/models/**/*.json
 !app/models/**/*.txt
 !app/models/**/*.md
+
+# Tools fetched by scripts/check.sh install-actionlint
+.tools/

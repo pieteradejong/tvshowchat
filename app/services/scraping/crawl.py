@@ -2,7 +2,6 @@ import copy
 import json
 import requests
 from bs4 import BeautifulSoup
-from sentence_transformers import SentenceTransformer
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 from pathlib import Path
 import re
@@ -10,6 +9,7 @@ from numpy import float32
 import logging
 from ratelimit import limits, sleep_and_retry
 from tenacity import retry, stop_after_attempt, wait_exponential
+from app.services.embedder import load_embedder
 from app.services.pipeline.validation import validate_single_episode, validate_episode_data
 
 # Configure logging
@@ -229,7 +229,7 @@ def fetch_parse_save_episodes(
 
         season_filter = set(target_seasons) if target_seasons else None
         soup = BeautifulSoup(response.content, "lxml")
-        embedder = SentenceTransformer("all-MiniLM-L6-v2")
+        embedder = load_embedder()
         result: Dict[str, Dict[str, Any]] = {}
         validation_errors = []
         season_counts: Dict[int, int] = {}

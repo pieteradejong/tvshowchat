@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Request
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from typing import Literal
 from fastapi.responses import HTMLResponse, FileResponse
@@ -74,5 +74,5 @@ async def model_health_check():
         logger.error(f"Model health check failed: {e}")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Model check failed: {str(e)}"
-        )
+            detail="Model check failed"
+        ) from e

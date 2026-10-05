@@ -1,0 +1,32 @@
+{
+  "_comment": "Query set for the search-engine regression baseline. Used by scripts/capture_search_baseline.py to pin ranking behaviour across the ChromaDB -> lightweight-engine rewrite. Sources: frontend/src/components/Search.tsx exampleQueries, test.sh per-season fixtures, plus edge cases exercising the query-analysis and boosting paths.",
+  "queries": [
+    { "q": "episode where Buffy dies",                  "note": "memory-query rewrite: strips 'episode where'" },
+    { "q": "musical episode",                           "note": "memory-query rewrite: appends 'singing song music'" },
+    { "q": "Spike first appears",                       "note": "character extraction + 'first appearance' branch" },
+    { "q": "episode with Willow and Tara",              "note": "two characters -> relationship boost (+0.15)" },
+    { "q": "that episode where Xander becomes a hyena", "note": "memory-query rewrite: 'that episode where'" },
+
+    { "q": "Welcome to the Hellmouth", "expect_season": 1, "note": "title match, season 1" },
+    { "q": "Becoming",                 "expect_season": 2, "note": "title match, season 2" },
+    { "q": "Graduation Day",           "expect_season": 3, "note": "title match, season 3" },
+    { "q": "The Initiative",           "expect_season": 4, "note": "title match, season 4" },
+    { "q": "The Gift",                 "expect_season": 5, "note": "title match, season 5" },
+    { "q": "Once More With Feeling",   "expect_season": 6, "note": "title match, season 6" },
+    { "q": "Chosen",                   "expect_season": 7, "note": "title match, season 7" },
+
+    { "q": "Buffy and Angel relationship",     "note": "query_type=relationship, 2 characters" },
+    { "q": "Willow uses magic",                "note": "theme=magic; also the /api/test-search default" },
+    { "q": "vampire slaying in the graveyard", "note": "themes vampire + death, no characters" },
+    { "q": "Giles",                            "note": "single token, single character" },
+    { "q": "high school graduation",           "note": "theme=school, no characters" },
+    { "q": "sacrifice to save the world",      "note": "theme=sacrifice" },
+    { "q": "who is the Mayor",                 "note": "multi-word character name" },
+    { "q": "the",                              "note": "degenerate: stopword only" },
+    { "q": "zzzzqqq nonexistent",              "note": "degenerate: no corpus overlap" }
+  ],
+  "season_filtered": [
+    { "q": "vampire", "season": 1 },
+    { "q": "magic",   "season": 6 }
+  ]
+}

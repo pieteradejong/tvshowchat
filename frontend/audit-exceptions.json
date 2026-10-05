@@ -1,0 +1,12 @@
+{
+  "_comment": "npm advisories accepted as not exploitable here. Each entry needs a reason and an expiry; scripts/check.sh fails on any advisory not listed, and on listed ones once expired. Record each in DECISIONS.md.",
+  "exceptions": [
+    {
+      "advisory": "GHSA-vfj7-8cjw-p6xm",
+      "package": "braces",
+      "severity": "high",
+      "reason": "Build-time only (tailwindcss 3 -> chokidar/micromatch), never shipped or run in production. The DoS needs attacker-controlled glob patterns; the only patterns are this repo's own Tailwind content globs. No patched release exists (3.0.3 is latest). Removed by the Tailwind 4 migration.",
+      "expires": "2026-11-01"
+    }
+  ]
+}

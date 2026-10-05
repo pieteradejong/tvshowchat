@@ -37,10 +37,19 @@ app/logs/
 logs/
 *.log.*
 
-# Data files (will be mounted or copied separately if needed)
-app/data/backup_*/
-app/data/chroma/
+# Local data and build output never go into the image: the app imports the
+# tracked dataset (app/content/) into app/data/ on first start, and the
+# frontend is built inside the image.
+app/data/
+app/static/
+app/models/
 app/dump.rdb
+app/app.log
+app.log
+
+# Dev-only dependency files
+requirements-dev.in
+requirements-dev.txt
 
 # Frontend
 # NOTE: frontend/ is needed for Docker build, so NOT ignoring it

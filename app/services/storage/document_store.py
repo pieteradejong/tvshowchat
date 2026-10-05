@@ -6,7 +6,7 @@ from datetime import datetime
 import shutil
 from dataclasses import dataclass, asdict
 import numpy as np
-from sentence_transformers import SentenceTransformer
+from app.services.embedder import load_embedder
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ class BuffyDocumentStore:
     def embedder(self):
         """Lazy-load the embedder only when needed."""
         if self._embedder is None:
-            self._embedder = SentenceTransformer("all-MiniLM-L6-v2")
+            self._embedder = load_embedder()
         return self._embedder
 
     def _ensure_dirs(self):
@@ -200,11 +200,17 @@ class BuffyDocumentStore:
             # Search through all seasons
             results = []
             for season_file in self.episodes_path.glob("season_*.json"):
+                if season_file.name == "season_stats.json":
+                    continue
+                try:
+                    season_num = int(season_file.stem.split('_')[1])
+                except (ValueError, IndexError):
+                    continue
+                
                 with open(season_file, 'r') as f:
                     season_data = json.load(f)
                 
                 # Get embeddings for this season
-                season_num = int(season_file.stem.split('_')[1])
                 embeddings_file = self._get_embeddings_file(season_num)
                 embeddings_data = {}
                 if embeddings_file.exists():
@@ -241,7 +247,7 @@ class BuffyDocumentStore:
             
             for season_key, season_data in data.items():
                 season_num = int(season_key.split('_')[1])
-                for episode_num, episode in season_data.items():
+                for episode in season_data.values():
                     # Convert to EpisodeDocument
                     doc = EpisodeDocument(
                         season_number=season_num,
