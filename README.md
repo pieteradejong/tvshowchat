@@ -402,13 +402,12 @@ The project includes Docker configuration for consistent, reproducible deploymen
 Test the Docker setup locally before deploying:
 
 ```bash
-# Build and run with Docker Compose
-docker-compose up --build
-
-# Or build and run directly
 docker build -t tvshowchat-api .
 docker run -p 8000:8000 tvshowchat-api
 ```
+
+Needs a running Docker daemon (on this machine: `colima start`). `scripts/check.sh` runs the same
+build and smoke test.
 
 The API will be available at `http://localhost:8000`.
 
@@ -515,7 +514,8 @@ open problems found during the 2026-09 review.
 
 ### Repository hygiene
 
-- [ ] **Remove `app/dump.rdb`** from git: a stray 2023 Redis dump in a public repo.
+- [x] **Remove `app/dump.rdb`** from git. Done 2026-10-05, together with the unused
+  `docker-compose.yml`; `.gitignore` and `.dockerignore` keep it out.
 - [x] **Fix `.github/workflows/ci.yml`.** Done 2026-10-01: rewritten — see
   [Security and CI/CD](#security-and-cicd).
 - [x] **Pin frontend dependencies exactly.** Done 2026-10-01, together with the upgrades that
